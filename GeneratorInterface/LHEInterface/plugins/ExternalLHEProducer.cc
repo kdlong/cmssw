@@ -159,7 +159,10 @@ ExternalLHEProducer::ExternalLHEProducer(const edm::ParameterSet& iConfig) :
   produces<LHEEventProduct>();
   produces<LHERunInfoProduct, edm::Transition::BeginRun>();
   produces<LHERunInfoProduct, edm::Transition::EndRun>();
-  produces<LHEWeightInfoProduct>();
+  produces<LHEWeightInfoProduct, edm::Transition::BeginRun>("test");
+  produces<std::string, edm::Transition::BeginRun>();
+  produces<std::string>("test");
+  produces<int>();
 }
 
 
@@ -184,6 +187,7 @@ void
 ExternalLHEProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   nextEvent();
+
   if (!partonLevel) {
     throw edm::Exception(edm::errors::EventGenerationFailure) << "No lhe event found in ExternalLHEProducer::produce().  "
     << "The likely cause is that the lhe file contains fewer events than were requested, which is possible "
@@ -240,6 +244,13 @@ ExternalLHEProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
                             product.get(), _1));
 
   iEvent.put(std::move(product));
+  std::unique_ptr<std::string> mystr(new std::string);
+  *mystr = "bonjour";
+  std::unique_ptr<int> myint(new int);
+  *myint = 17;
+  std::cout << "Adding string " << *mystr << " and int " << *myint << std::endl;
+  iEvent.put(std::move(mystr), "test");
+  iEvent.put(std::move(myint));
 
   if (runInfo) {
     std::unique_ptr<LHERunInfoProduct> product(new LHERunInfoProduct(*runInfo->getHEPRUP()));
@@ -330,19 +341,22 @@ ExternalLHEProducer::beginRunProduce(edm::Run& run, edm::EventSetup const& es)
 
   std::cout << "Adding the Weight product!";
   std::unique_ptr<LHEWeightInfoProduct> weightInfoProduct(new LHEWeightInfoProduct);
-  gen::WeightGroupInfo scaleInfo(
-      "<weightgroup name=\"Central scale variation\" combine=\"envelope\">"
-  );
-  scaleInfo.setWeightType(gen::scaleWeights);
+  std::unique_ptr<std::string> mystr(new std::string("bonjour"));
+  //gen::WeightGroupInfo scaleInfo(
+  //    "<weightgroup name=\"Central scale variation\" combine=\"envelope\">"
+  //);
+  //scaleInfo.setWeightType(gen::scaleWeights);
 
-  gen::WeightGroupInfo cenPdfInfo(
-      "<weightgroup name=\"NNPDF31_nnlo_hessian_pdfas\" combine=\"hessian\">"
-  );
-  cenPdfInfo.setWeightType(gen::pdfWeights);
+  //gen::WeightGroupInfo cenPdfInfo(
+  //    "<weightgroup name=\"NNPDF31_nnlo_hessian_pdfas\" combine=\"hessian\">"
+  //);
+  //cenPdfInfo.setWeightType(gen::pdfWeights);
 
-  weightInfoProduct->addWeightGroupInfo(scaleInfo);
-  weightInfoProduct->addWeightGroupInfo(cenPdfInfo);
-  run.put(std::move(weightInfoProduct));
+  //weightInfoProduct->addWeightGroupInfo(scaleInfo);
+  //weightInfoProduct->addWeightGroupInfo(cenPdfInfo);
+  weightInfoProduct->addWeightGroupInfo("test");
+  run.put(std::move(weightInfoProduct), "test");
+  run.put(std::move(mystr));
 
   nextEvent();
   if (runInfoLast) {

@@ -7,7 +7,7 @@
 #include <string>
 
 namespace gen {
-    typedef std::pair<size_t, std::string> weightId;
+    typedef std::pair<size_t, std::string> WeightId;
 
     enum WeightType {
         pdfWeights,
@@ -49,7 +49,7 @@ namespace gen {
             std::string headerEntry_;
             std::string name_;
             WeightType weightType_;
-            std::vector<weightId> idsContained_;
+            std::vector<WeightId> idsContained_;
             size_t firstId_;
             size_t lastId_;
 	};

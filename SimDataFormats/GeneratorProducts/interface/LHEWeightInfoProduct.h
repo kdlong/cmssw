@@ -14,22 +14,26 @@
 class LHEWeightInfoProduct {
     public:
         LHEWeightInfoProduct() {}
-	    LHEWeightInfoProduct(const LHEWeightInfoProduct& other) {weightGroupsInfo_ = other.weightGroupsInfo_;}
-	    LHEWeightInfoProduct(LHEWeightInfoProduct&& other) {weightGroupsInfo_ = std::move(other.weightGroupsInfo_);}
+	    LHEWeightInfoProduct(const LHEWeightInfoProduct& other); 
+	    LHEWeightInfoProduct(LHEWeightInfoProduct&& other);
         ~LHEWeightInfoProduct() {}
-        LHEWeightInfoProduct(std::vector<gen::WeightGroupInfo>& weightGroups) {
-            weightGroupsInfo_ = weightGroups;
-        }
-        LHEWeightInfoProduct &operator = (const LHEWeightInfoProduct &other) {weightGroupsInfo_ = other.weightGroupsInfo_; return * this; }
-        LHEWeightInfoProduct &operator = (LHEWeightInfoProduct &&other) {weightGroupsInfo_ = std::move(other.weightGroupsInfo_); return *this;}
+        //LHEWeightInfoProduct(std::vector<gen::WeightGroupInfo>& weightGroups) {
+        //    weightGroupsInfo_ = weightGroups;
+        //}
+        LHEWeightInfoProduct(const char* var);
+        LHEWeightInfoProduct& operator=(const LHEWeightInfoProduct &other); 
+        LHEWeightInfoProduct& operator=(LHEWeightInfoProduct &&other); 
 
-        std::vector<gen::WeightGroupInfo> getWeightGroupsInfo() { return weightGroupsInfo_; }
-        void addWeightGroupInfo(gen::WeightGroupInfo info) {  
-            weightGroupsInfo_.push_back(info); 
-        }
+        const char* getWeightGroupsInfo();
+        //std::vector<gen::WeightGroupInfo> getWeightGroupsInfo() { return weightGroupsInfo_; }
+        //void addWeightGroupInfo(gen::WeightGroupInfo info) {  
+        //    weightGroupsInfo_.push_back(info); 
+        //}
+        void addWeightGroupInfo(const char* var);
 
     private:
-        std::vector<gen::WeightGroupInfo> weightGroupsInfo_;
+        const char* weightGroupsInfo_;
+        //std::vector<gen::WeightGroupInfo> weightGroupsInfo_;
 
 
 };

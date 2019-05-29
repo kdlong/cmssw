@@ -135,23 +135,23 @@ void LHESource::putRunInfoProduct(edm::RunPrincipal& iRunPrincipal) {
 }
 
 void LHESource::putWeightInfoProduct(edm::RunPrincipal& iRunPrincipal) {
-  if (runInfoProductLast_) {
-    auto product = std::make_unique<LHEWeightInfoProduct>();
-    gen::WeightGroupInfo scaleInfo(
-        "<weightgroup name=\"Central scale variation\" combine=\"envelope\">"
-    );
-    scaleInfo.setWeightType(gen::scaleWeights);
+  //if (runInfoProductLast_) {
+  //  auto product = std::make_unique<LHEWeightInfoProduct>();
+  //  gen::WeightGroupInfo scaleInfo(
+  //      "<weightgroup name=\"Central scale variation\" combine=\"envelope\">"
+  //  );
+  //  scaleInfo.setWeightType(gen::scaleWeights);
 
-    gen::WeightGroupInfo cenPdfInfo(
-        "<weightgroup name=\"NNPDF31_nnlo_hessian_pdfas\" combine=\"hessian\">"
-    );
-    cenPdfInfo.setWeightType(gen::pdfWeights);
+  //  gen::WeightGroupInfo cenPdfInfo(
+  //      "<weightgroup name=\"NNPDF31_nnlo_hessian_pdfas\" combine=\"hessian\">"
+  //  );
+  //  cenPdfInfo.setWeightType(gen::pdfWeights);
 
-    product->addWeightGroupInfo(scaleInfo);
-    product->addWeightGroupInfo(cenPdfInfo);
-    std::unique_ptr<edm::WrapperBase> rdp(new edm::Wrapper<LHEWeightInfoProduct>(std::move(product)));
-    iRunPrincipal.put(lheProvenanceHelper_.weightProductBranchDescription_, std::move(rdp));
-  }
+  //  product->addWeightGroupInfo(scaleInfo);
+  //  product->addWeightGroupInfo(cenPdfInfo);
+  //  std::unique_ptr<edm::WrapperBase> rdp(new edm::Wrapper<LHEWeightInfoProduct>(std::move(product)));
+  //  iRunPrincipal.put(lheProvenanceHelper_.weightProductBranchDescription_, std::move(rdp));
+  //}
 }
 
 bool LHESource::setRunAndEventInfo(edm::EventID&, edm::TimeValue_t&, edm::EventAuxiliary::ExperimentType&)

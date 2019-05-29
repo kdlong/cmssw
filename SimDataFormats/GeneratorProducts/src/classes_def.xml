@@ -197,8 +197,8 @@
 	<class name="LHERunInfoProduct::Header" ClassVersion="10">
   <version ClassVersion="10" checksum="1310911082"/>
  </class>
- <class name="LHEWeightInfoProduct" ClassVersion="4">
-  <version ClassVersion="4" checksum="829980141"/>
+ <class name="LHEWeightInfoProduct" ClassVersion="6">
+ <version ClassVersion="6" checksum="1131047038"/>
  </class>
  <class name="LHEXMLStringProduct" ClassVersion="11">
   <version ClassVersion="10" checksum="4158740350"/>
@@ -228,10 +228,10 @@
   <version ClassVersion="4" checksum="4219107434"/>
  </class>
  <class name="std::vector<gen::WeightsInfo>"/>
- <class name="std::vector<gen::WeightGroupInfo>"/>
 	<class name="edm::Wrapper&lt;LHERunInfoProduct&gt;"/>
-	<class name="edm::Wrapper&lt;LHEWeightInfoProduct&gt;"/>
 	<class name="edm::Wrapper&lt;LHEEventProduct&gt;"/>
+	<class name="edm::Wrapper&lt;LHEWeightInfoProduct&gt;"/>
+ <class name="std::vector<gen::WeightGroupInfo>"/>
 
  <!--needed for backward compatibility between HepMC 2.06.xx and 2.05.yy-->
  <ioread sourceClass = "HepMC::Polarization" version="[1-10]" targetClass="HepMC::Polarization" source = "" target="m_defined">
