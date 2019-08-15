@@ -302,6 +302,27 @@ void ExternalLHEProducer::beginRunProduce(edm::Run& run, edm::EventSetup const& 
   unsigned int skip = 0;
   reader_ = std::make_unique<lhef::LHEReader>(infiles, skip);
 
+<<<<<<< HEAD
+=======
+  
+
+  
+  std::unique_ptr<LHEWeightInfoProduct> weightInfoProduct(new LHEWeightInfoProduct);
+  //gen::WeightGroupInfo scaleInfo;// = getExampleScaleWeights();
+  //edm::OwnVector<gen::WeightGroupInfo> pdfSets;// = getExamplePdfWeights();
+  //gen::WeightGroupInfo scaleInfo = getExampleScaleWeightsOutOfOrder();
+
+  // setup file reader
+  std::string LHEfilename ="cmsgrid_final.lhe";
+  LHEWeightGroupReaderHelper reader;
+  reader.parseLHEFile(LHEfilename);
+  
+  for (auto pdfSet : reader.getWeightGroups())
+      weightInfoProduct->addWeightGroupInfo(pdfSet);
+  weightGroups_ = weightInfoProduct->allWeightGroupsInfo();
+  run.put(std::move(weightInfoProduct));
+
+>>>>>>> f62468c7e64... Working on parsing integration with scale/pdf weights
   nextEvent();
   if (runInfoLast) {
     runInfo = runInfoLast;
