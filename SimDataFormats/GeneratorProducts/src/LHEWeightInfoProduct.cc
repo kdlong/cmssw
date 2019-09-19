@@ -21,18 +21,18 @@ const edm::OwnVector<gen::WeightGroupInfo>& LHEWeightInfoProduct::allWeightGroup
     return weightGroupsInfo_; 
 }
 
-const gen::WeightGroupInfo& LHEWeightInfoProduct::containingWeightGroupInfo(int index) const {
+const gen::WeightGroupInfo* LHEWeightInfoProduct::containingWeightGroupInfo(int index) const {
     for (const auto& weightGroup : weightGroupsInfo_) {
         if (weightGroup.indexInRange(index))
-            return weightGroup;
+            return &weightGroup;
     }
     throw std::domain_error("Failed to find containing weight group");
 }
 
-const gen::WeightGroupInfo& LHEWeightInfoProduct::orderedWeightGroupInfo(int weightGroupIndex) const {
+const gen::WeightGroupInfo* LHEWeightInfoProduct::orderedWeightGroupInfo(int weightGroupIndex) const {
     if (weightGroupIndex >= static_cast<int>(weightGroupsInfo_.size()))
         throw std::range_error("Weight index out of range!");
-    return weightGroupsInfo_[weightGroupIndex];
+    return &weightGroupsInfo_[weightGroupIndex];
 }
 
 void LHEWeightInfoProduct::addWeightGroupInfo(gen::WeightGroupInfo* info) {  

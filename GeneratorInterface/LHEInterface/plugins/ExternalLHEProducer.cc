@@ -107,7 +107,7 @@ private:
   std::unique_ptr<lhef::LHEReader>	reader_;
   std::shared_ptr<lhef::LHERunInfo>	runInfoLast;
   std::shared_ptr<lhef::LHERunInfo>	runInfo;
-  std::shared_ptr<LHEWeightGroupInfo>	weightInfo;
+  std::unique_ptr<LHEWeightInfoProduct>	weightInfoProduct_;
   std::shared_ptr<lhef::LHEEvent>	partonLevel;
   boost::ptr_deque<LHERunInfoProduct>	runInfoProducts;
   bool					wasMerged;
@@ -210,20 +210,19 @@ ExternalLHEProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
                             product.get(), _1));
 
   auto weightProduct = std::make_unique<LHEWeightProduct>();
-  //weightProduct->setNumWeightSets(weightGroups_.size());
-  weightProduct->setNumWeightSets(2);
-  //int weightGroupIndex = 0;
-  //int weightNum = 0;
-  //for (const auto& weight : partonLevel->weights()) {
-  //  weightGroupIndex = findWeightGroup(weight.id, weightNum, weightGroupIndex);
-  //  if (weightGroupIndex < 0 || weightGroupIndex >= static_cast<int>(weightGroups_.size())) {
-  //      continue;
-  //  }
-  //  auto group = weightGroups_[weightGroupIndex];
-  //  int entry = group.weightVectorEntry(weight.id, weightNum);
-  //  weightProduct->addWeight(weight.wgt, weightGroupIndex, entry);
-  //  weightNum++;
-  //}
+  weightProduct->setNumWeightSets(weightInfoProduct_->numberOfGroups());
+  int weightGroupIndex = 0;
+  int weightNum = 0;
+  for (const auto& weight : partonLevel->weights()) {
+    weightGroupIndex = findWeightGroup(weight.id, weightNum, weightGroupIndex);
+    if (weightGroupIndex < 0 || weightGroupIndex >= static_cast<int>(weightGroups_.size())) {
+        continue;
+    }
+    auto* group = weightInfoProduct_->orderedWeightGroupInfo(weightGroupIndex);
+    int entry = group->weightVectorEntry(weight.id, weightNum);
+    weightProduct->addWeight(weight.wgt, weightGroupIndex, entry);
+    weightNum++;
+  }
   iEvent.put(std::move(weightProduct));
 
   product->setScales(partonLevel->scales());
@@ -373,7 +372,7 @@ ExternalLHEProducer::beginRunProduce(edm::Run& run, edm::EventSetup const& es)
 
 	run.put(std::move(product));
   
-	//std::unique_ptr<LHEWeightInfoProduct> weightInfoProduct(new LHEWeightInfoProduct);
+	weightInfoProduct_ = std::make_unique<LHEWeightInfoProduct>();
 
 	LHEWeightGroupReaderHelper reader;
 	//reader.parseLHEFile(LHEfilename);
@@ -382,11 +381,10 @@ ExternalLHEProducer::beginRunProduce(edm::Run& run, edm::EventSetup const& es)
     std::cout << "Looping through them\n";
 	for (auto& weightGroup : reader.getWeightGroups()) {
         std::cout << "Adding\n";
-	    //weightInfoProduct->addWeightGroupInfo(&weightGroup);
-	    weightGroups_.push_back(&weightGroup);
+	    weightInfoProduct_->addWeightGroupInfo(&weightGroup);
+	    //weightGroups_.push_back(&weightGroup);
     }
 
-	//run.put(std::move(weightInfoProduct));
 
 	runInfo.reset();
     }
@@ -412,7 +410,7 @@ ExternalLHEProducer::endRunProduce(edm::Run& run, edm::EventSetup const& es)
   }  
   
   reader_.reset();  
-  weightGroups_.clear();
+  run.put(std::move(weightInfoProduct_));
   
   if (unlink(outputFile_.c_str())) {
     throw cms::Exception("OutputDeleteError") << "Unable to delete original script output file " << outputFile_ << " (errno=" << errno << ", " << strerror(errno) << ").";
@@ -548,21 +546,23 @@ int ExternalLHEProducer::findWeightGroup(std::string wgtId, int weightIndex, int
     // Start search at previous index, under expectation of ordered weights
     previousGroupIndex = previousGroupIndex >=0 ? previousGroupIndex : 0;
     for (int index = previousGroupIndex; 
-            index < std::min(index+1, static_cast<int>(weightGroups_.size())); index++) {
-        gen::WeightGroupInfo& weightGroup = weightGroups_[previousGroupIndex];
+            index < std::min(index+1, static_cast<int>(weightInfoProduct_->numberOfGroups())); index++) {
+        const gen::WeightGroupInfo* weightGroup = weightInfoProduct_->orderedWeightGroupInfo(previousGroupIndex);
+        //    index < std::min(index+1, static_cast<int>(weightGroups_.size())); index++) {
+        //gen::WeightGroupInfo& weightGroup = weightGroups_[previousGroupIndex];
         // Fast search assuming order is not perturbed outside of weight group
-        if (weightGroup.indexInRange(weightIndex) && weightGroup.containsWeight(wgtId, weightIndex)) {
+        if (weightGroup->indexInRange(weightIndex) && weightGroup->containsWeight(wgtId, weightIndex)) {
             return static_cast<int>(index);
         }
     }
 
     // Fall back to unordered search
-    int counter = 0;
-    for (auto weightGroup : weightGroups_) {
-        if (weightGroup.containsWeight(wgtId, weightIndex))
-            return counter;
-        counter++;
-    }
+    //int counter = 0;
+    //for (auto weightGroup : weightInfoProduct_->allWeightGroupsInfo()) {
+    //    if (weightGroup.containsWeight(wgtId, weightIndex))
+    //        return counter;
+    //    counter++;
+    //}
     return -1;
 }
 
