@@ -1,5 +1,6 @@
 #include "SimDataFormats/GeneratorProducts/interface/ScaleWeightGroupInfo.h"
 #include <stdexcept>
+#include <iostream>
 
 namespace gen {
     void ScaleWeightGroupInfo::copy(const ScaleWeightGroupInfo &other) {
@@ -16,6 +17,7 @@ namespace gen {
     }
 
     ScaleWeightGroupInfo* ScaleWeightGroupInfo::clone() const {
+        std::cout << "Cloning the scale\n";
         return new ScaleWeightGroupInfo(*this);
     }
 

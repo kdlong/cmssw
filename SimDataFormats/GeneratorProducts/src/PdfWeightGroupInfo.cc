@@ -1,4 +1,5 @@
 #include "SimDataFormats/GeneratorProducts/interface/PdfWeightGroupInfo.h"
+#include <iostream>
 
 namespace gen {
     void PdfWeightGroupInfo::copy(const PdfWeightGroupInfo &other) {
@@ -10,6 +11,7 @@ namespace gen {
     }
 
     PdfWeightGroupInfo* PdfWeightGroupInfo::clone() const {
+        std::cout << "Cloning the pdf\n";
         return new PdfWeightGroupInfo(*this);
     }
 }

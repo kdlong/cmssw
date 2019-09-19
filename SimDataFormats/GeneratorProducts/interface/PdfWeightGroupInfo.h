@@ -27,7 +27,7 @@ namespace gen {
             }
             virtual ~PdfWeightGroupInfo() override {}
             void copy(const PdfWeightGroupInfo &other);
-            PdfWeightGroupInfo* clone() const;
+            virtual PdfWeightGroupInfo* clone() const override;
 
             void setUncertaintyType(PdfUncertaintyType uncertaintyType) { uncertaintyType_ = uncertaintyType; }
             void setHasAlphasVariations(bool hasAlphasVars) { hasAlphasVars_ = hasAlphasVars; }

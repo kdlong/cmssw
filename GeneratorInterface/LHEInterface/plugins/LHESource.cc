@@ -147,8 +147,8 @@ void LHESource::putWeightInfoProduct(edm::RunPrincipal& iRunPrincipal) {
     );
     cenPdfInfo.setWeightType(gen::kPdfWeights);
 
-    product->addWeightGroupInfo(scaleInfo);
-    product->addWeightGroupInfo(cenPdfInfo);
+    product->addWeightGroupInfo(&scaleInfo);
+    product->addWeightGroupInfo(&cenPdfInfo);
     std::unique_ptr<edm::WrapperBase> rdp(new edm::Wrapper<LHEWeightInfoProduct>(std::move(product)));
     iRunPrincipal.put(lheProvenanceHelper_.weightProductBranchDescription_, std::move(rdp));
   }

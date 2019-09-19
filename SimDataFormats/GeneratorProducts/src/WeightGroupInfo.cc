@@ -1,6 +1,7 @@
 #include <string>
 #include <algorithm>
 #include "SimDataFormats/GeneratorProducts/interface/WeightGroupInfo.h"
+#include <iostream>
 
 namespace gen {
     void WeightGroupInfo::copy(const WeightGroupInfo &other) {
@@ -13,6 +14,7 @@ namespace gen {
     }
 
     WeightGroupInfo* WeightGroupInfo::clone() const {
+        std::cout << "Cloning the base one :(\n"; 
         return new WeightGroupInfo(*this);
     }
 

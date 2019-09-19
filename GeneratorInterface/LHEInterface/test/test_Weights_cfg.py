@@ -11,14 +11,9 @@ process = cms.Process('LHE')
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
-process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
-process.load('SimGeneral.MixingModule.mixNoPU_cfi')
-process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
-process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(10)
@@ -45,7 +40,7 @@ process.LHEoutput = cms.OutputModule("PoolOutputModule",
         dataTier = cms.untracked.string('LHE'),
         filterName = cms.untracked.string('')
     ),
-    fileName = cms.untracked.string('file:HIG-RunIIFall18wmLHEGS-00509.root'),
+    fileName = cms.untracked.string('file:/data/kelong/HIG-RunIIFall18wmLHEGS-00509.root'),
     #outputCommands = process.LHEEventContent.outputCommands,
     outputCommands = cms.untracked.vstring('keep *', 
         'drop ME*_MEtoEDM*_*_*'),
@@ -53,10 +48,6 @@ process.LHEoutput = cms.OutputModule("PoolOutputModule",
 )
 
 # Additional output definition
-
-# Other statements
-from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '102X_upgrade2018_realistic_v11', '')
 
 process.externalLHEProducer = cms.EDProducer("ExternalLHEProducer",
                                              #args = cms.vstring('/afs/cern.ch/user/k/kelong/work/public/DummyGridpacks/WLLJJ_WToLNu_EWK_4F_MLL-60_slc6_amd64_gcc481_CMSSW_7_1_30_tarball_Dummy.tgz'),

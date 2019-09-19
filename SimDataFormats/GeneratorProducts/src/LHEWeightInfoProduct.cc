@@ -35,6 +35,6 @@ const gen::WeightGroupInfo& LHEWeightInfoProduct::orderedWeightGroupInfo(int wei
     return weightGroupsInfo_[weightGroupIndex];
 }
 
-void LHEWeightInfoProduct::addWeightGroupInfo(gen::WeightGroupInfo& info) {  
+void LHEWeightInfoProduct::addWeightGroupInfo(gen::WeightGroupInfo* info) {  
     weightGroupsInfo_.push_back(info); 
 }

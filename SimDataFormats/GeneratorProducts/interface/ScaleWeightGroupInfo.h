@@ -40,7 +40,7 @@ namespace gen {
             }
             virtual ~ScaleWeightGroupInfo() override {}
             void copy(const ScaleWeightGroupInfo &other);
-            ScaleWeightGroupInfo* clone() const;
+            virtual ScaleWeightGroupInfo* clone() const override;
 
 	void setMuRMuFIndex(WeightMetaInfo info, float muR, float muF);
 	void addContainedId(int weightEntry, std::string id, std::string label, float muR, float muF);
