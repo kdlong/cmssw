@@ -26,6 +26,31 @@ SimCluster::SimCluster(EncodedEventId eventID, uint32_t particleID) {
   particleId_ = particleID;
 }
 
+SimCluster::SimCluster(const std::vector<SimTrack> &simtrks, int pdgId) {
+  if (simtrks.size() > 0) {
+    double sumPx = 0.;
+    double sumPy = 0.;
+    double sumPz = 0.;
+    double sumE = 0.;
+
+    for (const SimTrack& t : simtrks) {
+      addG4Track(t);
+      sumPx += t.momentum().px();
+      sumPy += t.momentum().py();
+      sumPz += t.momentum().pz();
+      sumE += t.momentum().E();
+    }
+
+    theMomentum_.SetPxPyPzE(sumPx, sumPy, sumPz, sumE);
+
+    // set event and particle ID (!= pdgID) from the first track for consistency
+    event_ = simtrks[0].eventId();
+    particleId_ = simtrks[0].trackId();
+  }
+
+  pdgId_ = pdgId;
+}
+
 SimCluster::~SimCluster() {}
 
 std::ostream &operator<<(std::ostream &s, SimCluster const &tp) {

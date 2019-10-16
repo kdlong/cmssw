@@ -44,19 +44,22 @@ public:
 
   SimCluster(const SimTrack &simtrk);
   SimCluster(EncodedEventId eventID, uint32_t particleID);  // for PU
+  SimCluster(const std::vector<SimTrack>& simtrks, int pdgId = 0);  // for merged clusters
 
   // destructor
   ~SimCluster();
 
   /** @brief PDG ID.
    *
-   * Returns the PDG ID of the first associated gen particle. If there are no
-   * gen particles associated then it returns type() from the first SimTrack. */
+   * Returns the PDG ID. If not id is set, the id of first associated gen particle is returned. If
+   * there are no gen particles associated then it returns type() from the first SimTrack. */
   int pdgId() const {
-    if (genParticles_.empty())
-      return g4Tracks_[0].type();
-    else
+    if (pdgId_ != 0)
+      return pdgId_;
+    else if (!genParticles_.empty())
       return (*genParticles_.begin())->pdgId();
+    else
+      return g4Tracks_[0].type();
   }
 
   /** @brief Signal source, crossing number.
@@ -177,6 +180,19 @@ public:
     fractions_.emplace_back(fraction);
   }
 
+  /** @brief Same as addRecHitAndFraction but when the hit is already registered, the fraction
+   * is increased. */
+  void addDuplicateRecHitAndFraction(uint32_t hit, float fraction) {
+    std::vector<uint32_t>::iterator it = std::find(hits_.begin(), hits_.end(), hit);
+    if (it == hits_.end()) {
+      // not added yet
+      addRecHitAndFraction(hit, fraction);
+    } else {
+      int i = std::distance(hits_.begin(), it);
+      fractions_[i] += fraction;
+    }
+  }
+
   /** @brief Returns list of rechit IDs and fractions for this SimCluster */
   std::vector<std::pair<uint32_t, float>> hits_and_fractions() const {
     std::vector<std::pair<uint32_t, float>> result;
@@ -202,6 +218,7 @@ private:
   uint64_t nsimhits_;
   EncodedEventId event_;
 
+  int pdgId_;
   uint32_t particleId_;
   float simhit_energy_;
   std::vector<uint32_t> hits_;
