@@ -18,4 +18,8 @@
   <class name="SimClusterRefVector"/>
   <class name="SimClusterRefProd"/>
   <class name="SimClusterContainer"/>
+  <class name="edm::Wrapper<SimClusterHistory>"/>
+  <class name="SimClusterHistory"/>
+  <class name="edm::Wrapper<std::vector<SimClusterHistory>>"/>
+  <class name="std::vector<SimClusterHistory>"/>
 </lcgdict>

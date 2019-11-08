@@ -157,20 +157,6 @@ private:
                    const T &event,
                    const edm::EventSetup &setup);
 
-  void determineRealisticSimClusterGroups(const std::unique_ptr<SimClusterCollection> &simClusters,
-                                          std::vector<std::vector<int>> &realisticSimClusterGroups,
-                                          std::unique_ptr<std::vector<float>> &radii,
-                                          std::unique_ptr<std::vector<math::XYZTLorentzVectorD>> &showerVectors) const;
-
-  void createRealisticSimClusters(const std::unique_ptr<SimClusterCollection> &simClusters,
-                                  const std::vector<std::vector<int>> &realisticSimClusterGroups,
-                                  std::unique_ptr<SimClusterCollection> &realisticSimClusters) const;
-
-  bool checkSimClusterMerging(int iSC, int jSC,
-    const std::unique_ptr<SimClusterCollection> &simClusters,
-    const std::unique_ptr<std::vector<float>> &radii,
-    const std::unique_ptr<std::vector<math::XYZTLorentzVectorD>> &showerVectors) const;
-
   const std::string messageCategory_;
 
   std::unordered_map<Index_t, float> m_detIdToTotalSimEnergy;  // keep track of cell normalizations
@@ -231,9 +217,9 @@ private:
   calo_particles m_caloParticles;
   // geometry type (0 pre-TDR; 1 TDR)
   int geometryType_;
-  bool produceRealisticSimClusters_;
+  bool saveSimClusterHistory_;
   hgcal::RecHitTools recHitTools_;
-  std::vector<std::vector<std::pair<int, int>>> simClusterParentVertices_;
+  std::vector<SimClusterHistory> simClusterHistory_;
 };
 
 /* Graph utility functions */
@@ -316,13 +302,13 @@ namespace {
                              CaloTruthAccumulator::calo_particles &caloParticles,
                              std::unordered_multimap<Barcode_t, Index_t> &simHitBarcodeToIndex,
                              std::unordered_map<int, std::map<int, float>> &simTrackDetIdEnergyMap,
-                             std::vector<std::vector<std::pair<int, int>>> &simClusterParentVertices,
+                             std::vector<SimClusterHistory> &simClusterHistory,
                              Selector selector)
         : output_(output),
           caloParticles_(caloParticles),
           simHitBarcodeToIndex_(simHitBarcodeToIndex),
           simTrackDetIdEnergyMap_(simTrackDetIdEnergyMap),
-          simClusterParentVertices_(simClusterParentVertices),
+          simClusterHistory_(simClusterHistory),
           selector_(selector) {}
     template <typename Vertex, typename Graph>
     void discover_vertex(Vertex u, const Graph &g) {
@@ -346,8 +332,9 @@ namespace {
         for (auto const &hit_and_energy : acc_energy) {
           simcluster.addRecHitAndFraction(hit_and_energy.first, hit_and_energy.second);
         }
-        // save parent vertices and their pdgId
-        std::vector<std::pair<int, int>> parentVertices;
+
+        // save parent vertices and their pdgId in the history
+        SimClusterHistory history;
         std::vector<Vertex> vertexLookup = {u};
         while (vertexLookup.size() > 0) {
           Vertex v = vertexLookup[0];
@@ -357,7 +344,7 @@ namespace {
             Vertex w = source(*it, g);
             auto const vprop = get(vertex_name, g, w);
             int pdgId = vprop.simTrack ? vprop.simTrack->type() : 0;
-            parentVertices.push_back(std::pair<int, int>(w, pdgId));
+            history.push_back(std::pair<int, int>(w, pdgId));
             if (w != 0) {
               vertexLookup.push_back(w);
             }
@@ -365,8 +352,8 @@ namespace {
         }
         // the vertex discovery is top-down, while the common ancestor lookup is bottom-up,
         // so reverse the vertices before storing them
-        std::reverse(parentVertices.begin(), parentVertices.end());
-        simClusterParentVertices_.push_back(parentVertices);
+        std::reverse(history.begin(), history.end());
+        simClusterHistory_.push_back(history);
       }
     }
     template <typename Edge, typename Graph>
@@ -401,7 +388,7 @@ namespace {
     CaloTruthAccumulator::calo_particles &caloParticles_;
     std::unordered_multimap<Barcode_t, Index_t> &simHitBarcodeToIndex_;
     std::unordered_map<int, std::map<int, float>> &simTrackDetIdEnergyMap_;
-    std::vector<std::vector<std::pair<int, int>>> &simClusterParentVertices_;
+    std::vector<SimClusterHistory> &simClusterHistory_;
     Selector selector_;
   };
 }  // namespace
@@ -421,17 +408,21 @@ CaloTruthAccumulator::CaloTruthAccumulator(const edm::ParameterSet &config,
       maxPseudoRapidity_(config.getParameter<double>("MaxPseudoRapidity")),
       premixStage1_(config.getParameter<bool>("premixStage1")),
       geometryType_(-1),
+<<<<<<< HEAD
       produceRealisticSimClusters_(config.getParameter<bool>("produceRealisticSimClusters")) {
   producesCollector.produces<SimClusterCollection>("MergedCaloTruth");
   producesCollector.produces<CaloParticleCollection>("MergedCaloTruth");
+=======
+      saveSimClusterHistory_(config.getParameter<bool>("saveSimClusterHistory")) {
+  mixMod.produces<SimClusterCollection>("MergedCaloTruth");
+  mixMod.produces<CaloParticleCollection>("MergedCaloTruth");
+>>>>>>> Refactoring.
   if (premixStage1_) {
     producesCollector.produces<std::vector<std::pair<unsigned int, float>>>("MergedCaloTruth");
   }
 
-  if (produceRealisticSimClusters_) {
-    mixMod.produces<SimClusterCollection>("RealisticCaloTruth");
-    mixMod.produces<std::vector<float>>("RealisticCaloTruth");
-    mixMod.produces<std::vector<math::XYZTLorentzVectorD>>("RealisticCaloTruth");
+  if (saveSimClusterHistory_) {
+    mixMod.produces<std::vector<SimClusterHistory>>("MergedCaloTruth");
   }
 
   iC.consumes<std::vector<SimTrack>>(simTrackLabel_);
@@ -492,7 +483,7 @@ void CaloTruthAccumulator::beginLuminosityBlock(edm::LuminosityBlock const &iLum
 void CaloTruthAccumulator::initializeEvent(edm::Event const &event, edm::EventSetup const &setup) {
   output_.pSimClusters.reset(new SimClusterCollection());
   output_.pCaloParticles.reset(new CaloParticleCollection());
-  simClusterParentVertices_.clear();
+  simClusterHistory_.clear();
 
   m_detIdToTotalSimEnergy.clear();
 }
@@ -531,31 +522,6 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
   edm::LogInfo(messageCategory_) << "Adding " << output_.pSimClusters->size() << " SimParticles and "
                                  << output_.pCaloParticles->size() << " CaloParticles to the event.";
 
-  // produce realistic sim clusters with updated ID and energy information
-  // which requires the hit energies to be not normalized to fractions yet (see below)
-  // the actual creation happens below after the hit energies were normalized
-  std::vector<std::vector<int>> realisticSimClusterGroups;
-  if (produceRealisticSimClusters_) {
-    recHitTools_.getEventSetup(setup);
-
-    // determine the clustering groups for producing relatistic sim clusters, instantly fill radii
-    std::unique_ptr<std::vector<float>> radii = std::make_unique<std::vector<float>>();
-    std::unique_ptr<std::vector<math::XYZTLorentzVectorD>> showerVectors = std::make_unique<std::vector<math::XYZTLorentzVectorD>>();
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    double t0 = tv.tv_sec * 1000. + tv.tv_usec / 1000.;
-    determineRealisticSimClusterGroups(output_.pSimClusters, realisticSimClusterGroups, radii, showerVectors);
-    gettimeofday(&tv, NULL);
-    double t1 = tv.tv_sec * 1000. + tv.tv_usec / 1000.;
-    std::cout << "group building took " << (t1 - t0) << " ms" << std::endl;
-    event.put(std::move(radii), "RealisticCaloTruth");
-    event.put(std::move(showerVectors), "RealisticCaloTruth");
-
-    std::cout << "CaloParticles        : " << output_.pCaloParticles->size() << std::endl;
-    std::cout << "SimClusters          : " << output_.pSimClusters->size() << std::endl;
-    std::cout << "Realistic SimClusters: " << realisticSimClusterGroups.size() << std::endl;
-  }
-
   // We need to normalize the hits and energies into hits and fractions (since
   // we have looped over all pileup events)
   // For premixing stage1 we keep the energies, they will be normalized to
@@ -584,18 +550,10 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
     }
   }
 
-  // actually create the realistic sim clusters and put them into the event content
-  if (produceRealisticSimClusters_) {
-    // create the clusters using the grouping information determined above
-    std::unique_ptr<SimClusterCollection> realisticSimClusters = std::make_unique<SimClusterCollection>();
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    double t0 = tv.tv_sec * 1000. + tv.tv_usec / 1000.;
-    createRealisticSimClusters(output_.pSimClusters, realisticSimClusterGroups, realisticSimClusters);
-    gettimeofday(&tv, NULL);
-    double t1 = tv.tv_sec * 1000. + tv.tv_usec / 1000.;
-    std::cout << "group merging took " << (t1 - t0) << " ms" << std::endl;
-    event.put(std::move(realisticSimClusters), "RealisticCaloTruth");
+  // save SimCluster history
+  if (saveSimClusterHistory_) {
+    std::unique_ptr<std::vector<SimClusterHistory>> simClusterHistory = std::make_unique<std::vector<SimClusterHistory>>(simClusterHistory_);
+    event.put(std::move(simClusterHistory), "MergedCaloTruth");
   }
 
   // save the SimCluster orphan handle so we can fill the calo particles
@@ -741,7 +699,7 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
       m_caloParticles,
       m_simHitBarcodeToIndex,
       simTrackDetIdEnergyMap,
-      simClusterParentVertices_,
+      simClusterHistory_,
       [&](EdgeProperty &edge_property) -> bool {
         // Apply selection on SimTracks in order to promote them to be
         // CaloParticles. The function returns TRUE if the particle satisfies
@@ -805,463 +763,5 @@ void CaloTruthAccumulator::fillSimHits(std::vector<std::pair<DetId, const PCaloH
   }  // end of loop over InputTags
 }
 
-float getShowerRadius(float f, float r1, float f1) {
-  float a = r1 / (sqrt(2) * TMath::ErfInverse(f1 - 0.00001));
-  return a * sqrt(2) * TMath::ErfInverse(f - 0.00001);
-}
-
-float getShowerRadius(float f, float r1, float f1, float r2, float f2) {
-  float d1 = getShowerRadius(f, r1, f1);
-  float d2 = getShowerRadius(f, r2, f2);
-  return (d1 + d2) / 2.f;
-}
-
-float getShowerRadius(float f, float r1, float f1, float r2, float f2, float r3, float f3) {
-  float d1 = getShowerRadius(f, r1, f1);
-  float d2 = getShowerRadius(f, r2, f2);
-  float d3 = getShowerRadius(f, r3, f3);
-  return (d1 + d2 + d3) / 3.f;
-}
-
-int commonAncestorPdgId(const std::vector<std::pair<int, int>> &v1, const std::vector<std::pair<int, int>> &v2) {
-  // integer pairs represent the vertex id in the graph and the pdg id of the corresponding particle
-  // to get the pdg id of the first common ancestor, walk through v1 and check if any vertex id is
-  // contained in v2, and if so, return the pdg id (should be the same for the matching elements)
-  for (const auto &p1 : v1) {
-    for (const auto &p2 : v2) {
-      if (p1.first == p2.first) {
-        return p1.second;
-      }
-    }
-  }
-  return 0;
-}
-
-struct ChainIndex {
-  ChainIndex(int iSC, ChainIndex* prev, ChainIndex* next) : iSC(iSC), prev(prev), next(next) {}
-
-  ChainIndex(int iSC) : ChainIndex(iSC, nullptr, nullptr) {}
-
-  ChainIndex(const ChainIndex &o) : ChainIndex(o.iSC, o.prev, o.next) {}
-
-  bool operator==(const ChainIndex &o) const { return o.iSC == iSC; }
-
-  int iSC;
-  ChainIndex* prev;
-  ChainIndex* next;
-};
-
-void CaloTruthAccumulator::determineRealisticSimClusterGroups(const std::unique_ptr<SimClusterCollection> &simClusters,
-                                                              std::vector<std::vector<int>> &realisticSimClusterGroups,
-                                                              std::unique_ptr<std::vector<float>> &radii,
-                                                              std::unique_ptr<std::vector<math::XYZTLorentzVectorD>> &showerVectors) const {
-  // TODO: algorithm in a nutshell
-  //
-  // Note: In many places, the implementation is based on indices for performance purposes. To
-  // simply the distinction, they are referred to as {i,j}Name, such as iSC for sim clusters or iH
-  // for hits. Sometimes, lists (vectors) of these indices are used. The index to those values are
-  // (e.g.) iiSC or iiH.
-
-  // parameters, possibly set via config (FREE PARAMETERS)
-  float minHGCalEta = 1.52;
-  int minShowerHits = 5;
-  float showerContainment = 0.6827;
-  float maxDeltaEta = 0.15;
-
-  int nSimClusters = (int)simClusters->size();
-
-  // clear the radii vector and reserve space
-  radii->clear();
-  radii->resize(nSimClusters);
-  showerVectors->clear();
-  showerVectors->resize(nSimClusters);
-
-  // for the moment, only SimClusters in the HGCal are considered
-  // clusters in the HCal barrel are copied unchanged
-  std::vector<int> scIndices;
-  for (int iSC = 0; iSC < nSimClusters; iSC++) {
-    if (fabs(simClusters->at(iSC).eta()) < minHGCalEta) {
-      // cluster located in HCal, only store a non-physical value
-      (*radii)[iSC] = -1.;
-    } else {
-      // cluster located in HGCal, store the index for treatment downstream
-      scIndices.push_back(iSC);
-    }
-  }
-
-  // the number of sim clusters in the HGCal
-  int nHGCalSimClusters = (int)scIndices.size();
-  std::cout << "found " << nHGCalSimClusters << " HGCal SimClusters" << std::endl;
-
-  // determine simCluster radii
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  double t0 = tv.tv_sec * 1000. + tv.tv_usec / 1000.;  // in ms
-  for (const int &iSC : scIndices) {
-    // approach:
-    //   1. Determine the shower four-vector (a: from SimTrack, b: from hit clustering).
-    //   2. Determine the sum of hit energies.
-    //   3. Sort hits by increasing dR distance to shower vector.
-    //   4. Sum up hit energies again until 68% of the total energy is reached.
-    //   5. Define the dR distance of the last hit as the shower radius, but also check by how much
-    //      the redius would change if the hit before or after is used instead. Maybe interpolate.
-
-    // create four-vectors for each hit and the summed shower vector
-    auto hitsAndEnergies = simClusters->at(iSC).hits_and_fractions();
-    int nHits = (int)hitsAndEnergies.size();
-    math::XYZTLorentzVectorD showerVector;
-    std::vector<math::XYZTLorentzVectorD> hitVectors;
-    hitVectors.resize(hitsAndEnergies.size());
-    std::vector<int> hitVectorIndices;
-    hitVectorIndices.resize(hitsAndEnergies.size());
-    for (int iH = 0; iH < nHits; iH++) {
-      // get the hit position and create the four-vector, assuming no mass
-      GlobalPoint position = recHitTools_.getPosition(hitsAndEnergies[iH].first);
-      float energy = hitsAndEnergies[iH].second;
-      float scale = energy / position.mag();
-      hitVectors[iH].SetPxPyPzE(position.x() * scale, position.y() * scale, position.z() * scale, energy);
-      showerVector += hitVectors[iH];
-      hitVectorIndices[iH] = iH;
-    }
-
-    // sort the hit vector indices according to distance to the shower vector, closest first
-    // notice the change from iH to iiH as from now on, the hitVectorIndices hold indices referring
-    // to the actual index in hitVectors
-    sort(
-        hitVectorIndices.begin(), hitVectorIndices.end(), [&showerVector, &hitVectors](const int &iiH, const int &jjH) {
-          return deltaR(showerVector, hitVectors[iiH]) < deltaR(showerVector, hitVectors[jjH]);
-        });
-
-    // loop through hit vectors in order of the sorted indices until the target energy is reached
-    float radius = deltaR(showerVector, hitVectors[hitVectorIndices[nHits - 1]]);
-    if (nHits >= minShowerHits) {
-      float sumEnergy = 0.;
-
-      for (int iiH = 0; iiH < nHits; iiH++) {
-        int iH = hitVectorIndices[iiH];
-        sumEnergy += hitVectors[iH].E();
-        // define the radius as the average of two or three guidance points close to the requested
-        // shower containment fraction
-        if (sumEnergy / showerVector.E() > showerContainment) {
-          if (iiH >= 1 && iiH <= nHits - 2) {
-            float r1 = deltaR(showerVector, hitVectors[iH]);
-            float f1 = sumEnergy / showerVector.E();
-            float r2 = deltaR(showerVector, hitVectors[hitVectorIndices[iiH - 1]]);
-            float r3 = deltaR(showerVector, hitVectors[hitVectorIndices[iiH + 1]]);
-            float f2 = (sumEnergy - hitVectors[hitVectorIndices[iiH - 1]].E()) / showerVector.E();
-            float f3 = (sumEnergy + hitVectors[hitVectorIndices[iiH + 1]].E()) / showerVector.E();
-            radius = getShowerRadius(showerContainment, r1, f1, r2, f2, r3, f3);
-          } else if (iiH >= 1) {
-            float r1 = deltaR(showerVector, hitVectors[iH]);
-            float f1 = sumEnergy / showerVector.E();
-            float r2 = deltaR(showerVector, hitVectors[hitVectorIndices[iiH - 1]]);
-            float f2 = (sumEnergy - hitVectors[hitVectorIndices[iiH - 1]].E()) / showerVector.E();
-            radius = getShowerRadius(showerContainment, r1, f1, r2, f2);
-          } else if (iiH <= nHits - 2) {
-            float r1 = deltaR(showerVector, hitVectors[iH]);
-            float f1 = sumEnergy / showerVector.E();
-            float r3 = deltaR(showerVector, hitVectors[hitVectorIndices[iiH + 1]]);
-            float f3 = (sumEnergy + hitVectors[hitVectorIndices[iiH + 1]].E()) / showerVector.E();
-            radius = getShowerRadius(showerContainment, r1, f1, r3, f3);
-          }
-        }
-      }
-    }
-
-    (*showerVectors)[iSC] = showerVector;
-    (*radii)[iSC] = radius;
-  }
-
-  gettimeofday(&tv, NULL);
-  double t1 = tv.tv_sec * 1000. + tv.tv_usec / 1000.;  // in ms
-  std::cout << "constructed radii, took " << (t1 - t0) << " ms" << std::endl;
-
-  // sort the cluster indices by eta
-  sort(scIndices.begin(), scIndices.end(), [&simClusters](const int &iSC, const int &jSC) {
-    return simClusters->at(iSC).eta() < simClusters->at(jSC).eta();
-  });
-
-  // std::cout << "sorted by eta" << std::endl;
-
-  // define a vector of chained indices for easy lookup of closeby clusters
-  // this might look trivial, but the next/prev pointers are changed dynamically downstream to
-  // describe / close holes in the chain during cluster merging
-  std::vector<ChainIndex*> chain;
-  for (int iiSC = 0; iiSC < nHGCalSimClusters; iiSC++) {
-    // add a new chain element
-    int iSC = scIndices[iiSC];
-    chain.push_back(new ChainIndex(iSC));
-
-    // connect elements
-    if (iiSC > 0) {
-      chain[iiSC]->prev = chain[iiSC - 1];
-      chain[iiSC - 1]->next = chain[iiSC];
-    }
-  }
-
-  // std::cout << "built up chain" << std::endl;
-  // for (const auto& elem : chain) {
-  //   std::cout << elem->prev << " | " << elem->iSC << " (" << elem << ") | " << elem->next << std::endl;
-  // }
-
-  while (chain.size() > 0) {
-    // define the merging group, seeded by the current front-most element of the chain
-    // (fancy talk for the sim cluster with the smallest eta that hasn't been checked yet)
-    std::vector<ChainIndex*> group = {chain[0]};
-    std::vector<int> simClusterGroup = {chain[0]->iSC};
-    int iG = 0;
-
-    while (iG < (int)group.size()) {
-      // look for nearby clusters of the sim cluster in the group referred to by iG
-      // this approach mimics recursion as the group might be extended within this while loop
-      ChainIndex* curr = group[iG];
-
-      // check clusters with smaller eta
-      ChainIndex* prev = curr->prev;
-      while (prev != nullptr) {
-        // do nothing when the previous element is already in the group
-        if (std::find(simClusterGroup.begin(), simClusterGroup.end(), prev->iSC) == simClusterGroup.end()) {
-          // stop when the difference in eta is too high already
-          const auto& currCluster = simClusters->at(curr->iSC);
-          const auto& prevCluster = simClusters->at(prev->iSC);
-          auto dEta = fabs(currCluster.p4().eta() - prevCluster.p4().eta());  // fabs actually not required
-          if (dEta > maxDeltaEta) {
-            break;
-          }
-          // check if the two clusters should be merged
-          // TODO: shouldn't the check consider all elements already in the group? ordering issue ahead?
-          if (checkSimClusterMerging(curr->iSC, prev->iSC, simClusters, radii, showerVectors)) {
-            // add the element to the group
-            group.push_back(prev);
-            simClusterGroup.push_back(prev->iSC);
-          }
-        }
-
-        // go backward
-        prev = prev->prev;
-      }
-
-      // check clusters with higher eta
-      ChainIndex* next = curr->next;
-      while (next != nullptr) {
-        // do nothing when the next element is already in the group
-        if (std::find(simClusterGroup.begin(), simClusterGroup.end(), next->iSC) == simClusterGroup.end()) {
-          // stop when the difference in eta is too high already
-          const auto& currCluster = simClusters->at(curr->iSC);
-          const auto& nextCluster = simClusters->at(next->iSC);
-          auto dEta = fabs(nextCluster.p4().eta() - currCluster.p4().eta());  // fabs actually not required
-          if (dEta > maxDeltaEta) {
-            break;
-          }
-          // check if the two clusters should be merged
-          // TODO: see not above
-          if (checkSimClusterMerging(next->iSC, curr->iSC, simClusters, radii, showerVectors)) {
-            // add the element to the group
-            group.push_back(next);
-            simClusterGroup.push_back(next->iSC);
-          }
-        }
-
-        // go forward
-        next = next->next;
-      }
-
-      // remove the current element and reconnect the chain
-      if (curr->prev != nullptr) {
-        if (curr->next != nullptr) {
-          curr->prev->next = curr->next;
-          curr->next->prev = curr->prev;
-        } else {
-          curr->prev->next = nullptr;
-        }
-      } else if (curr->next != nullptr) {
-        curr->next->prev = nullptr;
-      }
-
-      std::vector<ChainIndex*>::iterator it = std::find(chain.begin(), chain.end(), curr);
-      delete *it;
-      chain.erase(it);
-
-      // choose the next element in the group for the next iteration
-      iG++;
-    }
-
-    // store the actual group of sim cluster indices
-    realisticSimClusterGroups.push_back(simClusterGroup);
-  }
-
-  // group debugging
-  std::cout << "created " << realisticSimClusterGroups.size() << " groups" << std::endl;
-  double sumSize = 0.;
-  for (const auto& g : realisticSimClusterGroups) {
-    sumSize += g.size();
-  }
-  std::cout << "average size: " << (sumSize / realisticSimClusterGroups.size()) << std::endl;
-  // for (const auto& g : realisticSimClusterGroups) {
-  //   if (g.size() == 0) {
-  //     continue;
-  //   }
-  //   for (const int& iSC : g) {
-  //     std::cout << iSC << " ";
-  //   }
-  //   std::cout << std::endl;
-  // }
-
-  // radius debugging
-  // {
-  //   TCanvas* canvas = new TCanvas();
-  //   TH1F* hist = new TH1F(("h" + std::to_string(firstI)).c_str(), ";Radius;# Entries", 51, -0.02, 2.02);
-
-  //   int nRadii = 0;
-  //   double sumRadius = 0.;
-  //   for (const float &r : radii) {
-  //     // if (isinf(r)) std::cout << "got inf radius!" << std::endl;
-  //     hist->Fill(r);
-  //     if (r > 0) {
-  //       sumRadius += r;
-  //       nRadii++;
-  //     }
-  //   }
-  //   std::cout << "sum: " << sumRadius << std::endl;
-  //   std::cout << "n radii: " << nRadii << std::endl;
-  //   double meanRadius = sumRadius / nRadii;
-  //   std::cout << "mean: " << meanRadius << std::endl;
-  //   double sumDiffRadius2 = 0.;
-  //   for (const float &r : radii) {
-  //     if (r > 0) {
-  //       double diffRadius = r - meanRadius;
-  //       sumDiffRadius2 += diffRadius * diffRadius;
-  //     }
-  //   }
-  //   double varianceRadius = sumDiffRadius2 / (nRadii - 1);
-  //   double stdRadius = sqrt(varianceRadius);
-  //   std::cout << "radius mean: " << meanRadius << ", std: " << stdRadius << std::endl;
-
-  //   hist->Draw();
-  //   canvas->SaveAs(("hist_" + std::to_string(firstI) + ".pdf").c_str());
-
-  //   delete hist;
-  //   delete canvas;
-  // }
-}
-
-void CaloTruthAccumulator::createRealisticSimClusters(
-    const std::unique_ptr<SimClusterCollection> &simClusters,
-    const std::vector<std::vector<int>> &realisticSimClusterGroups,
-    std::unique_ptr<SimClusterCollection> &realisticSimClusters) const {
-  // merge cluster groups into "realistic" sim clusters
-  for (std::vector<int> group : realisticSimClusterGroups) {
-    if (group.size() == 0) {
-      continue;
-    }
-
-    // sort group elements by sim cluster energies
-    sort(group.begin(), group.end(), [&simClusters](const int &iSC, const int &jSC) {
-      return simClusters->at(iSC).energy() > simClusters->at(jSC).energy();
-    });
-
-    // get a vector of all sim tracks, also store the total energy
-    std::vector<SimTrack> simTracks;
-    float sumEnergy = 0.;
-    for (const int &iSC : group) {
-      // there is currently only one track per sim clusters
-      simTracks.push_back(simClusters->at(iSC).g4Tracks()[0]);
-
-      sumEnergy += simClusters->at(iSC).energy();
-    }
-
-    // determine the pdg id using infos about common ancestors
-    int pdgId = 78;  // TODO!
-
-
-    // create the realistic cluster
-    realisticSimClusters->emplace_back(simTracks, pdgId);
-    auto &realisticCluster = realisticSimClusters->back();
-
-    // fill hits and energy fractions
-    // since we merge, we have to care about duplicate hits and this might become drastically slow
-    // therefore, use the default addRecHitAndFraction method for the first cluster, and then
-    // loop over the remaining ones to invoke the slower but necessary addDuplicateRecHitAndFraction
-    for (const auto &hf : simClusters->at(group[0]).hits_and_fractions()) {
-      realisticCluster.addRecHitAndFraction(hf.first, hf.second);
-    }
-    for (int iiSC = 1; iiSC < (int)group.size(); iiSC++) {
-      int iSC = group[iiSC];
-      for (const auto &hf : simClusters->at(iSC).hits_and_fractions()) {
-        realisticCluster.addDuplicateRecHitAndFraction(hf.first, hf.second);
-      }
-    }
-  }
-}
-
-bool CaloTruthAccumulator::checkSimClusterMerging(int iSC, int jSC,
-    const std::unique_ptr<SimClusterCollection> &simClusters,
-    const std::unique_ptr<std::vector<float>> &radii,
-    const std::unique_ptr<std::vector<math::XYZTLorentzVectorD>> &showerVectors) const {
-  // get some values
-  auto dR = deltaR(showerVectors->at(iSC), showerVectors->at(jSC));
-  auto radius1 = radii->at(iSC);
-  auto radius2 = radii->at(jSC);
-
-  // define a combined radius using error propagation rules (as the pull is defined statistics-like)
-  auto combinedRadius = pow(radius1 * radius1 + radius2 * radius2, 0.5);
-
-  // when both clusters have no radius, i.e., they are coming from single hits, make a quick
-  // decision solely based in dR (FREE PARAMETER)
-  if (combinedRadius == 0) {
-    return dR < 0.005;
-  }
-
-  // if at least one clusters has a non-zero radius, define a pull
-  auto pull = dR / combinedRadius;
-
-  // use a simple merging criterion based on the pull (FREE PARAMETER)
-  return pull < 0.5;
-
-  // TODO: exploit information about common ancestors (e.g. useful for e/gamma, pi0, ...)
-}
-
 // Register with the framework
 DEFINE_DIGI_ACCUMULATOR(CaloTruthAccumulator);
-
-// unused helper methods, to be removed
-// bool vectorsIntersect(const std::vector<int> &v1, const std::vector<int> &v2) {
-//   // for large vectors, it would be useful to loop through sorted indices and stop early
-//   // when no match of a number of v1 is possible with any element in v2, but when comparing
-//   // vectors of incoming vertices, i.e., parent particles, those vectors are rather small
-//   for (const int &i1 : v1) {
-//     for (const int &i2 : v2) {
-//       if (i1 == i2) {
-//         return true;
-//       }
-//     }
-//   }
-//   return false;
-
-//   // second possible approach based on set intersections, but this one compares all elements
-//   // without stopping early
-//   // std::vector<int> result;
-//   // std::set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(result));
-//   // return result.size() > 0;
-// }
-// float getShowerRadius(float f, float r1, float f1, float r2, float f2) {
-//   float b = log(log(1.f - f2) / log(1.f - f1)) / log(r2 / r1);
-//   float a = - log(1.f - f1) / pow(r1, b);
-//   float res = pow(-log(1.f - f) / a, 1.f / b);
-//   if (isinf(res)) {
-//     std::cout << "produced inf" << std::endl;
-//     std::cout << "f : " << f << std::endl;
-//     std::cout << "r1: " << r1 << std::endl;
-//     std::cout << "f1: " << f1 << std::endl;
-//     std::cout << "r2: " << r2 << std::endl;
-//     std::cout << "f2: " << f2 << std::endl;
-//     std::cout << "--------------" << std::endl;
-//   }
-//   return pow(-log(1.f - f) / a, 1.f / b);
-// }
-// float getShowerRadius(float f, float r1, float f1, float r2, float f2, float r3, float f3) {
-//   float d12 = getShowerRadius(f, r1, f1, r2, f2);
-//   float d13 = getShowerRadius(f, r1, f1, r3, f3);
-//   float d23 = getShowerRadius(f, r2, f2, r3, f3);
-//   return (d12 + d13 + d23) / 3.f;
-// }
