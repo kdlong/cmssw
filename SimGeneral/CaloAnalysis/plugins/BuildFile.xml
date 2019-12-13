@@ -28,6 +28,12 @@
 <use   name="Geometry/HcalTowerAlgo"/>
 <use   name="Geometry/HcalCommonData"/>
 <use   name="RecoLocalCalo/HGCalRecAlgos"/>
+
+<use name="DataFormats/TrackReco" />
+<use   name="TrackingTools/Records"/>
+<use name="RecoHGCal/GraphReco"/>
+
+
 <library   file="*.cc" name="SimGeneralCaloAnalysisPlugins">
   <flags   EDM_PLUGIN="1"/>
 </library>

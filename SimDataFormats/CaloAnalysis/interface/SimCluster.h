@@ -9,6 +9,7 @@
 #include "SimDataFormats/Track/interface/SimTrack.h"
 #include <vector>
 
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 //
 // Forward declarations
 //
@@ -214,6 +215,16 @@ public:
   /** @brief add simhit's energy to cluster */
   void addSimHit(const PCaloHit &hit) { simhit_energy_ += hit.energy(); }
 
+
+  void setImpactPoint(const math::XYZTLorentzVectorF& point){impactPoint_ = point;}
+  const math::XYZTLorentzVectorF& impactPoint()const{return impactPoint_;}
+
+  void setImpactMomentum(const math::XYZTLorentzVectorF& mom){impactMomentum_=mom;}
+  const math::XYZTLorentzVectorF& impactMomentum()const{return impactMomentum_;}
+
+  const std::vector<math::XYZTLorentzVectorF> & subImpactPoints()const{return subImpacts_;}
+  void setSubImpactPoints(const std::vector<math::XYZTLorentzVectorF> &  p){subImpacts_=p;}
+
 private:
   uint64_t nsimhits_;
   EncodedEventId event_;
@@ -229,6 +240,13 @@ private:
   /// references to G4 and reco::GenParticle tracks
   std::vector<SimTrack> g4Tracks_;
   reco::GenParticleRefVector genParticles_;
+
+  //no need to make this all double
+  math::XYZTLorentzVectorF impactPoint_;
+  math::XYZTLorentzVectorF impactMomentum_;
+
+  std::vector<math::XYZTLorentzVectorF> subImpacts_;
+
 };
 
 #endif  // SimDataFormats_SimCluster_H

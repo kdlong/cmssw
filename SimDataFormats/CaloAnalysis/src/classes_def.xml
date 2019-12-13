@@ -8,7 +8,8 @@
   <class name="CaloParticleRefVector"/>
   <class name="CaloParticleRefProd"/>
   <class name="CaloParticleContainer"/>
-  <class name="SimCluster"  ClassVersion="4">
+  <class name="SimCluster"  ClassVersion="5">
+   <version ClassVersion="5" checksum="2292289445"/>
    <version ClassVersion="4" checksum="1975657497"/>
    <version ClassVersion="3" checksum="1773780587"/>
   </class>
