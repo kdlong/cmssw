@@ -202,6 +202,8 @@ void HGCTruthProducer::endStream() {}
 void HGCTruthProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
   recHitTools_.getEventSetup(setup);
 
+  std::cout << "HGCTruthProducer::produce" << std::endl;
+
   // create unique pointers for output products
   std::unique_ptr<std::vector<SimCluster>> mergedSimClusters = std::make_unique<std::vector<SimCluster>>();
   std::unique_ptr<std::vector<float>> radii = std::make_unique<std::vector<float>>();
@@ -212,6 +214,8 @@ void HGCTruthProducer::produce(edm::Event& event, const edm::EventSetup& setup) 
   edm::Handle<std::vector<SimCluster>> simClusterHandle;
   event.getByToken(simClusterToken_, simClusterHandle);
   SimClusterCollection simClusters(*simClusterHandle);
+
+
 
   // read SimClusterHistory
   edm::Handle<std::vector<SimClusterHistory>> simClusterHistoryHandle;
@@ -224,6 +228,8 @@ void HGCTruthProducer::produce(edm::Event& event, const edm::EventSetup& setup) 
 
   // do the actual merging
   mergeSimClusters(simClusters, simClusterHistory, groups, mergedSimClusters);
+
+  std::cout << "initial simclusters " << simClusters.size()<< " merged: " <<  mergedSimClusters->size() << std::endl;//DEBUG Jan
 
   // save outputs
   event.put(std::move(mergedSimClusters));
@@ -286,6 +292,9 @@ void HGCTruthProducer::determineSimClusterGroups(
       hitVectorIndices[iH] = iH;
     }
 
+    //Jan: hack in the propagated vector
+    showerVector = simClusters[iSC].impactPoint();
+
     // sort the hit vector indices according to distance to the shower vector, closest first
     // notice the change from iH to iiH as from now on, the hitVectorIndices hold indices referring
     // to the actual index in hitVectors
@@ -335,7 +344,7 @@ void HGCTruthProducer::determineSimClusterGroups(
 
   // sort the cluster indices by eta
   sort(scIndices.begin(), scIndices.end(), [&simClusters](const int &iSC, const int &jSC) {
-    return simClusters[iSC].eta() < simClusters[jSC].eta();
+    return simClusters[iSC].impactPoint().eta() < simClusters[jSC].impactPoint().eta();
   });
 
   // define a vector of chained indices for easy lookup of closeby clusters
@@ -374,7 +383,7 @@ void HGCTruthProducer::determineSimClusterGroups(
           // stop when the difference in eta is too high already
           const auto& currCluster = simClusters[curr->iSC];
           const auto& prevCluster = simClusters[prev->iSC];
-          auto dEta = fabs(currCluster.p4().eta() - prevCluster.p4().eta());  // fabs actually not required
+          auto dEta = fabs(currCluster.impactPoint().eta() - prevCluster.impactPoint().eta());  // fabs actually not required
           if (dEta > maxDeltaEtaGroup_) {
             break;
           }
@@ -399,7 +408,7 @@ void HGCTruthProducer::determineSimClusterGroups(
           // stop when the difference in eta is too high already
           const auto& currCluster = simClusters[curr->iSC];
           const auto& nextCluster = simClusters[next->iSC];
-          auto dEta = fabs(nextCluster.p4().eta() - currCluster.p4().eta());  // fabs actually not required
+          auto dEta = fabs(nextCluster.impactPoint().eta() - currCluster.impactPoint().eta());  // fabs actually not required
           if (dEta > maxDeltaEtaGroup_) {
             break;
           }
@@ -495,6 +504,10 @@ bool HGCTruthProducer::checkSimClusterMerging(
     const std::unique_ptr<std::vector<math::XYZTLorentzVectorD>> &vectors) const {
   // get some values
   auto dR = deltaR(vectors->at(iSC), vectors->at(jSC));
+
+  //Jan
+  return dR < 0.016;
+
   auto radius1 = radii->at(iSC);
   auto radius2 = radii->at(jSC);
 
@@ -532,20 +545,34 @@ void HGCTruthProducer::mergeSimClusters(
     });
 
     // get a vector of all sim tracks, also store the total energy
-    std::vector<SimTrack> simTracks;
+    ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>> combinedmomentum;
+    ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>> combinedposition;
     float sumEnergy = 0.;
     for (const int &iSC : group) {
-      // there is currently only one track per sim clusters
-      simTracks.push_back(simClusters[iSC].g4Tracks()[0]);
+        // there is currently only one track per sim clusters
+        combinedmomentum += simClusters[iSC].impactMomentum();
+        combinedposition += simClusters[iSC].impactPoint()*simClusters[iSC].impactMomentum().E();
 
-      sumEnergy += simClusters[iSC].energy();
+        sumEnergy += simClusters[iSC].impactMomentum().E();
     }
+    combinedmomentum /= (float)group.size();
+    combinedposition /= sumEnergy;
+
 
     // determine the pdg id using infos about common ancestors
     int pdgId = 78;  // TODO (this doesn't matter for now)
 
+    ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double>> combinedmomentumD(
+            combinedmomentum.x(),combinedmomentum.y(),combinedmomentum.z(),combinedmomentum.t()
+            );
+    //still needs to be added
+    SimTrack simtr(0, combinedmomentumD);
+    SimCluster newsc({simtr}, pdgId);
+
+    newsc.setImpactMomentum(combinedmomentum);
+    newsc.setImpactPoint(combinedposition);
     // create the cluster
-    mergedSimClusters->emplace_back(simTracks, pdgId);
+    mergedSimClusters->emplace_back(newsc);
     auto &cluster = mergedSimClusters->back();
 
     // fill hits and energy fractions
