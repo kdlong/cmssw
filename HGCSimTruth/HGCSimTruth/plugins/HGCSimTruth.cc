@@ -566,6 +566,7 @@ void HGCTruthProducer::mergeSimClusters(
     for (const int &iSC : group) {
         // there is currently only one track per sim clusters
         combinedmomentum += simClusters[iSC].impactMomentum();
+        std::cout << "pos "<< iSC << ": " << simClusters[iSC].impactPoint() <<" eta "<< simClusters[iSC].impactPoint().Eta() << std::endl;
     }
 
     // determine the pdg id using infos about common ancestors
@@ -587,16 +588,20 @@ void HGCTruthProducer::mergeSimClusters(
     // since we merge, we have to care about duplicate hits and this might become drastically slow
     // therefore, use the default addRecHitAndFraction method for the first cluster, and then
     // loop over the remaining ones to invoke the slower but necessary addDuplicateRecHitAndFraction
-    for (const auto &hf : simClusters[group[0]].hits_and_fractions()) {
-      cluster.addRecHitAndFraction(hf.first, hf.second);
-    }
+
     double combined_time = 0, totalenergy=0;
+    for (const auto &hf : simClusters[group[0]].hits_and_fractions()) {
+        cluster.addRecHitAndFraction(hf.first, hf.second);
+        double en = simClusters[group[0]].impactMomentum().E(); //energy weighted time
+        totalenergy += en;
+        combined_time+=simClusters[group[0]].impactPoint().T()*en;
+    }
     for (int iiSC = 1; iiSC < (int)group.size(); iiSC++) {
         int iSC = group[iiSC];
         for (const auto &hf : simClusters[iSC].hits_and_fractions()) {
             cluster.addDuplicateRecHitAndFraction(hf.first, hf.second);
         }
-        auto en = simClusters[iSC].impactMomentum().E(); //energy weighted time
+        double en = simClusters[iSC].impactMomentum().E(); //energy weighted time
         totalenergy += en;
         combined_time+=simClusters[iSC].impactPoint().T()*en;
     }
@@ -608,13 +613,19 @@ void HGCTruthProducer::mergeSimClusters(
 
     //get lowest layer index
     int layer = 4000;
+    double lowestz=4000.;
     for(const auto& hitsAndFractions: cluster.hits_and_fractions()){
         auto detid = hitsAndFractions.first;
         int thislayer = recHitTools_.getLayer(detid);
-        if(layer>thislayer){
-            layer = thislayer;
+        double thisz = fabs(recHitTools_.getPosition(detid).z());
+        if(lowestz>thisz){
+            lowestz = thisz;
         }
+        if(thislayer < layer)
+            layer = thislayer;
     }
+
+    std::cout << "lowest layer " << layer << std::endl;
     //assign position to first layer hit
     math::XYZVectorF thispos(0,0,0);
     int nhits=0;
@@ -622,18 +633,19 @@ void HGCTruthProducer::mergeSimClusters(
     //these are still energies in the accumulation step
     for(const auto& hitsAndEnergies: cluster.hits_and_fractions()){
         auto detid = hitsAndEnergies.first;
-        auto energy = hitsAndEnergies.second; //not precise but good enough for weighting
 
         int thislayer = recHitTools_.getLayer(detid);
-        if(thislayer == layer){
+        float thisz = fabs(recHitTools_.getPosition(detid).z());
+        if(fabs(thisz - lowestz) < 0.3 ){//thislayer == layer){
             //use rechit energies here
             auto mapit = rh_detid_to_idx.find(detid);
-            if(mapit != rh_detid_to_idx.end())
-                energy *= rechits.at(mapit->second)->energy() ;
-            else
-                energy = 0;
+            double energy = 0;
+            if(mapit == rh_detid_to_idx.end())
+                continue;
+            energy = rechits.at(mapit->second)->energy() * hitsAndEnergies.second;
             layeren+=energy;
             auto ipos = recHitTools_.getPosition(detid).basicVector();
+            std::cout << "thislayer " << thislayer << " "<< ipos <<  " energy "<< energy<<std::endl;
             thispos += math::XYZVectorF(ipos.x(),ipos.y(),ipos.z()) * energy;
             nhits++;
         }
@@ -641,6 +653,9 @@ void HGCTruthProducer::mergeSimClusters(
     thispos/=layeren;
     cluster.setImpactPoint(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>>(
             thispos.x(),thispos.y(),thispos.z(),combined_time));
+
+
+    std::cout << "new pos: " << cluster.impactPoint() << std::endl;
 
   }
 }

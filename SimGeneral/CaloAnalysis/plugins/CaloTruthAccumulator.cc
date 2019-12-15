@@ -810,9 +810,14 @@ std::cout << "popagate" << std::endl;
         /////////////////////////// Mostly for debugging
         //get position
         int layer = 4000;
+        double lowestz=4000.;
         for(const auto& hitsAndEnergies: sc.hits_and_fractions()){
             auto detid = hitsAndEnergies.first;
             int thislayer = recHitTools_.getLayer(detid);
+            double thisz = fabs(recHitTools_.getPosition(detid).z());
+            if(lowestz>thisz){
+                lowestz = thisz;
+            }
             if(layer>thislayer){
                 layer = thislayer;
             }
@@ -826,7 +831,8 @@ std::cout << "popagate" << std::endl;
             auto detid = hitsAndEnergies.first;
             auto energy = hitsAndEnergies.second; //not precise but good enough for weighting
             int thislayer = recHitTools_.getLayer(detid);
-            if(thislayer == layer){
+            float thisz = fabs(recHitTools_.getPosition(detid).z());
+            if(fabs(thisz - lowestz) < 0.3 ){//thislayer == layer){
                 auto ipos = recHitTools_.getPosition(detid).basicVector();
                 thispos += math::XYZVectorF(ipos.x(),ipos.y(),ipos.z()) * energy;
                 toten+=energy;
