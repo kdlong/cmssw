@@ -130,7 +130,9 @@ public:
     const SimClusterCollection&,
     const std::vector<SimClusterHistory>&,
     const std::vector<std::vector<int>>&,
-    std::unique_ptr<SimClusterCollection>&) const;
+    std::unique_ptr<SimClusterCollection>&,
+    const std::vector<const HGCRecHit*>& ,
+    const std::unordered_map<DetId, size_t>&) const;
 
 private:
   float showerContainment_;
@@ -215,6 +217,16 @@ void HGCTruthProducer::produce(edm::Event& event, const edm::EventSetup& setup) 
   event.getByToken(simClusterToken_, simClusterHandle);
   SimClusterCollection simClusters(*simClusterHandle);
 
+  std::vector<const HGCRecHit*> allrechits;
+  std::unordered_map<DetId, size_t> detid_to_rh_index;
+  size_t rhindex=0;
+  for (auto & token : recHitTokens_) {
+      for (const auto& rh : event.get(token)) {
+          detid_to_rh_index[rh.detid()]=rhindex;
+          rhindex++;
+          allrechits.push_back(&rh);
+      }
+  }
 
 
   // read SimClusterHistory
@@ -227,7 +239,7 @@ void HGCTruthProducer::produce(edm::Event& event, const edm::EventSetup& setup) 
   determineSimClusterGroups(simClusters, simClusterHistory, groups, radii, vectors);
 
   // do the actual merging
-  mergeSimClusters(simClusters, simClusterHistory, groups, mergedSimClusters);
+  mergeSimClusters(simClusters, simClusterHistory, groups, mergedSimClusters,allrechits,detid_to_rh_index);
 
   std::cout << "initial simclusters " << simClusters.size()<< " merged: " <<  mergedSimClusters->size() << std::endl;//DEBUG Jan
 
@@ -275,23 +287,23 @@ void HGCTruthProducer::determineSimClusterGroups(
   // determine simCluster radii
   for (const int &iSC : scIndices) {
     // create four-vectors for each hit and the summed shower vector
-    auto hitsAndEnergies = simClusters[iSC].hits_and_fractions();
-    int nHits = (int)hitsAndEnergies.size();
+    auto atthispointthis_is_hitsandfractions_hitsAndEnergies = simClusters[iSC].hits_and_fractions();
+    int nHits = (int)atthispointthis_is_hitsandfractions_hitsAndEnergies.size();
     math::XYZTLorentzVectorD showerVector;
     std::vector<math::XYZTLorentzVectorD> hitVectors;
-    hitVectors.resize(hitsAndEnergies.size());
+    hitVectors.resize(atthispointthis_is_hitsandfractions_hitsAndEnergies.size());
     std::vector<int> hitVectorIndices;
-    hitVectorIndices.resize(hitsAndEnergies.size());
+    hitVectorIndices.resize(atthispointthis_is_hitsandfractions_hitsAndEnergies.size());
     for (int iH = 0; iH < nHits; iH++) {
       // get the hit position and create the four-vector, assuming no mass
-      GlobalPoint position = recHitTools_.getPosition(hitsAndEnergies[iH].first);
-      float energy = hitsAndEnergies[iH].second;
+      GlobalPoint position = recHitTools_.getPosition(atthispointthis_is_hitsandfractions_hitsAndEnergies[iH].first);
+      float energy = atthispointthis_is_hitsandfractions_hitsAndEnergies[iH].second;
       float scale = energy / position.mag();
       hitVectors[iH].SetPxPyPzE(position.x() * scale, position.y() * scale, position.z() * scale, energy);
       showerVector += hitVectors[iH];
       hitVectorIndices[iH] = iH;
     }
-
+    //overwrites whatever was there before
     //Jan: hack in the propagated vector
     showerVector = simClusters[iSC].impactPoint();
 
@@ -533,7 +545,12 @@ void HGCTruthProducer::mergeSimClusters(
     const SimClusterCollection &simClusters,
     const std::vector<SimClusterHistory> &simClusterHistory,
     const std::vector<std::vector<int>> &groups,
-    std::unique_ptr<SimClusterCollection> &mergedSimClusters) const {
+    std::unique_ptr<SimClusterCollection> &mergedSimClusters,
+    const std::vector<const HGCRecHit*>& rechits,
+    const std::unordered_map<DetId, size_t>& rh_detid_to_idx) const {
+
+
+
   for (std::vector<int> group : groups) {
     if (group.size() == 0) {
       continue;
@@ -546,18 +563,10 @@ void HGCTruthProducer::mergeSimClusters(
 
     // get a vector of all sim tracks, also store the total energy
     ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>> combinedmomentum;
-    ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>> combinedposition;
-    float sumEnergy = 0.;
     for (const int &iSC : group) {
         // there is currently only one track per sim clusters
         combinedmomentum += simClusters[iSC].impactMomentum();
-        combinedposition += simClusters[iSC].impactPoint()*simClusters[iSC].impactMomentum().E();
-
-        sumEnergy += simClusters[iSC].impactMomentum().E();
     }
-    combinedmomentum /= (float)group.size();
-    combinedposition /= sumEnergy;
-
 
     // determine the pdg id using infos about common ancestors
     int pdgId = 78;  // TODO (this doesn't matter for now)
@@ -570,7 +579,6 @@ void HGCTruthProducer::mergeSimClusters(
     SimCluster newsc({simtr}, pdgId);
 
     newsc.setImpactMomentum(combinedmomentum);
-    newsc.setImpactPoint(combinedposition);
     // create the cluster
     mergedSimClusters->emplace_back(newsc);
     auto &cluster = mergedSimClusters->back();
@@ -582,12 +590,57 @@ void HGCTruthProducer::mergeSimClusters(
     for (const auto &hf : simClusters[group[0]].hits_and_fractions()) {
       cluster.addRecHitAndFraction(hf.first, hf.second);
     }
+    double combined_time = 0, totalenergy=0;
     for (int iiSC = 1; iiSC < (int)group.size(); iiSC++) {
-      int iSC = group[iiSC];
-      for (const auto &hf : simClusters[iSC].hits_and_fractions()) {
-        cluster.addDuplicateRecHitAndFraction(hf.first, hf.second);
-      }
+        int iSC = group[iiSC];
+        for (const auto &hf : simClusters[iSC].hits_and_fractions()) {
+            cluster.addDuplicateRecHitAndFraction(hf.first, hf.second);
+        }
+        auto en = simClusters[iSC].impactMomentum().E(); //energy weighted time
+        totalenergy += en;
+        combined_time+=simClusters[iSC].impactPoint().T()*en;
     }
+    combined_time/=totalenergy;
+    //recalculate entry position at first hit
+
+
+
+
+    //get lowest layer index
+    int layer = 4000;
+    for(const auto& hitsAndFractions: cluster.hits_and_fractions()){
+        auto detid = hitsAndFractions.first;
+        int thislayer = recHitTools_.getLayer(detid);
+        if(layer>thislayer){
+            layer = thislayer;
+        }
+    }
+    //assign position to first layer hit
+    math::XYZVectorF thispos(0,0,0);
+    int nhits=0;
+    //these are still energies in the accumulation step
+    for(const auto& hitsAndEnergies: cluster.hits_and_fractions()){
+        auto detid = hitsAndEnergies.first;
+        auto energy = hitsAndEnergies.second; //not precise but good enough for weighting
+
+        int thislayer = recHitTools_.getLayer(detid);
+        if(thislayer == layer){
+            //use rechit energies here
+            auto mapit = rh_detid_to_idx.find(detid);
+            if(mapit != rh_detid_to_idx.end())
+                energy *= rechits.at(mapit->second)->energy() ;
+            else
+                energy = 0;
+
+            auto ipos = recHitTools_.getPosition(detid).basicVector();
+            thispos += math::XYZVectorF(ipos.x(),ipos.y(),ipos.z()) * energy;
+            nhits++;
+        }
+    }
+    thispos/=totalenergy;
+    cluster.setImpactPoint(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>>(
+            thispos.x(),thispos.y(),thispos.z(),combined_time));
+
   }
 }
 
