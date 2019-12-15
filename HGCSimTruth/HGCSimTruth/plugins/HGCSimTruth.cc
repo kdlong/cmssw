@@ -618,6 +618,7 @@ void HGCTruthProducer::mergeSimClusters(
     //assign position to first layer hit
     math::XYZVectorF thispos(0,0,0);
     int nhits=0;
+    double layeren=0;
     //these are still energies in the accumulation step
     for(const auto& hitsAndEnergies: cluster.hits_and_fractions()){
         auto detid = hitsAndEnergies.first;
@@ -631,13 +632,13 @@ void HGCTruthProducer::mergeSimClusters(
                 energy *= rechits.at(mapit->second)->energy() ;
             else
                 energy = 0;
-
+            layeren+=energy;
             auto ipos = recHitTools_.getPosition(detid).basicVector();
             thispos += math::XYZVectorF(ipos.x(),ipos.y(),ipos.z()) * energy;
             nhits++;
         }
     }
-    thispos/=totalenergy;
+    thispos/=layeren;
     cluster.setImpactPoint(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>>(
             thispos.x(),thispos.y(),thispos.z(),combined_time));
 
