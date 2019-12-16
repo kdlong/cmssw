@@ -32,6 +32,7 @@
 <use name="DataFormats/TrackReco" />
 <use   name="TrackingTools/Records"/>
 <use name="RecoHGCal/GraphReco"/>
+<use name="HGCSimTruth/HGCSimTruth" />
 
 
 <library   file="*.cc" name="SimGeneralCaloAnalysisPlugins">

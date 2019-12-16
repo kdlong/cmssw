@@ -60,6 +60,7 @@
 
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 #include "RecoHGCal/GraphReco/interface/HGCalParticlePropagator.h"
+#include "HGCSimTruth/HGCSimTruth/interface/SimClusterTools.h"
 
 #include "TMath.h"
 #include "TCanvas.h"
@@ -803,51 +804,20 @@ std::cout << "popagate" << std::endl;
     int misassigned = 0;
     int totalhgcalinthisround = 0;
     int novertex = 0;
+
+    SimClusterTools sctools;
+    sctools.setRechitTools(recHitTools_);
+
     for(size_t isc = previous_simclusters; isc < scs->size(); isc++){
         auto & sc = scs->at(isc);
 
-//std::cout << isc << std::endl;
-        /////////////////////////// Mostly for debugging
-        //get position
-        int layer = 4000;
-        double lowestz=4000.;
-        for(const auto& hitsAndEnergies: sc.hits_and_fractions()){
-            auto detid = hitsAndEnergies.first;
-            int thislayer = recHitTools_.getLayer(detid);
-            double thisz = fabs(recHitTools_.getPosition(detid).z());
-            if(lowestz>thisz){
-                lowestz = thisz;
-            }
-            if(layer>thislayer){
-                layer = thislayer;
-            }
-        }
-        //assign position to first layer hit
-        math::XYZVectorF thispos(0,0,0);
-        float toten=0;
-        int nhits=0;
-        //these are still energies in the accumulation step
-        for(const auto& hitsAndEnergies: sc.hits_and_fractions()){
-            auto detid = hitsAndEnergies.first;
-            auto energy = hitsAndEnergies.second; //not precise but good enough for weighting
-            int thislayer = recHitTools_.getLayer(detid);
-            float thisz = fabs(recHitTools_.getPosition(detid).z());
-            if(fabs(thisz - lowestz) < 0.3 ){//thislayer == layer){
-                auto ipos = recHitTools_.getPosition(detid).basicVector();
-                thispos += math::XYZVectorF(ipos.x(),ipos.y(),ipos.z()) * energy;
-                toten+=energy;
-                nhits++;
-            }
-        }
-        thispos/=toten;
 
-
+        sctools.recalculatePosition(sc,0);
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>> thispos = sc.impactPoint();
 
         // std::cout << thispos <<" "<< thispos.eta() <<std::endl;
 
         if(fabs(thispos.z())>prop_.getHGCalZ()){//inside
-            math::XYZTLorentzVectorF insidepos(thispos.x(),thispos.y(),thispos.z(),0);
-            sc.setImpactPoint(insidepos);
             sc.setImpactMomentum(sc.p4());
         }
 
@@ -896,7 +866,7 @@ std::cout << "popagate" << std::endl;
                     sc.setImpactMomentum(momentum);
                 }
             }
-            else if(fabs(thispos.eta()) > 1.5 && fabs(thispos.eta()) < 3.){
+            else if(fabs(thispos.Eta()) > 1.5 && fabs(thispos.Eta()) < 3.){
                 totalhgcalinthisround++;
             }
 

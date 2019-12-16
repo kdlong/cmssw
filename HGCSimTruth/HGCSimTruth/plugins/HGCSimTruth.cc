@@ -50,6 +50,8 @@
 
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 
+#include "HGCSimTruth/HGCSimTruth/interface/SimClusterTools.h"
+
 #include "TMath.h"
 #include "TCanvas.h"
 #include "TH1F.h"
@@ -607,55 +609,17 @@ void HGCTruthProducer::mergeSimClusters(
     }
     combined_time/=totalenergy;
     //recalculate entry position at first hit
+    SimClusterTools sctools;
+    sctools.setRechitTools(recHitTools_);
+    sctools.setRechitVector(rechits);
+    sctools.setIndexMap(rh_detid_to_idx);
 
+    sctools.recalculatePosition(cluster, combined_time);
 
-
-
+    //get energy weighted center and lowest layer
+    //
     //get lowest layer index
-    int layer = 4000;
-    double lowestz=4000.;
-    for(const auto& hitsAndFractions: cluster.hits_and_fractions()){
-        auto detid = hitsAndFractions.first;
-        int thislayer = recHitTools_.getLayer(detid);
-        double thisz = fabs(recHitTools_.getPosition(detid).z());
-        if(lowestz>thisz){
-            lowestz = thisz;
-        }
-        if(thislayer < layer)
-            layer = thislayer;
-    }
 
-    std::cout << "lowest layer " << layer << std::endl;
-    //assign position to first layer hit
-    math::XYZVectorF thispos(0,0,0);
-    int nhits=0;
-    double layeren=0;
-    //these are still energies in the accumulation step
-    for(const auto& hitsAndEnergies: cluster.hits_and_fractions()){
-        auto detid = hitsAndEnergies.first;
-
-        int thislayer = recHitTools_.getLayer(detid);
-        float thisz = fabs(recHitTools_.getPosition(detid).z());
-        if(fabs(thisz - lowestz) < 0.3 ){//thislayer == layer){
-            //use rechit energies here
-            auto mapit = rh_detid_to_idx.find(detid);
-            double energy = 0;
-            if(mapit == rh_detid_to_idx.end())
-                continue;
-            energy = rechits.at(mapit->second)->energy() * hitsAndEnergies.second;
-            layeren+=energy;
-            auto ipos = recHitTools_.getPosition(detid).basicVector();
-            std::cout << "thislayer " << thislayer << " "<< ipos <<  " energy "<< energy<<std::endl;
-            thispos += math::XYZVectorF(ipos.x(),ipos.y(),ipos.z()) * energy;
-            nhits++;
-        }
-    }
-    thispos/=layeren;
-    cluster.setImpactPoint(ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>>(
-            thispos.x(),thispos.y(),thispos.z(),combined_time));
-
-
-    std::cout << "new pos: " << cluster.impactPoint() << std::endl;
 
   }
 }
