@@ -568,7 +568,9 @@ void HGCTruthProducer::mergeSimClusters(
     for (const int &iSC : group) {
         // there is currently only one track per sim clusters
         combinedmomentum += simClusters[iSC].impactMomentum();
-        std::cout << "pos "<< iSC << ": " << simClusters[iSC].impactPoint() <<" eta "<< simClusters[iSC].impactPoint().Eta() << std::endl;
+        std::cout << "pos "<< iSC << ": " << simClusters[iSC].impactPoint() <<" eta "<< simClusters[iSC].impactPoint().Eta()
+              <<  " momentum " << simClusters[iSC].impactMomentum() << " vertexmomentum " << simClusters[iSC].p4()
+                        << std::endl;
     }
 
     // determine the pdg id using infos about common ancestors

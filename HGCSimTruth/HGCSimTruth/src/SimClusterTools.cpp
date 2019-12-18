@@ -6,7 +6,7 @@
  */
 
 #include "../interface/SimClusterTools.h"
-
+#include <cmath>
 
 void SimClusterTools::recalculatePosition(SimCluster& cluster, const double& assigned_time)const{
 
@@ -31,7 +31,8 @@ void SimClusterTools::recalculatePosition(SimCluster& cluster, const double& ass
             layer = thislayer;
 
         double energy = hitsAndFractions.second;
-
+        if(energy==0 || energy != energy || std::isinf(energy))
+            energy = 1e-4;
         if(allrechits_){
             auto mapit = detid_to_rh_index_->find(detid);
             if(mapit == detid_to_rh_index_->end())
@@ -42,10 +43,12 @@ void SimClusterTools::recalculatePosition(SimCluster& cluster, const double& ass
         center_eta+=rhpos.eta() * energy;
         center_rphi += reco::deltaPhi(rhpos.phi(), cluster.impactPoint().phi()) * energy;
     }
-    center_eta /= energysum;
-    center_rphi /= energysum;
-    center_rphi += cluster.impactPoint().phi();
-    reco::reduceRange(center_rphi);
+    if(energysum){
+        center_eta /= energysum;
+        center_rphi /= energysum;
+        center_rphi += cluster.impactPoint().phi();
+        center_rphi = reco::reduceRange(center_rphi);
+    }
 
     //std::cout << "lowest layer " << layer << std::endl;
     //assign position to first layer hit
@@ -72,7 +75,8 @@ void SimClusterTools::recalculatePosition(SimCluster& cluster, const double& ass
             //don't consider strays
             if(reco::deltaR(center_eta,center_rphi,ipos.eta(),ipos.phi()) > considerhitdistance_)
                 continue;
-
+            if(energy==0 || energy != energy || std::isinf(energy))
+                energy = 1e-4;
             layeren+=energy;
             //std::cout << "thislayer " << thislayer << " "<< ipos <<  " energy "<< energy<<std::endl;
             thispos += math::XYZVectorF(ipos.x(),ipos.y(),ipos.z()) * energy;
