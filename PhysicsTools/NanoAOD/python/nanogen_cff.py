@@ -9,7 +9,6 @@ from PhysicsTools.NanoAOD.genWeights_cff import *
 from PhysicsTools.NanoAOD.genVertex_cff import *
 from PhysicsTools.NanoAOD.common_cff import Var,CandVars
 from PhysicsTools.NanoAOD.nano_eras_cff import *
-from PhysicsTools.NanoAOD.genWeights_cff import *
 
 nanoMetadata = cms.EDProducer("UniqueStringProducer",
     strings = cms.PSet(
@@ -42,7 +41,6 @@ nanogenSequence = cms.Sequence(
 def nanoGenCommonCustomize(process):
     process.rivetMetTable.extension = False
     process.lheInfoTable.storeLHEParticles = True
-    process.lheInfoTable.storeAllLHEInfo = True
     process.lheInfoTable.precision = 14
     process.genWeightsTable.keepAllPSWeights = True
     process.genJetFlavourAssociation.jets = process.genJetTable.src

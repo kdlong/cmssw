@@ -66,15 +66,12 @@ void TableOutputBranches::branch(TTree &tree) {
   }
 }
 
-void TableOutputBranches::fill(const edm::OccurrenceForOutput &iWhatever, TTree &tree, bool extensions) {
+void TableOutputBranches::fill(const nanoaod::FlatTable &tab, TTree &tree, bool extensions) {
   if (m_extension != DontKnowYetIfMainOrExtension) {
     if (extensions != m_extension)
       return;  // do nothing, wait to be called with the proper flag
   }
 
-  edm::Handle<nanoaod::FlatTable> handle;
-  iWhatever.getByToken(m_token, handle);
-  const nanoaod::FlatTable &tab = *handle;
   m_counter = tab.size();
   m_singleton = tab.singleton();
   if (!m_branchesBooked) {
