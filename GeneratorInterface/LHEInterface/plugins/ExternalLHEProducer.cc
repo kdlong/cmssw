@@ -47,12 +47,15 @@ Implementation:
 
 #include "SimDataFormats/GeneratorProducts/interface/LesHouches.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHERunInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenWeightInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenWeightProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEXMLStringProduct.h"
 
 #include "GeneratorInterface/LHEInterface/interface/LHERunInfo.h"
 #include "GeneratorInterface/LHEInterface/interface/LHEEvent.h"
 #include "GeneratorInterface/LHEInterface/interface/LHEReader.h"
+#include "GeneratorInterface/Core/interface/LHEWeightHelper.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/RandomNumberGenerator.h"
@@ -63,7 +66,9 @@ Implementation:
 // class declaration
 //
 
-class ExternalLHEProducer : public edm::one::EDProducer<edm::BeginRunProducer, edm::EndRunProducer> {
+class ExternalLHEProducer : public edm::one::EDProducer<edm::BeginRunProducer,
+                                                        edm::EndRunProducer,
+                                                        edm::BeginLuminosityBlockProducer> {
 public:
   explicit ExternalLHEProducer(const edm::ParameterSet& iConfig);
   ~ExternalLHEProducer() override;
@@ -74,10 +79,12 @@ private:
   void produce(edm::Event&, const edm::EventSetup&) override;
   void beginRunProduce(edm::Run& run, edm::EventSetup const& es) override;
   void endRunProduce(edm::Run&, edm::EventSetup const&) override;
+  void beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) override;
   void preallocThreads(unsigned int) override;
 
   int closeDescriptors(int preserve);
   void executeScript();
+  int findWeightGroup(std::string wgtId, int weightIndex, int previousGroupIndex);
   std::unique_ptr<std::string> readOutput();
 
   void nextEvent();
@@ -95,13 +102,14 @@ private:
   // Used only if nPartonMapping is in the configuration
   std::map<unsigned, std::pair<unsigned, unsigned>> nPartonMapping_{};
 
-  std::unique_ptr<lhef::LHEReader> reader_;
-  std::shared_ptr<lhef::LHERunInfo> runInfoLast;
-  std::shared_ptr<lhef::LHERunInfo> runInfo;
-  std::shared_ptr<lhef::LHEEvent> partonLevel;
-  boost::ptr_deque<LHERunInfoProduct> runInfoProducts;
-  bool wasMerged;
-
+  std::unique_ptr<lhef::LHEReader>	reader_;
+  gen::LHEWeightHelper weightHelper_;
+  std::shared_ptr<lhef::LHERunInfo>	runInfoLast;
+  std::shared_ptr<lhef::LHERunInfo>	runInfo;
+  std::shared_ptr<lhef::LHEEvent>	partonLevel;
+  boost::ptr_deque<LHERunInfoProduct>	runInfoProducts;
+  bool					wasMerged;
+  
   class FileCloseSentry : private boost::noncopyable {
   public:
     explicit FileCloseSentry(int fd) : fd_(fd){};
@@ -151,8 +159,10 @@ ExternalLHEProducer::ExternalLHEProducer(const edm::ParameterSet& iConfig)
   produces<LHEXMLStringProduct, edm::Transition::BeginRun>("LHEScriptOutput");
 
   produces<LHEEventProduct>();
+  produces<GenWeightProduct>();
   produces<LHERunInfoProduct, edm::Transition::BeginRun>();
   produces<LHERunInfoProduct, edm::Transition::EndRun>();
+  produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
 }
 
 ExternalLHEProducer::~ExternalLHEProducer() {}
@@ -181,7 +191,14 @@ void ExternalLHEProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
   }
   std::for_each(partonLevel->weights().begin(),
                 partonLevel->weights().end(),
-                boost::bind(&LHEEventProduct::addWeight, product.get(), _1));
+                boost::bind(&LHEEventProduct::addWeight,
+                            product.get(), _1));
+
+  // Should also zero out the weights in the GenInfoProduct
+  auto weightProduct = weightHelper_.weightProduct(partonLevel->weights(), 
+                                            partonLevel->originalXWGTUP());
+  iEvent.put(std::move(weightProduct));
+
   product->setScales(partonLevel->scales());
   if (nPartonMapping_.empty()) {
     product->setNpLO(partonLevel->npLO());
@@ -246,31 +263,31 @@ void ExternalLHEProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
 }
 
 // ------------ method called when starting to processes a run  ------------
-void ExternalLHEProducer::beginRunProduce(edm::Run& run, edm::EventSetup const& es) {
-  // pass the number of events as previous to last argument
+void 
+ExternalLHEProducer::beginRunProduce(edm::Run& run, edm::EventSetup const& es)
+{
 
-  std::ostringstream eventStream;
-  eventStream << nEvents_;
-  // args_.push_back(eventStream.str());
-  args_.insert(args_.begin() + 1, eventStream.str());
+    // pass the number of events as previous to last argument
+    std::ostringstream eventStream;
+    eventStream << nEvents_;
+    // args_.push_back(eventStream.str());
+    args_.insert(args_.begin() + 1, eventStream.str());
 
-  // pass the random number generator seed as last argument
+    // pass the random number generator seed as last argument
 
-  edm::Service<edm::RandomNumberGenerator> rng;
+    edm::Service<edm::RandomNumberGenerator> rng;
 
-  if (!rng.isAvailable()) {
-    throw cms::Exception("Configuration")
-        << "The ExternalLHEProducer module requires the RandomNumberGeneratorService\n"
-           "which is not present in the configuration file.  You must add the service\n"
-           "in the configuration file if you want to run ExternalLHEProducer";
-  }
-  std::ostringstream randomStream;
-  randomStream << rng->mySeed();
-  // args_.push_back(randomStream.str());
-  args_.insert(args_.begin() + 2, randomStream.str());
+    if ( ! rng.isAvailable()) {
+	throw cms::Exception("Configuration")
+	    << "The ExternalLHEProducer module requires the RandomNumberGeneratorService\n"
+	    "which is not present in the configuration file.  You must add the service\n"
+	    "in the configuration file if you want to run ExternalLHEProducer";
+    }
+    std::ostringstream randomStream;
+    randomStream << rng->mySeed(); 
+    args_.insert(args_.begin() + 2, randomStream.str());
 
-  // args_.emplace_back(std::to_string(nThreads_));
-  args_.insert(args_.begin() + 3, std::to_string(nThreads_));
+    args_.insert(args_.begin() + 3, std::to_string(nThreads_));
 
   for (unsigned int iArg = 0; iArg < args_.size(); iArg++) {
     LogDebug("LHEInputArgs") << "arg [" << iArg << "] = " << args_[iArg];
@@ -293,14 +310,14 @@ void ExternalLHEProducer::beginRunProduce(edm::Run& run, edm::EventSetup const& 
     p->fillCompressedContent(instream, 0.25 * insize);
     instream.close();
   }
-  run.put(std::move(p), "LHEScriptOutput");
+    run.put(std::move(p), "LHEScriptOutput");
 
-  // LHE C++ classes translation
-  // (read back uncompressed file from disk in streaming mode again to save memory)
+    // LHE C++ classes translation
+    // (read back uncompressed file from disk in streaming mode again to save memory)
 
-  std::vector<std::string> infiles(1, outputFile_);
-  unsigned int skip = 0;
-  reader_ = std::make_unique<lhef::LHEReader>(infiles, skip);
+    std::vector<std::string> infiles(1, outputFile_);
+    unsigned int skip = 0;
+    reader_ = std::make_unique<lhef::LHEReader>(infiles, skip);
 
   nextEvent();
   if (runInfoLast) {
@@ -322,7 +339,35 @@ void ExternalLHEProducer::beginRunProduce(edm::Run& run, edm::EventSetup const& 
 
     runInfo.reset();
   }
+    
+    nextEvent();
+    if (runInfoLast) {
+	runInfo = runInfoLast;
+  
+	std::unique_ptr<LHERunInfoProduct> product(new LHERunInfoProduct(*runInfo->getHEPRUP()));
+	std::for_each(runInfo->getHeaders().begin(),
+		      runInfo->getHeaders().end(),
+		      boost::bind(&LHERunInfoProduct::addHeader,
+				  product.get(), _1));
+	std::for_each(runInfo->getComments().begin(),
+		      runInfo->getComments().end(),
+		      boost::bind(&LHERunInfoProduct::addComment,
+				  product.get(), _1));
+  
+	// keep a copy around in case of merging
+	runInfoProducts.push_back(new LHERunInfoProduct(*product));
+	wasMerged = false;
+
+	run.put(std::move(product));
+  
+	//weightHelper_.parseWeightGroupsFromHeader(runInfo->findHeader("initrwgt"));
+	weightHelper_.setHeaderLines(runInfo->findHeader("initrwgt"));
+    weightHelper_.parseWeights();
+      
+	runInfo.reset();
+    }
 }
+
 
 // ------------ method called when ending the processing of a run  ------------
 void ExternalLHEProducer::endRunProduce(edm::Run& run, edm::EventSetup const& es) {
@@ -333,18 +378,25 @@ void ExternalLHEProducer::endRunProduce(edm::Run& run, edm::EventSetup const& es
 
   nextEvent();
   if (partonLevel) {
-    throw edm::Exception(edm::errors::EventGenerationFailure)
-        << "Error in ExternalLHEProducer::endRunProduce().  "
-        << "Event loop is over, but there are still lhe events to process."
-        << "This could happen if lhe file contains more events than requested.  This is never expected to happen.";
-  }
-
-  reader_.reset();
+    throw edm::Exception(edm::errors::EventGenerationFailure) << "Error in ExternalLHEProducer::endRunProduce().  "
+    << "Event loop is over, but there are still lhe events to process."
+    << "This could happen if lhe file contains more events than requested.  This is never expected to happen.";
+  }  
+  
+  reader_.reset();  
 
   if (unlink(outputFile_.c_str())) {
-    throw cms::Exception("OutputDeleteError") << "Unable to delete original script output file " << outputFile_
-                                              << " (errno=" << errno << ", " << strerror(errno) << ").";
+    throw cms::Exception("OutputDeleteError") << "Unable to delete original script output file " << outputFile_ << " (errno=" << errno << ", " << strerror(errno) << ").";
+  }  
+}
+
+void 
+ExternalLHEProducer::beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) {
+  auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();
+  for (auto& weightGroup : weightHelper_.weightGroups()) {
+      weightInfoProduct->addWeightGroupInfo(weightGroup.clone());
   }
+  lumi.put(std::move(weightInfoProduct));
 }
 
 // ------------ Close all the open file descriptors ------------
@@ -472,6 +524,7 @@ void ExternalLHEProducer::executeScript() {
     throw cms::Exception("ExternalLHEProducer") << "Child failed with exit code " << rc << ".";
   }
 }
+
 
 // ------------ Read the output script ------------
 #define BUFSIZE 4096

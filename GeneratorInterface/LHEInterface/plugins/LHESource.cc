@@ -23,6 +23,7 @@
 #include "SimDataFormats/GeneratorProducts/interface/LesHouches.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHERunInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenWeightInfoProduct.h"
 
 #include "GeneratorInterface/LHEInterface/interface/LHERunInfo.h"
 #include "GeneratorInterface/LHEInterface/interface/LHEEvent.h"
@@ -105,6 +106,7 @@ void LHESource::readRun_(edm::RunPrincipal& runPrincipal) {
   runPrincipal.fillRunPrincipal(processHistoryRegistryForUpdate());
 
   putRunInfoProduct(runPrincipal);
+  putWeightInfoProduct(runPrincipal);
 }
 
 void LHESource::readLuminosityBlock_(edm::LuminosityBlockPrincipal& lumiPrincipal) {
@@ -121,7 +123,28 @@ void LHESource::putRunInfoProduct(edm::RunPrincipal& iRunPrincipal) {
   }
 }
 
-bool LHESource::setRunAndEventInfo(edm::EventID&, edm::TimeValue_t&, edm::EventAuxiliary::ExperimentType&) {
+void LHESource::putWeightInfoProduct(edm::RunPrincipal& iRunPrincipal) {
+  if (runInfoProductLast_) {
+    auto product = std::make_unique<GenWeightInfoProduct>();
+    gen::WeightGroupInfo scaleInfo(
+        "<weightgroup name=\"Central scale variation\" combine=\"envelope\">"
+    );
+    scaleInfo.setWeightType(gen::WeightType::kScaleWeights);
+
+    gen::WeightGroupInfo cenPdfInfo(
+        "<weightgroup name=\"NNPDF31_nnlo_hessian_pdfas\" combine=\"hessian\">"
+    );
+    cenPdfInfo.setWeightType(gen::WeightType::kPdfWeights);
+
+    product->addWeightGroupInfo(&scaleInfo);
+    product->addWeightGroupInfo(&cenPdfInfo);
+    std::unique_ptr<edm::WrapperBase> rdp(new edm::Wrapper<GenWeightInfoProduct>(std::move(product)));
+    //iRunPrincipal.put(lheProvenanceHelper_.weightProductBranchDescription_, std::move(rdp));
+  }
+}
+
+bool LHESource::setRunAndEventInfo(edm::EventID&, edm::TimeValue_t&, edm::EventAuxiliary::ExperimentType&)
+{
   nextEvent();
   if (!partonLevel_) {
     // We just finished an input file. See if there is another.

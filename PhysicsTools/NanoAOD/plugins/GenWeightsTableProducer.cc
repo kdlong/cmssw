@@ -20,39 +20,42 @@
 #include <regex>
 
 namespace {
+
+  void mergeSumVectors(std::vector<long double>& v1, std::vector<long double> const& v2) {
+    if (v1.empty() && !v2.empty())
+      v1.resize(v2.size(), 0);
+    if (!v2.empty())
+      for (unsigned int i = 0, n = v1.size(); i < n; ++i)
+        v1[i] += v2[i];
+  }
+
   ///  ---- Cache object for running sums of weights ----
-  struct Counter {
-    Counter() : num(0), sumw(0), sumw2(0), sumPDF(), sumScale(), sumRwgt(), sumNamed(), sumPS() {}
-
-    // the counters
-    long long num;
-    long double sumw;
-    long double sumw2;
-    std::vector<long double> sumPDF, sumScale, sumRwgt, sumNamed, sumPS;
-
+  class Counter {
+  public:
     void clear() {
-      num = 0;
-      sumw = 0;
-      sumw2 = 0;
-      sumPDF.clear();
-      sumScale.clear();
-      sumRwgt.clear();
-      sumNamed.clear(), sumPS.clear();
+      num_ = 0;
+      sumw_ = 0;
+      sumw2_ = 0;
+      sumPDF_.clear();
+      sumScale_.clear();
+      sumRwgt_.clear();
+      sumNamed_.clear();
+      sumPS_.clear();
     }
 
     // inc the counters
     void incGenOnly(double w) {
-      num++;
-      sumw += w;
-      sumw2 += (w * w);
+      num_++;
+      sumw_ += w;
+      sumw2_ += (w * w);
     }
 
     void incPSOnly(double w0, const std::vector<double>& wPS) {
       if (!wPS.empty()) {
-        if (sumPS.empty())
-          sumPS.resize(wPS.size(), 0);
+        if (sumPS_.empty())
+          sumPS_.resize(wPS.size(), 0);
         for (unsigned int i = 0, n = wPS.size(); i < n; ++i)
-          sumPS[i] += (w0 * wPS[i]);
+          sumPS_[i] += (w0 * wPS[i]);
       }
     }
 
@@ -66,62 +69,55 @@ namespace {
       incGenOnly(w0);
       // then add up variations
       if (!wScale.empty()) {
-        if (sumScale.empty())
-          sumScale.resize(wScale.size(), 0);
+        if (sumScale_.empty())
+          sumScale_.resize(wScale.size(), 0);
         for (unsigned int i = 0, n = wScale.size(); i < n; ++i)
-          sumScale[i] += (w0 * wScale[i]);
+          sumScale_[i] += (w0 * wScale[i]);
       }
       if (!wPDF.empty()) {
-        if (sumPDF.empty())
-          sumPDF.resize(wPDF.size(), 0);
+        if (sumPDF_.empty())
+          sumPDF_.resize(wPDF.size(), 0);
         for (unsigned int i = 0, n = wPDF.size(); i < n; ++i)
-          sumPDF[i] += (w0 * wPDF[i]);
+          sumPDF_[i] += (w0 * wPDF[i]);
       }
       if (!wRwgt.empty()) {
-        if (sumRwgt.empty())
-          sumRwgt.resize(wRwgt.size(), 0);
+        if (sumRwgt_.empty())
+          sumRwgt_.resize(wRwgt.size(), 0);
         for (unsigned int i = 0, n = wRwgt.size(); i < n; ++i)
-          sumRwgt[i] += (w0 * wRwgt[i]);
+          sumRwgt_[i] += (w0 * wRwgt[i]);
       }
       if (!wNamed.empty()) {
-        if (sumNamed.empty())
-          sumNamed.resize(wNamed.size(), 0);
+        if (sumNamed_.empty())
+          sumNamed_.resize(wNamed.size(), 0);
         for (unsigned int i = 0, n = wNamed.size(); i < n; ++i)
-          sumNamed[i] += (w0 * wNamed[i]);
+          sumNamed_[i] += (w0 * wNamed[i]);
       }
       incPSOnly(w0, wPS);
     }
 
     void merge(const Counter& other) {
-      num += other.num;
-      sumw += other.sumw;
-      sumw2 += other.sumw2;
-      if (sumScale.empty() && !other.sumScale.empty())
-        sumScale.resize(other.sumScale.size(), 0);
-      if (sumPDF.empty() && !other.sumPDF.empty())
-        sumPDF.resize(other.sumPDF.size(), 0);
-      if (sumRwgt.empty() && !other.sumRwgt.empty())
-        sumRwgt.resize(other.sumRwgt.size(), 0);
-      if (sumNamed.empty() && !other.sumNamed.empty())
-        sumNamed.resize(other.sumNamed.size(), 0);
-      if (sumPS.empty() && !other.sumPS.empty())
-        sumPS.resize(other.sumPS.size(), 0);
-      if (!other.sumScale.empty())
-        for (unsigned int i = 0, n = sumScale.size(); i < n; ++i)
-          sumScale[i] += other.sumScale[i];
-      if (!other.sumPDF.empty())
-        for (unsigned int i = 0, n = sumPDF.size(); i < n; ++i)
-          sumPDF[i] += other.sumPDF[i];
-      if (!other.sumRwgt.empty())
-        for (unsigned int i = 0, n = sumRwgt.size(); i < n; ++i)
-          sumRwgt[i] += other.sumRwgt[i];
-      if (!other.sumNamed.empty())
-        for (unsigned int i = 0, n = sumNamed.size(); i < n; ++i)
-          sumNamed[i] += other.sumNamed[i];
-      if (!other.sumPS.empty())
-        for (unsigned int i = 0, n = sumPS.size(); i < n; ++i)
-          sumPS[i] += other.sumPS[i];
+      num_ += other.num_;
+      sumw_ += other.sumw_;
+      sumw2_ += other.sumw2_;
+
+      mergeSumVectors(sumScale_, other.sumScale_);
+      mergeSumVectors(sumPDF_, other.sumPDF_);
+      mergeSumVectors(sumRwgt_, other.sumRwgt_);
+      mergeSumVectors(sumNamed_, other.sumNamed_);
+      mergeSumVectors(sumPS_, other.sumPS_);
     }
+
+    //private:
+    // the counters
+    long long num_ = 0;
+    long double sumw_ = 0;
+    long double sumw2_ = 0;
+
+    std::vector<long double> sumPDF_;
+    std::vector<long double> sumScale_;
+    std::vector<long double> sumRwgt_;
+    std::vector<long double> sumNamed_;
+    std::vector<long double> sumPS_;
   };
 
   struct CounterMap {
@@ -233,10 +229,6 @@ public:
         hasIssuedWarning_(false) {
     produces<nanoaod::FlatTable>();
     produces<std::string>("genModel");
-    produces<nanoaod::FlatTable>("LHEScale");
-    produces<nanoaod::FlatTable>("LHEPdf");
-    produces<nanoaod::FlatTable>("LHEReweighting");
-    produces<nanoaod::FlatTable>("LHENamed");
     produces<nanoaod::FlatTable>("PS");
     produces<nanoaod::MergeableCounterTable, edm::Transition::EndRun>();
     if (namedWeightIDs_.size() != namedWeightLabels_.size()) {
@@ -255,17 +247,15 @@ public:
 
   void produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
     // get my counter for weights
-    Counter* counter = streamCache(id)->get();
+    Counter& counter = *streamCache(id)->get();
 
     // generator information (always available)
-    edm::Handle<GenEventInfoProduct> genInfo;
-    iEvent.getByToken(genTag_, genInfo);
-    double weight = genInfo->weight();
+    auto const& genInfo = iEvent.get(genTag_);
 
     // table for gen info, always available
     auto out = std::make_unique<nanoaod::FlatTable>(1, "genWeight", true);
     out->setDoc("generator weight");
-    out->addColumnValue<float>("", weight, "generator weight", nanoaod::FlatTable::FloatColumn);
+    out->addColumnValue<float>("", genInfo.weight(), "generator weight", nanoaod::FlatTable::FloatColumn);
     iEvent.put(std::move(out));
 
     std::string model_label = streamCache(id)->getLabel();
@@ -273,7 +263,6 @@ public:
     iEvent.put(std::move(outM), "genModel");
 
     // tables for LHE weights, may not be filled
-    std::unique_ptr<nanoaod::FlatTable> lheScaleTab, lhePdfTab, lheRwgtTab, lheNamedTab;
     std::unique_ptr<nanoaod::FlatTable> genPSTab;
 
     edm::Handle<LHEEventProduct> lheInfo;
@@ -285,51 +274,41 @@ public:
     }
     if (lheInfo.isValid()) {
       // get the dynamic choice of weights
-      const DynamicWeightChoice* weightChoice = runCache(iEvent.getRun().index());
+      const DynamicWeightChoice& weightChoice = *runCache(iEvent.getRun().index());
       // go fill tables
-      fillLHEWeightTables(
-          counter, weightChoice, weight, *lheInfo, *genInfo, lheScaleTab, lhePdfTab, lheRwgtTab, lheNamedTab, genPSTab);
+      fillLHEWeightTables(counter, weightChoice, genInfo.weight(), *lheInfo, genInfo, genPSTab);
     } else {
       // Still try to add the PS weights
-      fillOnlyPSWeightTable(counter, weight, *genInfo, genPSTab);
+      fillOnlyPSWeightTable(counter, genInfo.weight(), genInfo, genPSTab);
       // make dummy values
-      lheScaleTab.reset(new nanoaod::FlatTable(1, "LHEScaleWeights", true));
-      lhePdfTab.reset(new nanoaod::FlatTable(1, "LHEPdfWeights", true));
-      lheRwgtTab.reset(new nanoaod::FlatTable(1, "LHEReweightingWeights", true));
-      lheNamedTab.reset(new nanoaod::FlatTable(1, "LHENamedWeights", true));
       if (!hasIssuedWarning_.exchange(true)) {
         edm::LogWarning("LHETablesProducer") << "No LHEEventProduct, so there will be no LHE Tables\n";
       }
     }
 
-    iEvent.put(std::move(lheScaleTab), "LHEScale");
-    iEvent.put(std::move(lhePdfTab), "LHEPdf");
-    iEvent.put(std::move(lheRwgtTab), "LHEReweighting");
-    iEvent.put(std::move(lheNamedTab), "LHENamed");
     iEvent.put(std::move(genPSTab), "PS");
   }
 
-  void fillLHEWeightTables(Counter* counter,
-                           const DynamicWeightChoice* weightChoice,
+  void fillLHEWeightTables(Counter& counter,
+                           const DynamicWeightChoice& weightChoice,
                            double genWeight,
                            const LHEEventProduct& lheProd,
                            const GenEventInfoProduct& genProd,
-                           std::unique_ptr<nanoaod::FlatTable>& outScale,
-                           std::unique_ptr<nanoaod::FlatTable>& outPdf,
-                           std::unique_ptr<nanoaod::FlatTable>& outRwgt,
-                           std::unique_ptr<nanoaod::FlatTable>& outNamed,
                            std::unique_ptr<nanoaod::FlatTable>& outPS) const {
-    bool lheDebug = debug_.exchange(
-        false);  // make sure only the first thread dumps out this (even if may still be mixed up with other output, but nevermind)
+    // make sure only the first thread dumps out this (even if may still be mixed up with other output, but nevermind)
+    bool lheDebug = debug_.exchange(false);
 
-    const std::vector<std::string>& scaleWeightIDs = weightChoice->scaleWeightIDs;
-    const std::vector<std::string>& pdfWeightIDs = weightChoice->pdfWeightIDs;
-    const std::vector<std::string>& rwgtWeightIDs = weightChoice->rwgtIDs;
+    const std::vector<std::string>& scaleWeightIDs = weightChoice.scaleWeightIDs;
+    const std::vector<std::string>& pdfWeightIDs = weightChoice.pdfWeightIDs;
+    const std::vector<std::string>& rwgtWeightIDs = weightChoice.rwgtIDs;
 
     double w0 = lheProd.originalXWGTUP();
 
-    std::vector<double> wScale(scaleWeightIDs.size(), 1), wPDF(pdfWeightIDs.size(), 1), wRwgt(rwgtWeightIDs.size(), 1),
-        wNamed(namedWeightIDs_.size(), 1);
+    std::vector<double> wScale(scaleWeightIDs.size(), 1);
+    std::vector<double> wPDF(pdfWeightIDs.size(), 1);
+    std::vector<double> wRwgt(rwgtWeightIDs.size(), 1);
+    std::vector<double> wNamed(namedWeightIDs_.size(), 1);
+
     for (auto& weight : lheProd.weights()) {
       if (lheDebug)
         printf("Weight  %+9.5f   rel %+9.5f   for id %s\n", weight.wgt, weight.wgt / w0, weight.id.c_str());
@@ -358,7 +337,7 @@ public:
         wPS[i - 6] = (genProd.weights()[i]) / w0;
       }
     }
-    outPS.reset(new nanoaod::FlatTable(wPS.size(), "PSWeight", false));
+    outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
     outPS->addColumn<float>("",
                             wPS,
                             vectorSize > 1 ? "PS weights (w_var / w_nominal); [0] is ISR=0.5 FSR=1; [1] is ISR=1 "
@@ -367,35 +346,10 @@ public:
                             nanoaod::FlatTable::FloatColumn,
                             lheWeightPrecision_);
 
-    outScale.reset(new nanoaod::FlatTable(wScale.size(), "LHEScaleWeight", false));
-    outScale->addColumn<float>(
-        "", wScale, weightChoice->scaleWeightsDoc, nanoaod::FlatTable::FloatColumn, lheWeightPrecision_);
-
-    outPdf.reset(new nanoaod::FlatTable(wPDF.size(), "LHEPdfWeight", false));
-    outPdf->addColumn<float>(
-        "", wPDF, weightChoice->pdfWeightsDoc, nanoaod::FlatTable::FloatColumn, lheWeightPrecision_);
-
-    outRwgt.reset(new nanoaod::FlatTable(wRwgt.size(), "LHEReweightingWeight", false));
-    outRwgt->addColumn<float>(
-        "", wRwgt, weightChoice->rwgtWeightDoc, nanoaod::FlatTable::FloatColumn, lheWeightPrecision_);
-
-    outNamed.reset(new nanoaod::FlatTable(1, "LHEWeight", true));
-    outNamed->addColumnValue<float>("originalXWGTUP",
-                                    lheProd.originalXWGTUP(),
-                                    "Nominal event weight in the LHE file",
-                                    nanoaod::FlatTable::FloatColumn);
-    for (unsigned int i = 0, n = wNamed.size(); i < n; ++i) {
-      outNamed->addColumnValue<float>(namedWeightLabels_[i],
-                                      wNamed[i],
-                                      "LHE weight for id " + namedWeightIDs_[i] + ", relative to nominal",
-                                      nanoaod::FlatTable::FloatColumn,
-                                      lheWeightPrecision_);
-    }
-
-    counter->incLHE(genWeight, wScale, wPDF, wRwgt, wNamed, wPS);
+    counter.incLHE(genWeight, wScale, wPDF, wRwgt, wNamed, wPS);
   }
 
-  void fillOnlyPSWeightTable(Counter* counter,
+  void fillOnlyPSWeightTable(Counter& counter,
                              double genWeight,
                              const GenEventInfoProduct& genProd,
                              std::unique_ptr<nanoaod::FlatTable>& outPS) const {
@@ -408,7 +362,7 @@ public:
       }
     }
 
-    outPS.reset(new nanoaod::FlatTable(wPS.size(), "PSWeight", false));
+    outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
     outPS->addColumn<float>("",
                             wPS,
                             vectorSize > 1 ? "PS weights (w_var / w_nominal); [0] is ISR=0.5 FSR=1; [1] is ISR=1 "
@@ -417,16 +371,16 @@ public:
                             nanoaod::FlatTable::FloatColumn,
                             lheWeightPrecision_);
 
-    counter->incGenOnly(genWeight);
-    counter->incPSOnly(genWeight, wPS);
+    counter.incGenOnly(genWeight);
+    counter.incPSOnly(genWeight, wPS);
   }
 
   // create an empty counter
   std::shared_ptr<DynamicWeightChoice> globalBeginRun(edm::Run const& iRun, edm::EventSetup const&) const override {
     edm::Handle<LHERunInfoProduct> lheInfo;
 
-    bool lheDebug = debugRun_.exchange(
-        false);  // make sure only the first thread dumps out this (even if may still be mixed up with other output, but nevermind)
+    // make sure only the first thread dumps out this (even if may still be mixed up with other output, but nevermind)
+    bool lheDebug = debugRun_.exchange(false);
     auto weightChoice = std::make_shared<DynamicWeightChoice>();
 
     // getByToken throws since we're not in the endRun (see https://github.com/cms-sw/cmssw/pull/18499)
@@ -797,40 +751,40 @@ public:
     auto out = std::make_unique<nanoaod::MergeableCounterTable>();
 
     for (auto x : runCounterMap->countermap) {
-      auto runCounter = &(x.second);
+      auto& runCounter = x.second;
       std::string label = std::string("_") + x.first;
       std::string doclabel = (!x.first.empty()) ? (std::string(", for model label ") + x.first) : "";
 
-      out->addInt("genEventCount" + label, "event count" + doclabel, runCounter->num);
-      out->addFloat("genEventSumw" + label, "sum of gen weights" + doclabel, runCounter->sumw);
-      out->addFloat("genEventSumw2" + label, "sum of gen (weight^2)" + doclabel, runCounter->sumw2);
+      out->addInt("genEventCount" + label, "event count" + doclabel, runCounter.num_);
+      out->addFloat("genEventSumw" + label, "sum of gen weights" + doclabel, runCounter.sumw_);
+      out->addFloat("genEventSumw2" + label, "sum of gen (weight^2)" + doclabel, runCounter.sumw2_);
 
-      double norm = runCounter->sumw ? 1.0 / runCounter->sumw : 1;
-      auto sumScales = runCounter->sumScale;
+      double norm = runCounter.sumw_ ? 1.0 / runCounter.sumw_ : 1;
+      auto sumScales = runCounter.sumScale_;
       for (auto& val : sumScales)
         val *= norm;
       out->addVFloat("LHEScaleSumw" + label,
                      "Sum of genEventWeight * LHEScaleWeight[i], divided by genEventSumw" + doclabel,
                      sumScales);
-      auto sumPDFs = runCounter->sumPDF;
+      auto sumPDFs = runCounter.sumPDF_;
       for (auto& val : sumPDFs)
         val *= norm;
       out->addVFloat(
           "LHEPdfSumw" + label, "Sum of genEventWeight * LHEPdfWeight[i], divided by genEventSumw" + doclabel, sumPDFs);
-      if (!runCounter->sumRwgt.empty()) {
-        auto sumRwgts = runCounter->sumRwgt;
+      if (!runCounter.sumRwgt_.empty()) {
+        auto sumRwgts = runCounter.sumRwgt_;
         for (auto& val : sumRwgts)
           val *= norm;
         out->addVFloat("LHEReweightingSumw" + label,
                        "Sum of genEventWeight * LHEReweightingWeight[i], divided by genEventSumw" + doclabel,
                        sumRwgts);
       }
-      if (!runCounter->sumNamed.empty()) {  // it could be empty if there's no LHE info in the sample
+      if (!runCounter.sumNamed_.empty()) {  // it could be empty if there's no LHE info in the sample
         for (unsigned int i = 0, n = namedWeightLabels_.size(); i < n; ++i) {
           out->addFloat(
               "LHESumw_" + namedWeightLabels_[i] + label,
               "Sum of genEventWeight * LHEWeight_" + namedWeightLabels_[i] + ", divided by genEventSumw" + doclabel,
-              runCounter->sumNamed[i] * norm);
+              runCounter.sumNamed_[i] * norm);
         }
       }
     }
