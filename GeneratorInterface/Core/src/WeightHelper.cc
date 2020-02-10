@@ -90,7 +90,7 @@ namespace gen {
         for (const auto& lab : attributeNames_.at(label)) {
             auto& content = weight.content;
             
-            std::regex expr(lab+"=([0-9]+)");
+            std::regex expr(lab+"=([0-9.]+)");
             std::smatch match;
             if (std::regex_search(content, match, expr)) {
                 return boost::algorithm::trim_copy(match.str(1));
@@ -103,7 +103,7 @@ namespace gen {
         auto& group = weightGroups_.back();
         auto& scaleGroup = dynamic_cast<gen::ScaleWeightGroupInfo&>(group);
         std::string muRText = searchAttributes("mur", weight);
-        std::string muFText = searchAttributes("mur", weight);
+        std::string muFText = searchAttributes("muf", weight);
         if (muRText.empty() || muFText.empty()) {
             scaleGroup.setIsWellFormed(false);
             return;
@@ -112,7 +112,7 @@ namespace gen {
         try {
             float muR = std::stof(muRText);
             float muF = std::stof(muFText);
-            scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
+	    scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
         }
         catch(std::invalid_argument& e) {
             scaleGroup.setIsWellFormed(false);
@@ -122,36 +122,36 @@ namespace gen {
     void WeightHelper::updatePdfInfo(const ParsedWeight& weight) {
         auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
         std::string lhaidText = searchAttributes("pdf", weight);
-        int lhaid = 0;
-        if (!lhaidText.empty()) {
-            try {
-                lhaid = std::stoi(lhaidText);
-            }
-            catch(std::invalid_argument& e) {
-                pdfGroup.setIsWellFormed(false);
-            }
+	int lhaid = 0;
+	if (!lhaidText.empty()) {
+	    try {
+		lhaid = std::stoi(lhaidText);
+	    }
+	    catch(std::invalid_argument& e) {
+		pdfGroup.setIsWellFormed(false);
+	    }
 
-            if (!pdfGroup.containsParentLhapdfId(lhaid, weight.index)) {
-                std::string description = "";
-                auto pdfInfo = std::find_if(pdfSetsInfo.begin(), pdfSetsInfo.end(),
-                    [lhaid] (const PdfSetInfo& setInfo) { return setInfo.lhapdfId == lhaid; });
-                if (pdfInfo != pdfSetsInfo.end()) {
-                    pdfGroup.setUncertaintyType(pdfInfo->uncertaintyType);
-                    if (pdfInfo->uncertaintyType == gen::kHessianUnc)
-                        description += "Hessian ";
-                    else if (pdfInfo->uncertaintyType == gen::kMonteCarloUnc)
-                        description += "Monte Carlo ";
-                    description += "Uncertainty sets for LHAPDF set " + pdfInfo->name;
-                    description += " with LHAID = " + std::to_string(lhaid);
-                    description += "; ";
-                }
-                //else
-                //    description += "Uncertainty sets for LHAPDF set with LHAID = " + std::to_string(lhaid);
-                pdfGroup.addLhapdfId(lhaid, weight.index);
-                pdfGroup.appendDescription(description);
-            }
-        }
-        else
+	    if (!pdfGroup.containsParentLhapdfId(lhaid, weight.index)) {
+		std::string description = "";
+		auto pdfInfo = std::find_if(pdfSetsInfo.begin(), pdfSetsInfo.end(),
+					    [lhaid] (const PdfSetInfo& setInfo) { return setInfo.lhapdfId == lhaid; });
+		if (pdfInfo != pdfSetsInfo.end()) {
+		    pdfGroup.setUncertaintyType(pdfInfo->uncertaintyType);
+		    if (pdfInfo->uncertaintyType == gen::kHessianUnc)
+			description += "Hessian ";
+		    else if (pdfInfo->uncertaintyType == gen::kMonteCarloUnc)
+			description += "Monte Carlo ";
+		    description += "Uncertainty sets for LHAPDF set " + pdfInfo->name;
+		    description += " with LHAID = " + std::to_string(lhaid);
+		    description += "; ";
+		}
+		//else
+		//    description += "Uncertainty sets for LHAPDF set with LHAID = " + std::to_string(lhaid);
+		pdfGroup.addLhapdfId(lhaid, weight.index);
+		pdfGroup.appendDescription(description);
+	    }
+	}
+	else
             pdfGroup.setIsWellFormed(false);
     }
 
