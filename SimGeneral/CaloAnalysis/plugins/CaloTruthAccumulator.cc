@@ -430,21 +430,15 @@ CaloTruthAccumulator::CaloTruthAccumulator(const edm::ParameterSet &config,
       maxPseudoRapidity_(config.getParameter<double>("MaxPseudoRapidity")),
       premixStage1_(config.getParameter<bool>("premixStage1")),
       geometryType_(-1),
-<<<<<<< HEAD
-      produceRealisticSimClusters_(config.getParameter<bool>("produceRealisticSimClusters")) {
+      saveSimClusterHistory_(config.getParameter<bool>("saveSimClusterHistory")) {
   producesCollector.produces<SimClusterCollection>("MergedCaloTruth");
   producesCollector.produces<CaloParticleCollection>("MergedCaloTruth");
-=======
-      saveSimClusterHistory_(config.getParameter<bool>("saveSimClusterHistory")) {
-  mixMod.produces<SimClusterCollection>("MergedCaloTruth");
-  mixMod.produces<CaloParticleCollection>("MergedCaloTruth");
->>>>>>> Refactoring.
   if (premixStage1_) {
     producesCollector.produces<std::vector<std::pair<unsigned int, float>>>("MergedCaloTruth");
   }
 
   if (saveSimClusterHistory_) {
-    mixMod.produces<std::vector<SimClusterHistory>>("MergedCaloTruth");
+    producesCollector.produces<std::vector<SimClusterHistory>>("MergedCaloTruth");
   }
 
   iC.consumes<std::vector<SimTrack>>(simTrackLabel_);
@@ -875,3 +869,4 @@ void CaloTruthAccumulator::assignSimClusterCoordinates(std::unique_ptr<SimCluste
 
 // Register with the framework
 DEFINE_DIGI_ACCUMULATOR(CaloTruthAccumulator);
+
