@@ -57,9 +57,9 @@ namespace gen {
 
         // Possible names for the same thing
         const std::unordered_map<std::string, std::vector<std::string>> attributeNames_ = {
-            {"muf",  {"muR", "MUR", "muf","facscfact"}},
-            {"mur",  {"muF", "MUF", "mur","renscfact"}},
-            {"pdf", {"PDF", "PDF set", "lhapdf", "pdf", "pdf set", "pdfset"}}
+	  {"muf",  {"muF", "MUF", "muf","facscfact"}},
+	  {"mur",  {"muR", "MUR", "mur","renscfact"}},
+	  {"pdf", {"PDF", "PDF set", "lhapdf", "pdf", "pdf set", "pdfset"}},
         };
     };
 }

@@ -90,7 +90,7 @@ namespace gen {
         for (const auto& lab : attributeNames_.at(label)) {
             auto& content = weight.content;
             
-            std::regex expr(lab+"=([0-9.]+)");
+            std::regex expr(lab+"=([0-9.]+(?:[eE][+-]?[0-9]+)?)");
             std::smatch match;
             if (std::regex_search(content, match, expr)) {
                 return boost::algorithm::trim_copy(match.str(1));
@@ -112,6 +112,7 @@ namespace gen {
         try {
             float muR = std::stof(muRText);
             float muF = std::stof(muFText);
+	    std::cout << muR << " " << muF << ": " << weight.content << "\n";
 	    scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
         }
         catch(std::invalid_argument& e) {
