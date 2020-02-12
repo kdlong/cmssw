@@ -11,6 +11,7 @@
 #include "SimDataFormats/GeneratorProducts/interface/ScaleWeightGroupInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/MEParamWeightGroupInfo.h"
 #include <boost/algorithm/string.hpp>
+#include <fstream>
 
 namespace gen {
     struct PdfSetInfo {
@@ -60,6 +61,7 @@ namespace gen {
 	  {"muf",  {"muF", "MUF", "muf","facscfact"}},
 	  {"mur",  {"muR", "MUR", "mur","renscfact"}},
 	  {"pdf", {"PDF", "PDF set", "lhapdf", "pdf", "pdf set", "pdfset"}},
+	  //{"dyn", {"DYN_SCALE", "dyn_scale_choice"}},
         };
     };
 }

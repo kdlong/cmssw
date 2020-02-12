@@ -50,11 +50,22 @@ namespace gen {
             {"CT14qed_inc_proton", 13400, kHessianUnc},
             {"LUXqed17_plus_PDF4LHC15_nnlo_100", 82200, kMonteCarloUnc},
         })
-    { model_ = ""; }
+    {
+	model_ = "";
+	// start to read in lhapdf file. Not sure how to get uncType
+	// std::string lhapdf_path = std::getenv("LHAPDF_DATA_PATH");
+	// std::ifstream pdf_file;
+	// pdf_file.open(lhapdf_path+"/pdfsets.index");
+	// int lha_set, dummy;
+	// std::string lha_name;
+	// while(pdf_file >> lha_set >> lha_name >> dummy) {
+	//     std::cout << lha_name << ": " << lha_set << "\n";
+	// }
+    }
     
     bool WeightHelper::isScaleWeightGroup(const ParsedWeight& weight) {
         return (weight.groupname.find("scale_variation") != std::string::npos
-                    || weight.groupname.find("Central scale variation") != std::string::npos);
+		|| weight.groupname.find("Central scale variation") != std::string::npos);
     }
 
     bool WeightHelper::isPdfWeightGroup(const ParsedWeight& weight) {
@@ -108,11 +119,17 @@ namespace gen {
             scaleGroup.setIsWellFormed(false);
             return;
         }
+	// currently skips events with a dynscale. May add back
+        //size_t dyn = -1;
+	if (weight.attributes.find("DYN_SCALE") != weight.attributes.end()) {
+	    //  dyn = std::stoi(boost::algorithm::trim_copy_if(weight.attributes.at("DYN_SCALE"), boost::is_any_of("\"")));
+	    return;
+	}
 
+	
         try {
             float muR = std::stof(muRText);
             float muF = std::stof(muFText);
-	    std::cout << muR << " " << muF << ": " << weight.content << "\n";
 	    scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
         }
         catch(std::invalid_argument& e) {
@@ -168,14 +185,14 @@ namespace gen {
     }
 
     void WeightHelper::splitPdfGroups() {
-    //    std::vector<gen::PdfWeightGroupInfo> groupsToSplit;
-    //    for (auto& group: weightGroups_) {
-    //        if (group.weightType() == gen::WeightType::kPdfWeights) {
-    //            gen::PdfWeightGroupInfo& = dynamic_cast<gen::PdfWeightGroupInfo&>(group);
-    //            if (group.containsMultipleSets())
-    //                groupsToSplit.push_back(group);
-    //        }
-    //    }
+	// std::vector<gen::PdfWeightGroupInfo> groupsToSplit;
+	// for (auto& group: weightGroups_) {
+	//     if (group.weightType() == gen::WeightType::kPdfWeights) {
+	// 	gen::PdfWeightGroupInfo& = dynamic_cast<gen::PdfWeightGroupInfo&>(group);
+	// 	if (group.containsMultipleSets())
+	// 	    groupsToSplit.push_back(group);
+	//     }
+	// }
     }
 
     std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<gen::WeightsInfo> weights, float w0) {

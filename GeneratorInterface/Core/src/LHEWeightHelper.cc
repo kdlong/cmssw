@@ -6,13 +6,13 @@ using namespace tinyxml2;
 
 namespace gen {
     void LHEWeightHelper::setHeaderLines(std::vector<std::string> headerLines) {
-        headerLines_ = headerLines;
+	headerLines_ = headerLines;
     }
 
     void LHEWeightHelper::parseWeights() {
 	parsedWeights_.clear();
 	tinyxml2::XMLDocument xmlDoc;
-	std::cout << "xmlStatus: " <<xmlDoc.Parse(("<root>" + boost::algorithm::join(headerLines_, "") + "</root>").c_str()) << std::endl;
+	xmlDoc.Parse(("<root>" + boost::algorithm::join(headerLines_, "") + "</root>").c_str());
 	std::vector<std::string> nameAlts_ = {"name", "type"};
 	tinyxml2::XMLElement* root = xmlDoc.FirstChildElement("root");
 	size_t weightIndex = 0;
@@ -21,8 +21,9 @@ namespace gen {
 	    if (strcmp(e->Name(), "weight") == 0) {
 		// we are here if there is a weight that does not belong to any group
 		std::string text = "";
-		if (e->GetText())
+		if (e->GetText()) {
 		    text = e->GetText();
+		}
 		parsedWeights_.push_back({e->Attribute("id"), weightIndex++, groupName, text});
 	    }
 	    if (strcmp(e->Name(), "weightgroup") == 0) {
@@ -53,7 +54,7 @@ namespace gen {
     }
 
     void LHEWeightHelper::buildGroups() {
-        weightGroups_.clear();
+	weightGroups_.clear();
 	std::string currentGroupName;
 	for (const auto& weight : parsedWeights_) {
 	    if (weight.groupname != currentGroupName) {
@@ -61,7 +62,7 @@ namespace gen {
 	    }
 	    currentGroupName = weight.groupname;
 	    WeightGroupInfo& group = weightGroups_.back();
-            
+	    
 	    group.addContainedId(weight.index, weight.id, weight.content);
 	    if (group.weightType() == gen::WeightType::kScaleWeights)
 		updateScaleInfo(weight);
@@ -71,12 +72,12 @@ namespace gen {
 	
 	// checks
 	for(auto& wgt : weightGroups_) {
-            if(! wgt.isWellFormed()) std::cout << "\033[1;31m";
+	    if(! wgt.isWellFormed()) std::cout << "\033[1;31m";
 	    std::cout << std::boolalpha << wgt.name() << " (" << wgt.firstId() << "-" << wgt.lastId() << "): " << wgt.isWellFormed() << std::endl;
-            if (wgt.weightType() == gen::WeightType::kScaleWeights) {
+	    if (wgt.weightType() == gen::WeightType::kScaleWeights) {
 		auto& wgtScale = dynamic_cast<gen::ScaleWeightGroupInfo&>( wgt);
 		std::cout << wgtScale.centralIndex() << " ";
-                std::cout << wgtScale.muR1muF2Index() << " ";
+		std::cout << wgtScale.muR1muF2Index() << " ";
 		std::cout << wgtScale.muR1muF05Index() << " ";
 		std::cout << wgtScale.muR2muF1Index() << " ";
 		std::cout << wgtScale.muR2muF2Index() << " ";
@@ -87,20 +88,20 @@ namespace gen {
 	    } else if (wgt.weightType() == gen::WeightType::kPdfWeights) {
 		std::cout << wgt.description() << "\n";
 	    }
-	    if(! wgt.isWellFormed()) std::cout << "\033[0m";                
+	    if(! wgt.isWellFormed()) std::cout << "\033[0m";		     
 	    //std::cout <<  << "\n";
 	}
 	//splitPdfGroups();
     }
 
     std::unique_ptr<WeightGroupInfo> LHEWeightHelper::buildGroup(const ParsedWeight& weight) {
-        if (isScaleWeightGroup(weight))
-            return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
-        else if (isPdfWeightGroup(weight))
-            return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
-        else if (isMEParamWeightGroup(weight))
-            return std::make_unique<MEParamWeightGroupInfo>(weight.groupname);
+	if (isScaleWeightGroup(weight))
+	    return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
+	else if (isPdfWeightGroup(weight))
+	    return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
+	else if (isMEParamWeightGroup(weight))
+	    return std::make_unique<MEParamWeightGroupInfo>(weight.groupname);
 
-        return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
+	return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
     }
 }
