@@ -1,4 +1,5 @@
 <use   name="clhep"/>
+<use   name="root"/>
 <use   name="CalibFormats/SiStripObjects"/>
 <use   name="CalibTracker/Records"/>
 <use   name="CalibTracker/SiPixelESProducers"/>

@@ -14,6 +14,9 @@ namespace SimDataFormats {
     SimClusterRefProd scrp;
     SimClusterContainer scc;
 
+    SimClusterHistory sch;
+    edm::Wrapper<SimClusterHistory> wsch;
+
     CaloParticle cp;
     CaloParticleCollection vcp;
     edm::Wrapper<CaloParticleCollection> wvcp;
