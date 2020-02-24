@@ -10,6 +10,7 @@
 #include "IOMC/ParticleGuns/interface/FlatRandomPtGunProducer.h"
 #include "IOMC/ParticleGuns/interface/FlatRandomEThetaGunProducer.h"
 #include "IOMC/ParticleGuns/interface/FlatRandomMultiParticlePGunProducer.h"
+#include "IOMC/ParticleGuns/interface/FlatEtaRangeGunProducer.h"
 #include "IOMC/ParticleGuns/interface/FlatRandomPtThetaGunProducer.h"
 #include "IOMC/ParticleGuns/interface/FlatRandomOneOverPtGunProducer.h"
 #include "IOMC/ParticleGuns/interface/ExpoRandomPtGunProducer.h"
@@ -20,6 +21,7 @@
 #include "IOMC/ParticleGuns/interface/FlatRandomPtAndDxyGunProducer.h"
 #include "IOMC/ParticleGuns/interface/RandomMultiParticlePGunProducer.h"
 #include "IOMC/ParticleGuns/interface/CloseByParticleGunProducer.h"
+#include "IOMC/ParticleGuns/interface/CloseByFlatDeltaRGunProducer.h"
 #include "IOMC/ParticleGuns/interface/RandomXiThetaGunProducer.h"
 #include "IOMC/ParticleGuns/interface/BeamMomentumGunProducer.h"
 // particle gun prototypes
@@ -42,6 +44,8 @@ using edm::FlatRandomEThetaGunProducer;
 DEFINE_FWK_MODULE(FlatRandomEThetaGunProducer);
 using edm::FlatRandomMultiParticlePGunProducer;
 DEFINE_FWK_MODULE(FlatRandomMultiParticlePGunProducer);
+using edm::FlatEtaRangeGunProducer;
+DEFINE_FWK_MODULE(FlatEtaRangeGunProducer);
 using edm::FlatRandomPtThetaGunProducer;
 DEFINE_FWK_MODULE(FlatRandomPtThetaGunProducer);
 using edm::FlatRandomOneOverPtGunProducer;
@@ -62,5 +66,7 @@ using edm::RandomMultiParticlePGunProducer;
 DEFINE_FWK_MODULE(RandomMultiParticlePGunProducer);
 using edm::CloseByParticleGunProducer;
 DEFINE_FWK_MODULE(CloseByParticleGunProducer);
+using edm::CloseByFlatDeltaRGunProducer;
+DEFINE_FWK_MODULE(CloseByFlatDeltaRGunProducer);
 using edm::RandomXiThetaGunProducer;
 DEFINE_FWK_MODULE(RandomXiThetaGunProducer);
