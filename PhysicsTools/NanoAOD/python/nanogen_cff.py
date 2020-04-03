@@ -1,6 +1,7 @@
 from PhysicsTools.NanoAOD.taus_cff import *
 from PhysicsTools.NanoAOD.jets_cff import *
-from PhysicsTools.NanoAOD.globals_cff import *
+from PhysicsTools.NanoAOD.globals_cff import genTable
+from PhysicsTools.NanoAOD.met_cff import metMCTable
 from PhysicsTools.NanoAOD.genparticles_cff import *
 from PhysicsTools.NanoAOD.particlelevel_cff import *
 from PhysicsTools.NanoAOD.lheInfoTable_cfi import *
@@ -39,18 +40,6 @@ nanoMetadata = cms.EDProducer("UniqueStringProducer",
     )
 )
 
-metGenTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
-    src = cms.InputTag("genMetTrue"),
-    name = cms.string("GenMET"),
-    doc = cms.string("Gen MET"),
-    singleton = cms.bool(True),
-    extension = cms.bool(False),
-    variables = cms.PSet(
-       pt  = Var("pt",  float, doc="pt", precision=10),
-       phi = Var("phi", float, doc="phi", precision=10),
-    ),
-)
-
 nanogenSequence = cms.Sequence(
     nanoMetadata+
     genWeights+
@@ -72,30 +61,14 @@ nanogenSequence = cms.Sequence(
     tautagger+
     rivetProducerHTXS+
     particleLevelTables+
-    metGenTable+
+    metMCTable+
     genWeightsTable+
     lheWeightsTable+
     lheInfoTable
 )
 
-NANOAODGENoutput = cms.OutputModule("NanoAODOutputModule",
-    compressionAlgorithm = cms.untracked.string('LZMA'),
-    compressionLevel = cms.untracked.int32(9),
-    dataset = cms.untracked.PSet(
-        dataTier = cms.untracked.string('NANOAODSIM'),
-        filterName = cms.untracked.string('')
-    ),
-    fileName = cms.untracked.string('nanogen.root'),
-    outputCommands = cms.untracked.vstring(
-        'drop *',
-        "keep nanoaodFlatTable_*Table_*_*",     # event data
-        "keep String_*_genModel_*",  # generator model data
-        "keep nanoaodMergeableCounterTable_*Table_*_*", # accumulated per/run or per/lumi data
-        "keep nanoaodUniqueString_nanoMetadata_*_*",   # basic metadata
-    )
-)
-
 def nanoGenCommonCustomize(process):
+    process.rivetMetTable.extension = False
     process.lheInfoTable.storeLHEParticles = True
     process.lheInfoTable.precision = 14
     process.genJetFlavourAssociation.jets = process.genJetTable.src
@@ -116,6 +89,10 @@ def customizeNanoGENFromMini(process):
     process.nanoAOD_step.insert(0, process.genParticles2HepMC)
     process.nanoAOD_step.insert(0, process.mergedGenParticles)
 
+    process.metMCTable.src = "slimmedMETs"
+    process.metMCTable.variables.pt = Var("genMET.pt", float, doc="pt", precision=10)
+    process.metMCTable.variables.phi = Var("genMET.phi", float, doc="phi", precision=10)
+
     process.rivetProducerHTXS.HepMCCollection = "genParticles2HepMCHiggsVtx:unsmeared"
     process.genParticleTable.src = "prunedGenParticles"
     process.patJetPartons.particles = "prunedGenParticles"
@@ -130,6 +107,10 @@ def customizeNanoGENFromMini(process):
     return process
 
 def customizeNanoGEN(process):
+    process.metMCTable.src = "genMetTrue"
+    process.metMCTable.variables.pt = Var("pt", float, doc="pt", precision=10)
+    process.metMCTable.variables.phi = Var("phi", float, doc="phi", precision=10)
+
     process.rivetProducerHTXS.HepMCCollection = "generatorSmeared"
     process.genParticleTable.src = "genParticles"
     process.patJetPartons.particles = "genParticles"
@@ -139,6 +120,11 @@ def customizeNanoGEN(process):
     process.genJetAK8Table.src = "ak8GenJets"
     process.tauGenJets.GenParticles = "genParticles"
     process.genVisTaus.srcGenParticles = "genParticles"
+
+    # In case customizeNanoGENFromMini has already been called
+    process.nanoAOD_step.remove(process.genParticles2HepMCHiggsVtx)
+    process.nanoAOD_step.remove(process.genParticles2HepMC)
+    process.nanoAOD_step.remove(process.mergedGenParticles)
     nanoGenCommonCustomize(process)
     return process
 
