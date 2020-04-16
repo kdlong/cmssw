@@ -243,11 +243,13 @@ void CaloTrkProcessing::update(const G4Step* aStep) {
     }
   }
   if (doFineCalo_ && (!trkInfo->isInHistory())) {
-    const G4VTouchable* touch = aStep->GetPreStepPoint()->GetTouchable();
-    if (isItCalo(touch, fineDetectors_) >= 0) {
+    const G4VTouchable* pre_touch = aStep->GetPreStepPoint()->GetTouchable();
+    const G4VTouchable* post_touch = aStep->GetPostStepPoint()->GetTouchable();
+    bool crossHGCBoundary = isItCalo(pre_touch, fineDetectors_) < 0 && isItCalo(post_touch, fineDetectors_) >= 0;
+    if (isItCalo(pre_touch, fineDetectors_) >= 0 || crossHGCBoundary) {
       int pdg = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
       double cut = (pdg == 22) ? eMinFinePhoton_ : eMinFine_;
-      if (aStep->GetTrack()->GetKineticEnergy() / CLHEP::MeV > cut) {
+      if (crossHGCBoundary || aStep->GetTrack()->GetKineticEnergy() / CLHEP::MeV > cut) {
         trkInfo->putInHistory();
         trkInfo->setIDfineCalo(id);
       }
