@@ -52,6 +52,7 @@ namespace gen {
         void updateScaleInfo(const ParsedWeight& weight);
         void updatePdfInfo(const ParsedWeight& weight);
         void splitPdfGroups();
+        std::vector<PdfSetInfo> setupPdfSetsInfo();
         std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;
         std::string searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const;
         std::string searchAttributesByRegex(const std::string& label, const ParsedWeight& weight) const;
