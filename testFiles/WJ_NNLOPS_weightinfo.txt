@@ -1,0 +1,1612 @@
+<weightgroup name='scale_variation' combine='envelope' >
+<weight id='1001' > lhapdf=306000 renscfact=1d0 facscfact=1d0 </weight>
+<weight id='1002' > lhapdf=306000 renscfact=1d0 facscfact=2d0 </weight>
+<weight id='1003' > lhapdf=306000 renscfact=1d0 facscfact=0.5d0 </weight>
+<weight id='1004' > lhapdf=306000 renscfact=2d0 facscfact=1d0 </weight>
+<weight id='1005' > lhapdf=306000 renscfact=2d0 facscfact=2d0 </weight>
+<weight id='1006' > lhapdf=306000 renscfact=2d0 facscfact=0.5d0 </weight>
+<weight id='1007' > lhapdf=306000 renscfact=0.5d0 facscfact=1d0 </weight>
+<weight id='1008' > lhapdf=306000 renscfact=0.5d0 facscfact=2d0 </weight>
+<weight id='1009' > lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 </weight>
+<weight id='1001-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=1d0 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='1002-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=2d0 DYNNLO_mur1_muf1_3D.top MINLO-W2-denom.top</weight>
+<weight id='1003-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=0.5d0 DYNNLO_mur1_muf1_3D.top MINLO-W3-denom.top</weight>
+<weight id='1004-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=1d0 DYNNLO_mur1_muf1_3D.top MINLO-W4-denom.top</weight>
+<weight id='1005-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=2d0 DYNNLO_mur1_muf1_3D.top MINLO-W5-denom.top</weight>
+<weight id='1006-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=0.5d0 DYNNLO_mur1_muf1_3D.top MINLO-W6-denom.top</weight>
+<weight id='1007-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=1d0 DYNNLO_mur1_muf1_3D.top MINLO-W7-denom.top</weight>
+<weight id='1008-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=2d0 DYNNLO_mur1_muf1_3D.top MINLO-W8-denom.top</weight>
+<weight id='1009-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 DYNNLO_mur1_muf1_3D.top MINLO-W9-denom.top</weight>
+</weightgroup>
+<weightgroup name='scale_variation2' combine='envelope' >
+<weight id='1010' > lhapdf=306000 renscfact=1d0 facscfact=1d0 </weight>
+<weight id='1011' > lhapdf=306000 renscfact=1d0 facscfact=2d0 </weight>
+<weight id='1012' > lhapdf=306000 renscfact=1d0 facscfact=0.5d0 </weight>
+<weight id='1013' > lhapdf=306000 renscfact=2d0 facscfact=1d0 </weight>
+<weight id='1014' > lhapdf=306000 renscfact=2d0 facscfact=2d0 </weight>
+<weight id='1015' > lhapdf=306000 renscfact=2d0 facscfact=0.5d0 </weight>
+<weight id='1016' > lhapdf=306000 renscfact=0.5d0 facscfact=1d0 </weight>
+<weight id='1017' > lhapdf=306000 renscfact=0.5d0 facscfact=2d0 </weight>
+<weight id='1018' > lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 </weight>
+<weight id='1019' > lhapdf=306000 renscfact=1d0 facscfact=1d0 </weight>
+<weight id='1020' > lhapdf=306000 renscfact=1d0 facscfact=2d0 </weight>
+<weight id='1021' > lhapdf=306000 renscfact=1d0 facscfact=0.5d0 </weight>
+<weight id='1022' > lhapdf=306000 renscfact=2d0 facscfact=1d0 </weight>
+<weight id='1023' > lhapdf=306000 renscfact=2d0 facscfact=2d0 </weight>
+<weight id='1024' > lhapdf=306000 renscfact=2d0 facscfact=0.5d0 </weight>
+<weight id='1025' > lhapdf=306000 renscfact=0.5d0 facscfact=1d0 </weight>
+<weight id='1026' > lhapdf=306000 renscfact=0.5d0 facscfact=2d0 </weight>
+<weight id='1027' > lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 </weight>
+<weight id='1028' > lhapdf=306000 renscfact=1d0 facscfact=1d0 </weight>
+<weight id='1029' > lhapdf=306000 renscfact=1d0 facscfact=2d0 </weight>
+<weight id='1030' > lhapdf=306000 renscfact=1d0 facscfact=0.5d0 </weight>
+<weight id='1031' > lhapdf=306000 renscfact=2d0 facscfact=1d0 </weight>
+<weight id='1032' > lhapdf=306000 renscfact=2d0 facscfact=2d0 </weight>
+<weight id='1033' > lhapdf=306000 renscfact=2d0 facscfact=0.5d0 </weight>
+<weight id='1034' > lhapdf=306000 renscfact=0.5d0 facscfact=1d0 </weight>
+<weight id='1035' > lhapdf=306000 renscfact=0.5d0 facscfact=2d0 </weight>
+<weight id='1036' > lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 </weight>
+<weight id='1037' > lhapdf=306000 renscfact=1d0 facscfact=1d0 </weight>
+<weight id='1038' > lhapdf=306000 renscfact=1d0 facscfact=2d0 </weight>
+<weight id='1039' > lhapdf=306000 renscfact=1d0 facscfact=0.5d0 </weight>
+<weight id='1040' > lhapdf=306000 renscfact=2d0 facscfact=1d0 </weight>
+<weight id='1041' > lhapdf=306000 renscfact=2d0 facscfact=2d0 </weight>
+<weight id='1042' > lhapdf=306000 renscfact=2d0 facscfact=0.5d0 </weight>
+<weight id='1043' > lhapdf=306000 renscfact=0.5d0 facscfact=1d0 </weight>
+<weight id='1044' > lhapdf=306000 renscfact=0.5d0 facscfact=2d0 </weight>
+<weight id='1045' > lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 </weight>
+<weight id='1046' > lhapdf=306000 renscfact=1d0 facscfact=1d0 </weight>
+<weight id='1047' > lhapdf=306000 renscfact=1d0 facscfact=2d0 </weight>
+<weight id='1048' > lhapdf=306000 renscfact=1d0 facscfact=0.5d0 </weight>
+<weight id='1049' > lhapdf=306000 renscfact=2d0 facscfact=1d0 </weight>
+<weight id='1050' > lhapdf=306000 renscfact=2d0 facscfact=2d0 </weight>
+<weight id='1051' > lhapdf=306000 renscfact=2d0 facscfact=0.5d0 </weight>
+<weight id='1052' > lhapdf=306000 renscfact=0.5d0 facscfact=1d0 </weight>
+<weight id='1053' > lhapdf=306000 renscfact=0.5d0 facscfact=2d0 </weight>
+<weight id='1054' > lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 </weight>
+<weight id='1055' > lhapdf=306000 renscfact=1d0 facscfact=1d0 </weight>
+<weight id='1056' > lhapdf=306000 renscfact=1d0 facscfact=2d0 </weight>
+<weight id='1057' > lhapdf=306000 renscfact=1d0 facscfact=0.5d0 </weight>
+<weight id='1058' > lhapdf=306000 renscfact=2d0 facscfact=1d0 </weight>
+<weight id='1059' > lhapdf=306000 renscfact=2d0 facscfact=2d0 </weight>
+<weight id='1060' > lhapdf=306000 renscfact=2d0 facscfact=0.5d0 </weight>
+<weight id='1061' > lhapdf=306000 renscfact=0.5d0 facscfact=1d0 </weight>
+<weight id='1062' > lhapdf=306000 renscfact=0.5d0 facscfact=2d0 </weight>
+<weight id='1063' > lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 </weight>
+<weight id='1064' > lhapdf=306000 renscfact=1d0 facscfact=1d0 </weight>
+<weight id='1065' > lhapdf=306000 renscfact=1d0 facscfact=2d0 </weight>
+<weight id='1066' > lhapdf=306000 renscfact=1d0 facscfact=0.5d0 </weight>
+<weight id='1067' > lhapdf=306000 renscfact=2d0 facscfact=1d0 </weight>
+<weight id='1068' > lhapdf=306000 renscfact=2d0 facscfact=2d0 </weight>
+<weight id='1069' > lhapdf=306000 renscfact=2d0 facscfact=0.5d0 </weight>
+<weight id='1070' > lhapdf=306000 renscfact=0.5d0 facscfact=1d0 </weight>
+<weight id='1071' > lhapdf=306000 renscfact=0.5d0 facscfact=2d0 </weight>
+<weight id='1072' > lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 </weight>
+<weight id='1073' > lhapdf=306000 renscfact=1d0 facscfact=1d0 </weight>
+<weight id='1074' > lhapdf=306000 renscfact=1d0 facscfact=2d0 </weight>
+<weight id='1075' > lhapdf=306000 renscfact=1d0 facscfact=0.5d0 </weight>
+<weight id='1076' > lhapdf=306000 renscfact=2d0 facscfact=1d0 </weight>
+<weight id='1077' > lhapdf=306000 renscfact=2d0 facscfact=2d0 </weight>
+<weight id='1078' > lhapdf=306000 renscfact=2d0 facscfact=0.5d0 </weight>
+<weight id='1079' > lhapdf=306000 renscfact=0.5d0 facscfact=1d0 </weight>
+<weight id='1080' > lhapdf=306000 renscfact=0.5d0 facscfact=2d0 </weight>
+<weight id='1081' > lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 </weight>
+<weight id='1010-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=1d0 DYNNLO_mur1_muf2_3D.top MINLO-W1-denom.top</weight>
+<weight id='1011-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=2d0 DYNNLO_mur1_muf2_3D.top MINLO-W2-denom.top</weight>
+<weight id='1012-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=0.5d0 DYNNLO_mur1_muf2_3D.top MINLO-W3-denom.top</weight>
+<weight id='1013-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=1d0 DYNNLO_mur1_muf2_3D.top MINLO-W4-denom.top</weight>
+<weight id='1014-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=2d0 DYNNLO_mur1_muf2_3D.top MINLO-W5-denom.top</weight>
+<weight id='1015-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=0.5d0 DYNNLO_mur1_muf2_3D.top MINLO-W6-denom.top</weight>
+<weight id='1016-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=1d0 DYNNLO_mur1_muf2_3D.top MINLO-W7-denom.top</weight>
+<weight id='1017-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=2d0 DYNNLO_mur1_muf2_3D.top MINLO-W8-denom.top</weight>
+<weight id='1018-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 DYNNLO_mur1_muf2_3D.top MINLO-W9-denom.top</weight>
+<weight id='1019-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=1d0 DYNNLO_mur1_muf0.5_3D.top MINLO-W1-denom.top</weight>
+<weight id='1020-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=2d0 DYNNLO_mur1_muf0.5_3D.top MINLO-W2-denom.top</weight>
+<weight id='1021-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=0.5d0 DYNNLO_mur1_muf0.5_3D.top MINLO-W3-denom.top</weight>
+<weight id='1022-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=1d0 DYNNLO_mur1_muf0.5_3D.top MINLO-W4-denom.top</weight>
+<weight id='1023-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=2d0 DYNNLO_mur1_muf0.5_3D.top MINLO-W5-denom.top</weight>
+<weight id='1024-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=0.5d0 DYNNLO_mur1_muf0.5_3D.top MINLO-W6-denom.top</weight>
+<weight id='1025-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=1d0 DYNNLO_mur1_muf0.5_3D.top MINLO-W7-denom.top</weight>
+<weight id='1026-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=2d0 DYNNLO_mur1_muf0.5_3D.top MINLO-W8-denom.top</weight>
+<weight id='1027-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 DYNNLO_mur1_muf0.5_3D.top MINLO-W9-denom.top</weight>
+<weight id='1028-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=1d0 DYNNLO_mur2_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='1029-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=2d0 DYNNLO_mur2_muf1_3D.top MINLO-W2-denom.top</weight>
+<weight id='1030-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=0.5d0 DYNNLO_mur2_muf1_3D.top MINLO-W3-denom.top</weight>
+<weight id='1031-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=1d0 DYNNLO_mur2_muf1_3D.top MINLO-W4-denom.top</weight>
+<weight id='1032-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=2d0 DYNNLO_mur2_muf1_3D.top MINLO-W5-denom.top</weight>
+<weight id='1033-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=0.5d0 DYNNLO_mur2_muf1_3D.top MINLO-W6-denom.top</weight>
+<weight id='1034-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=1d0 DYNNLO_mur2_muf1_3D.top MINLO-W7-denom.top</weight>
+<weight id='1035-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=2d0 DYNNLO_mur2_muf1_3D.top MINLO-W8-denom.top</weight>
+<weight id='1036-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 DYNNLO_mur2_muf1_3D.top MINLO-W9-denom.top</weight>
+<weight id='1037-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=1d0 DYNNLO_mur2_muf2_3D.top MINLO-W1-denom.top</weight>
+<weight id='1038-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=2d0 DYNNLO_mur2_muf2_3D.top MINLO-W2-denom.top</weight>
+<weight id='1039-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=0.5d0 DYNNLO_mur2_muf2_3D.top MINLO-W3-denom.top</weight>
+<weight id='1040-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=1d0 DYNNLO_mur2_muf2_3D.top MINLO-W4-denom.top</weight>
+<weight id='1041-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=2d0 DYNNLO_mur2_muf2_3D.top MINLO-W5-denom.top</weight>
+<weight id='1042-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=0.5d0 DYNNLO_mur2_muf2_3D.top MINLO-W6-denom.top</weight>
+<weight id='1043-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=1d0 DYNNLO_mur2_muf2_3D.top MINLO-W7-denom.top</weight>
+<weight id='1044-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=2d0 DYNNLO_mur2_muf2_3D.top MINLO-W8-denom.top</weight>
+<weight id='1045-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 DYNNLO_mur2_muf2_3D.top MINLO-W9-denom.top</weight>
+<weight id='1046-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=1d0 DYNNLO_mur2_muf0.5_3D.top MINLO-W1-denom.top</weight>
+<weight id='1047-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=2d0 DYNNLO_mur2_muf0.5_3D.top MINLO-W2-denom.top</weight>
+<weight id='1048-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=0.5d0 DYNNLO_mur2_muf0.5_3D.top MINLO-W3-denom.top</weight>
+<weight id='1049-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=1d0 DYNNLO_mur2_muf0.5_3D.top MINLO-W4-denom.top</weight>
+<weight id='1050-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=2d0 DYNNLO_mur2_muf0.5_3D.top MINLO-W5-denom.top</weight>
+<weight id='1051-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=0.5d0 DYNNLO_mur2_muf0.5_3D.top MINLO-W6-denom.top</weight>
+<weight id='1052-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=1d0 DYNNLO_mur2_muf0.5_3D.top MINLO-W7-denom.top</weight>
+<weight id='1053-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=2d0 DYNNLO_mur2_muf0.5_3D.top MINLO-W8-denom.top</weight>
+<weight id='1054-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 DYNNLO_mur2_muf0.5_3D.top MINLO-W9-denom.top</weight>
+<weight id='1055-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=1d0 DYNNLO_mur0.5_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='1056-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=2d0 DYNNLO_mur0.5_muf1_3D.top MINLO-W2-denom.top</weight>
+<weight id='1057-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=0.5d0 DYNNLO_mur0.5_muf1_3D.top MINLO-W3-denom.top</weight>
+<weight id='1058-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=1d0 DYNNLO_mur0.5_muf1_3D.top MINLO-W4-denom.top</weight>
+<weight id='1059-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=2d0 DYNNLO_mur0.5_muf1_3D.top MINLO-W5-denom.top</weight>
+<weight id='1060-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=0.5d0 DYNNLO_mur0.5_muf1_3D.top MINLO-W6-denom.top</weight>
+<weight id='1061-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=1d0 DYNNLO_mur0.5_muf1_3D.top MINLO-W7-denom.top</weight>
+<weight id='1062-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=2d0 DYNNLO_mur0.5_muf1_3D.top MINLO-W8-denom.top</weight>
+<weight id='1063-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 DYNNLO_mur0.5_muf1_3D.top MINLO-W9-denom.top</weight>
+<weight id='1064-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=1d0 DYNNLO_mur0.5_muf2_3D.top MINLO-W1-denom.top</weight>
+<weight id='1065-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=2d0 DYNNLO_mur0.5_muf2_3D.top MINLO-W2-denom.top</weight>
+<weight id='1066-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=0.5d0 DYNNLO_mur0.5_muf2_3D.top MINLO-W3-denom.top</weight>
+<weight id='1067-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=1d0 DYNNLO_mur0.5_muf2_3D.top MINLO-W4-denom.top</weight>
+<weight id='1068-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=2d0 DYNNLO_mur0.5_muf2_3D.top MINLO-W5-denom.top</weight>
+<weight id='1069-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=0.5d0 DYNNLO_mur0.5_muf2_3D.top MINLO-W6-denom.top</weight>
+<weight id='1070-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=1d0 DYNNLO_mur0.5_muf2_3D.top MINLO-W7-denom.top</weight>
+<weight id='1071-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=2d0 DYNNLO_mur0.5_muf2_3D.top MINLO-W8-denom.top</weight>
+<weight id='1072-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 DYNNLO_mur0.5_muf2_3D.top MINLO-W9-denom.top</weight>
+<weight id='1073-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=1d0 DYNNLO_mur0.5_muf0.5_3D.top MINLO-W1-denom.top</weight>
+<weight id='1074-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=2d0 DYNNLO_mur0.5_muf0.5_3D.top MINLO-W2-denom.top</weight>
+<weight id='1075-NNLOPS'> lhapdf=306000 renscfact=1d0 facscfact=0.5d0 DYNNLO_mur0.5_muf0.5_3D.top MINLO-W3-denom.top</weight>
+<weight id='1076-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=1d0 DYNNLO_mur0.5_muf0.5_3D.top MINLO-W4-denom.top</weight>
+<weight id='1077-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=2d0 DYNNLO_mur0.5_muf0.5_3D.top MINLO-W5-denom.top</weight>
+<weight id='1078-NNLOPS'> lhapdf=306000 renscfact=2d0 facscfact=0.5d0 DYNNLO_mur0.5_muf0.5_3D.top MINLO-W6-denom.top</weight>
+<weight id='1079-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=1d0 DYNNLO_mur0.5_muf0.5_3D.top MINLO-W7-denom.top</weight>
+<weight id='1080-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=2d0 DYNNLO_mur0.5_muf0.5_3D.top MINLO-W8-denom.top</weight>
+<weight id='1081-NNLOPS'> lhapdf=306000 renscfact=0.5d0 facscfact=0.5d0 DYNNLO_mur0.5_muf0.5_3D.top MINLO-W9-denom.top</weight>
+</weightgroup>
+<weightgroup name='PDF_variation1' combine='hessian' >
+<weight id='2000' > lhapdf=306000 </weight>
+<weight id='2001' > lhapdf=306001 </weight>
+<weight id='2002' > lhapdf=306002 </weight>
+<weight id='2003' > lhapdf=306003 </weight>
+<weight id='2004' > lhapdf=306004 </weight>
+<weight id='2005' > lhapdf=306005 </weight>
+<weight id='2006' > lhapdf=306006 </weight>
+<weight id='2007' > lhapdf=306007 </weight>
+<weight id='2008' > lhapdf=306008 </weight>
+<weight id='2009' > lhapdf=306009 </weight>
+<weight id='2010' > lhapdf=306010 </weight>
+<weight id='2011' > lhapdf=306011 </weight>
+<weight id='2012' > lhapdf=306012 </weight>
+<weight id='2013' > lhapdf=306013 </weight>
+<weight id='2014' > lhapdf=306014 </weight>
+<weight id='2015' > lhapdf=306015 </weight>
+<weight id='2016' > lhapdf=306016 </weight>
+<weight id='2017' > lhapdf=306017 </weight>
+<weight id='2018' > lhapdf=306018 </weight>
+<weight id='2019' > lhapdf=306019 </weight>
+<weight id='2020' > lhapdf=306020 </weight>
+<weight id='2021' > lhapdf=306021 </weight>
+<weight id='2022' > lhapdf=306022 </weight>
+<weight id='2023' > lhapdf=306023 </weight>
+<weight id='2024' > lhapdf=306024 </weight>
+<weight id='2025' > lhapdf=306025 </weight>
+<weight id='2026' > lhapdf=306026 </weight>
+<weight id='2027' > lhapdf=306027 </weight>
+<weight id='2028' > lhapdf=306028 </weight>
+<weight id='2029' > lhapdf=306029 </weight>
+<weight id='2030' > lhapdf=306030 </weight>
+<weight id='2031' > lhapdf=306031 </weight>
+<weight id='2032' > lhapdf=306032 </weight>
+<weight id='2033' > lhapdf=306033 </weight>
+<weight id='2034' > lhapdf=306034 </weight>
+<weight id='2035' > lhapdf=306035 </weight>
+<weight id='2036' > lhapdf=306036 </weight>
+<weight id='2037' > lhapdf=306037 </weight>
+<weight id='2038' > lhapdf=306038 </weight>
+<weight id='2039' > lhapdf=306039 </weight>
+<weight id='2040' > lhapdf=306040 </weight>
+<weight id='2041' > lhapdf=306041 </weight>
+<weight id='2042' > lhapdf=306042 </weight>
+<weight id='2043' > lhapdf=306043 </weight>
+<weight id='2044' > lhapdf=306044 </weight>
+<weight id='2045' > lhapdf=306045 </weight>
+<weight id='2046' > lhapdf=306046 </weight>
+<weight id='2047' > lhapdf=306047 </weight>
+<weight id='2048' > lhapdf=306048 </weight>
+<weight id='2049' > lhapdf=306049 </weight>
+<weight id='2050' > lhapdf=306050 </weight>
+<weight id='2051' > lhapdf=306051 </weight>
+<weight id='2052' > lhapdf=306052 </weight>
+<weight id='2053' > lhapdf=306053 </weight>
+<weight id='2054' > lhapdf=306054 </weight>
+<weight id='2055' > lhapdf=306055 </weight>
+<weight id='2056' > lhapdf=306056 </weight>
+<weight id='2057' > lhapdf=306057 </weight>
+<weight id='2058' > lhapdf=306058 </weight>
+<weight id='2059' > lhapdf=306059 </weight>
+<weight id='2060' > lhapdf=306060 </weight>
+<weight id='2061' > lhapdf=306061 </weight>
+<weight id='2062' > lhapdf=306062 </weight>
+<weight id='2063' > lhapdf=306063 </weight>
+<weight id='2064' > lhapdf=306064 </weight>
+<weight id='2065' > lhapdf=306065 </weight>
+<weight id='2066' > lhapdf=306066 </weight>
+<weight id='2067' > lhapdf=306067 </weight>
+<weight id='2068' > lhapdf=306068 </weight>
+<weight id='2069' > lhapdf=306069 </weight>
+<weight id='2070' > lhapdf=306070 </weight>
+<weight id='2071' > lhapdf=306071 </weight>
+<weight id='2072' > lhapdf=306072 </weight>
+<weight id='2073' > lhapdf=306073 </weight>
+<weight id='2074' > lhapdf=306074 </weight>
+<weight id='2075' > lhapdf=306075 </weight>
+<weight id='2076' > lhapdf=306076 </weight>
+<weight id='2077' > lhapdf=306077 </weight>
+<weight id='2078' > lhapdf=306078 </weight>
+<weight id='2079' > lhapdf=306079 </weight>
+<weight id='2080' > lhapdf=306080 </weight>
+<weight id='2081' > lhapdf=306081 </weight>
+<weight id='2082' > lhapdf=306082 </weight>
+<weight id='2083' > lhapdf=306083 </weight>
+<weight id='2084' > lhapdf=306084 </weight>
+<weight id='2085' > lhapdf=306085 </weight>
+<weight id='2086' > lhapdf=306086 </weight>
+<weight id='2087' > lhapdf=306087 </weight>
+<weight id='2088' > lhapdf=306088 </weight>
+<weight id='2089' > lhapdf=306089 </weight>
+<weight id='2090' > lhapdf=306090 </weight>
+<weight id='2091' > lhapdf=306091 </weight>
+<weight id='2092' > lhapdf=306092 </weight>
+<weight id='2093' > lhapdf=306093 </weight>
+<weight id='2094' > lhapdf=306094 </weight>
+<weight id='2095' > lhapdf=306095 </weight>
+<weight id='2096' > lhapdf=306096 </weight>
+<weight id='2097' > lhapdf=306097 </weight>
+<weight id='2098' > lhapdf=306098 </weight>
+<weight id='2099' > lhapdf=306099 </weight>
+<weight id='2100' > lhapdf=306100 </weight>
+<weight id='2101' > lhapdf=306101 </weight>
+<weight id='2102' > lhapdf=306102 </weight>
+<weight id='2104' > lhapdf=322500 </weight>
+<weight id='2105' > lhapdf=322700 </weight>
+<weight id='2106' > lhapdf=322900 </weight>
+<weight id='2107' > lhapdf=323100 </weight>
+<weight id='2108' > lhapdf=323300 </weight>
+<weight id='2109' > lhapdf=323500 </weight>
+<weight id='2110' > lhapdf=323700 </weight>
+<weight id='2111' > lhapdf=323900 </weight>
+<weight id='2200' > lhapdf=325700 </weight>
+<weight id='2201' > lhapdf=325701 </weight>
+<weight id='2202' > lhapdf=325702 </weight>
+<weight id='2203' > lhapdf=325703 </weight>
+<weight id='2204' > lhapdf=325704 </weight>
+<weight id='2205' > lhapdf=325705 </weight>
+<weight id='2206' > lhapdf=325706 </weight>
+<weight id='2207' > lhapdf=325707 </weight>
+<weight id='2208' > lhapdf=325708 </weight>
+<weight id='2209' > lhapdf=325709 </weight>
+<weight id='2210' > lhapdf=325710 </weight>
+<weight id='2211' > lhapdf=325711 </weight>
+<weight id='2212' > lhapdf=325712 </weight>
+<weight id='2213' > lhapdf=325713 </weight>
+<weight id='2214' > lhapdf=325714 </weight>
+<weight id='2215' > lhapdf=325715 </weight>
+<weight id='2216' > lhapdf=325716 </weight>
+<weight id='2217' > lhapdf=325717 </weight>
+<weight id='2218' > lhapdf=325718 </weight>
+<weight id='2219' > lhapdf=325719 </weight>
+<weight id='2220' > lhapdf=325720 </weight>
+<weight id='2221' > lhapdf=325721 </weight>
+<weight id='2222' > lhapdf=325722 </weight>
+<weight id='2223' > lhapdf=325723 </weight>
+<weight id='2224' > lhapdf=325724 </weight>
+<weight id='2225' > lhapdf=325725 </weight>
+<weight id='2226' > lhapdf=325726 </weight>
+<weight id='2227' > lhapdf=325727 </weight>
+<weight id='2228' > lhapdf=325728 </weight>
+<weight id='2229' > lhapdf=325729 </weight>
+<weight id='2230' > lhapdf=325730 </weight>
+<weight id='2231' > lhapdf=325731 </weight>
+<weight id='2232' > lhapdf=325732 </weight>
+<weight id='2233' > lhapdf=325733 </weight>
+<weight id='2234' > lhapdf=325734 </weight>
+<weight id='2235' > lhapdf=325735 </weight>
+<weight id='2236' > lhapdf=325736 </weight>
+<weight id='2237' > lhapdf=325737 </weight>
+<weight id='2238' > lhapdf=325738 </weight>
+<weight id='2239' > lhapdf=325739 </weight>
+<weight id='2240' > lhapdf=325740 </weight>
+<weight id='2241' > lhapdf=325741 </weight>
+<weight id='2242' > lhapdf=325742 </weight>
+<weight id='2243' > lhapdf=325743 </weight>
+<weight id='2244' > lhapdf=325744 </weight>
+<weight id='2245' > lhapdf=325745 </weight>
+<weight id='2246' > lhapdf=325746 </weight>
+<weight id='2247' > lhapdf=325747 </weight>
+<weight id='2248' > lhapdf=325748 </weight>
+<weight id='2249' > lhapdf=325749 </weight>
+<weight id='2250' > lhapdf=325750 </weight>
+<weight id='2251' > lhapdf=325751 </weight>
+<weight id='2252' > lhapdf=325752 </weight>
+<weight id='2253' > lhapdf=325753 </weight>
+<weight id='2254' > lhapdf=325754 </weight>
+<weight id='2255' > lhapdf=325755 </weight>
+<weight id='2256' > lhapdf=325756 </weight>
+<weight id='2257' > lhapdf=325757 </weight>
+<weight id='2258' > lhapdf=325758 </weight>
+<weight id='2259' > lhapdf=325759 </weight>
+<weight id='2260' > lhapdf=325760 </weight>
+<weight id='2261' > lhapdf=325761 </weight>
+<weight id='2262' > lhapdf=325762 </weight>
+<weight id='2263' > lhapdf=325763 </weight>
+<weight id='2264' > lhapdf=325764 </weight>
+<weight id='2265' > lhapdf=325765 </weight>
+<weight id='2266' > lhapdf=325766 </weight>
+<weight id='2267' > lhapdf=325767 </weight>
+<weight id='2268' > lhapdf=325768 </weight>
+<weight id='2269' > lhapdf=325769 </weight>
+<weight id='2270' > lhapdf=325770 </weight>
+<weight id='2271' > lhapdf=325771 </weight>
+<weight id='2272' > lhapdf=325772 </weight>
+<weight id='2273' > lhapdf=325773 </weight>
+<weight id='2274' > lhapdf=325774 </weight>
+<weight id='2275' > lhapdf=325775 </weight>
+<weight id='2276' > lhapdf=325776 </weight>
+<weight id='2277' > lhapdf=325777 </weight>
+<weight id='2278' > lhapdf=325778 </weight>
+<weight id='2279' > lhapdf=325779 </weight>
+<weight id='2280' > lhapdf=325780 </weight>
+<weight id='2281' > lhapdf=325781 </weight>
+<weight id='2282' > lhapdf=325782 </weight>
+<weight id='2283' > lhapdf=325783 </weight>
+<weight id='2284' > lhapdf=325784 </weight>
+<weight id='2285' > lhapdf=325785 </weight>
+<weight id='2286' > lhapdf=325786 </weight>
+<weight id='2287' > lhapdf=325787 </weight>
+<weight id='2288' > lhapdf=325788 </weight>
+<weight id='2289' > lhapdf=325789 </weight>
+<weight id='2290' > lhapdf=325790 </weight>
+<weight id='2291' > lhapdf=325791 </weight>
+<weight id='2292' > lhapdf=325792 </weight>
+<weight id='2293' > lhapdf=325793 </weight>
+<weight id='2294' > lhapdf=325794 </weight>
+<weight id='2295' > lhapdf=325795 </weight>
+<weight id='2296' > lhapdf=325796 </weight>
+<weight id='2297' > lhapdf=325797 </weight>
+<weight id='2298' > lhapdf=325798 </weight>
+<weight id='2299' > lhapdf=325799 </weight>
+<weight id='2300' > lhapdf=325800 </weight>
+<weight id='2400' > lhapdf=325900 </weight>
+<weight id='2401' > lhapdf=325901 </weight>
+<weight id='2402' > lhapdf=325902 </weight>
+<weight id='2403' > lhapdf=325903 </weight>
+<weight id='2404' > lhapdf=325904 </weight>
+<weight id='2405' > lhapdf=325905 </weight>
+<weight id='2406' > lhapdf=325906 </weight>
+<weight id='2407' > lhapdf=325907 </weight>
+<weight id='2408' > lhapdf=325908 </weight>
+<weight id='2409' > lhapdf=325909 </weight>
+<weight id='2410' > lhapdf=325910 </weight>
+<weight id='2411' > lhapdf=325911 </weight>
+<weight id='2412' > lhapdf=325912 </weight>
+<weight id='2413' > lhapdf=325913 </weight>
+<weight id='2414' > lhapdf=325914 </weight>
+<weight id='2415' > lhapdf=325915 </weight>
+<weight id='2416' > lhapdf=325916 </weight>
+<weight id='2417' > lhapdf=325917 </weight>
+<weight id='2418' > lhapdf=325918 </weight>
+<weight id='2419' > lhapdf=325919 </weight>
+<weight id='2420' > lhapdf=325920 </weight>
+<weight id='2421' > lhapdf=325921 </weight>
+<weight id='2422' > lhapdf=325922 </weight>
+<weight id='2423' > lhapdf=325923 </weight>
+<weight id='2424' > lhapdf=325924 </weight>
+<weight id='2425' > lhapdf=325925 </weight>
+<weight id='2426' > lhapdf=325926 </weight>
+<weight id='2427' > lhapdf=325927 </weight>
+<weight id='2428' > lhapdf=325928 </weight>
+<weight id='2429' > lhapdf=325929 </weight>
+<weight id='2430' > lhapdf=325930 </weight>
+<weight id='2431' > lhapdf=325931 </weight>
+<weight id='2432' > lhapdf=325932 </weight>
+<weight id='2433' > lhapdf=325933 </weight>
+<weight id='2434' > lhapdf=325934 </weight>
+<weight id='2435' > lhapdf=325935 </weight>
+<weight id='2436' > lhapdf=325936 </weight>
+<weight id='2437' > lhapdf=325937 </weight>
+<weight id='2438' > lhapdf=325938 </weight>
+<weight id='2439' > lhapdf=325939 </weight>
+<weight id='2440' > lhapdf=325940 </weight>
+<weight id='2441' > lhapdf=325941 </weight>
+<weight id='2442' > lhapdf=325942 </weight>
+<weight id='2443' > lhapdf=325943 </weight>
+<weight id='2444' > lhapdf=325944 </weight>
+<weight id='2445' > lhapdf=325945 </weight>
+<weight id='2446' > lhapdf=325946 </weight>
+<weight id='2447' > lhapdf=325947 </weight>
+<weight id='2448' > lhapdf=325948 </weight>
+<weight id='2449' > lhapdf=325949 </weight>
+<weight id='2450' > lhapdf=325950 </weight>
+<weight id='2451' > lhapdf=325951 </weight>
+<weight id='2452' > lhapdf=325952 </weight>
+<weight id='2453' > lhapdf=325953 </weight>
+<weight id='2454' > lhapdf=325954 </weight>
+<weight id='2455' > lhapdf=325955 </weight>
+<weight id='2456' > lhapdf=325956 </weight>
+<weight id='2457' > lhapdf=325957 </weight>
+<weight id='2458' > lhapdf=325958 </weight>
+<weight id='2459' > lhapdf=325959 </weight>
+<weight id='2460' > lhapdf=325960 </weight>
+<weight id='2461' > lhapdf=325961 </weight>
+<weight id='2462' > lhapdf=325962 </weight>
+<weight id='2463' > lhapdf=325963 </weight>
+<weight id='2464' > lhapdf=325964 </weight>
+<weight id='2465' > lhapdf=325965 </weight>
+<weight id='2466' > lhapdf=325966 </weight>
+<weight id='2467' > lhapdf=325967 </weight>
+<weight id='2468' > lhapdf=325968 </weight>
+<weight id='2469' > lhapdf=325969 </weight>
+<weight id='2470' > lhapdf=325970 </weight>
+<weight id='2471' > lhapdf=325971 </weight>
+<weight id='2472' > lhapdf=325972 </weight>
+<weight id='2473' > lhapdf=325973 </weight>
+<weight id='2474' > lhapdf=325974 </weight>
+<weight id='2475' > lhapdf=325975 </weight>
+<weight id='2476' > lhapdf=325976 </weight>
+<weight id='2477' > lhapdf=325977 </weight>
+<weight id='2478' > lhapdf=325978 </weight>
+<weight id='2479' > lhapdf=325979 </weight>
+<weight id='2480' > lhapdf=325980 </weight>
+<weight id='2481' > lhapdf=325981 </weight>
+<weight id='2482' > lhapdf=325982 </weight>
+<weight id='2483' > lhapdf=325983 </weight>
+<weight id='2484' > lhapdf=325984 </weight>
+<weight id='2485' > lhapdf=325985 </weight>
+<weight id='2486' > lhapdf=325986 </weight>
+<weight id='2487' > lhapdf=325987 </weight>
+<weight id='2488' > lhapdf=325988 </weight>
+<weight id='2489' > lhapdf=325989 </weight>
+<weight id='2490' > lhapdf=325990 </weight>
+<weight id='2491' > lhapdf=325991 </weight>
+<weight id='2492' > lhapdf=325992 </weight>
+<weight id='2493' > lhapdf=325993 </weight>
+<weight id='2494' > lhapdf=325994 </weight>
+<weight id='2495' > lhapdf=325995 </weight>
+<weight id='2496' > lhapdf=325996 </weight>
+<weight id='2497' > lhapdf=325997 </weight>
+<weight id='2498' > lhapdf=325998 </weight>
+<weight id='2499' > lhapdf=325999 </weight>
+<weight id='2500' > lhapdf=326000 </weight>
+<weight id='2600' > lhapdf=326100 </weight>
+<weight id='2601' > lhapdf=326101 </weight>
+<weight id='2602' > lhapdf=326102 </weight>
+<weight id='2603' > lhapdf=326103 </weight>
+<weight id='2604' > lhapdf=326104 </weight>
+<weight id='2605' > lhapdf=326105 </weight>
+<weight id='2606' > lhapdf=326106 </weight>
+<weight id='2607' > lhapdf=326107 </weight>
+<weight id='2608' > lhapdf=326108 </weight>
+<weight id='2609' > lhapdf=326109 </weight>
+<weight id='2610' > lhapdf=326110 </weight>
+<weight id='2611' > lhapdf=326111 </weight>
+<weight id='2612' > lhapdf=326112 </weight>
+<weight id='2613' > lhapdf=326113 </weight>
+<weight id='2614' > lhapdf=326114 </weight>
+<weight id='2615' > lhapdf=326115 </weight>
+<weight id='2616' > lhapdf=326116 </weight>
+<weight id='2617' > lhapdf=326117 </weight>
+<weight id='2618' > lhapdf=326118 </weight>
+<weight id='2619' > lhapdf=326119 </weight>
+<weight id='2620' > lhapdf=326120 </weight>
+<weight id='2621' > lhapdf=326121 </weight>
+<weight id='2622' > lhapdf=326122 </weight>
+<weight id='2623' > lhapdf=326123 </weight>
+<weight id='2624' > lhapdf=326124 </weight>
+<weight id='2625' > lhapdf=326125 </weight>
+<weight id='2626' > lhapdf=326126 </weight>
+<weight id='2627' > lhapdf=326127 </weight>
+<weight id='2628' > lhapdf=326128 </weight>
+<weight id='2629' > lhapdf=326129 </weight>
+<weight id='2630' > lhapdf=326130 </weight>
+<weight id='2631' > lhapdf=326131 </weight>
+<weight id='2632' > lhapdf=326132 </weight>
+<weight id='2633' > lhapdf=326133 </weight>
+<weight id='2634' > lhapdf=326134 </weight>
+<weight id='2635' > lhapdf=326135 </weight>
+<weight id='2636' > lhapdf=326136 </weight>
+<weight id='2637' > lhapdf=326137 </weight>
+<weight id='2638' > lhapdf=326138 </weight>
+<weight id='2639' > lhapdf=326139 </weight>
+<weight id='2640' > lhapdf=326140 </weight>
+<weight id='2641' > lhapdf=326141 </weight>
+<weight id='2642' > lhapdf=326142 </weight>
+<weight id='2643' > lhapdf=326143 </weight>
+<weight id='2644' > lhapdf=326144 </weight>
+<weight id='2645' > lhapdf=326145 </weight>
+<weight id='2646' > lhapdf=326146 </weight>
+<weight id='2647' > lhapdf=326147 </weight>
+<weight id='2648' > lhapdf=326148 </weight>
+<weight id='2649' > lhapdf=326149 </weight>
+<weight id='2650' > lhapdf=326150 </weight>
+<weight id='2651' > lhapdf=326151 </weight>
+<weight id='2652' > lhapdf=326152 </weight>
+<weight id='2653' > lhapdf=326153 </weight>
+<weight id='2654' > lhapdf=326154 </weight>
+<weight id='2655' > lhapdf=326155 </weight>
+<weight id='2656' > lhapdf=326156 </weight>
+<weight id='2657' > lhapdf=326157 </weight>
+<weight id='2658' > lhapdf=326158 </weight>
+<weight id='2659' > lhapdf=326159 </weight>
+<weight id='2660' > lhapdf=326160 </weight>
+<weight id='2661' > lhapdf=326161 </weight>
+<weight id='2662' > lhapdf=326162 </weight>
+<weight id='2663' > lhapdf=326163 </weight>
+<weight id='2664' > lhapdf=326164 </weight>
+<weight id='2665' > lhapdf=326165 </weight>
+<weight id='2666' > lhapdf=326166 </weight>
+<weight id='2667' > lhapdf=326167 </weight>
+<weight id='2668' > lhapdf=326168 </weight>
+<weight id='2669' > lhapdf=326169 </weight>
+<weight id='2670' > lhapdf=326170 </weight>
+<weight id='2671' > lhapdf=326171 </weight>
+<weight id='2672' > lhapdf=326172 </weight>
+<weight id='2673' > lhapdf=326173 </weight>
+<weight id='2674' > lhapdf=326174 </weight>
+<weight id='2675' > lhapdf=326175 </weight>
+<weight id='2676' > lhapdf=326176 </weight>
+<weight id='2677' > lhapdf=326177 </weight>
+<weight id='2678' > lhapdf=326178 </weight>
+<weight id='2679' > lhapdf=326179 </weight>
+<weight id='2680' > lhapdf=326180 </weight>
+<weight id='2681' > lhapdf=326181 </weight>
+<weight id='2682' > lhapdf=326182 </weight>
+<weight id='2683' > lhapdf=326183 </weight>
+<weight id='2684' > lhapdf=326184 </weight>
+<weight id='2685' > lhapdf=326185 </weight>
+<weight id='2686' > lhapdf=326186 </weight>
+<weight id='2687' > lhapdf=326187 </weight>
+<weight id='2688' > lhapdf=326188 </weight>
+<weight id='2689' > lhapdf=326189 </weight>
+<weight id='2690' > lhapdf=326190 </weight>
+<weight id='2691' > lhapdf=326191 </weight>
+<weight id='2692' > lhapdf=326192 </weight>
+<weight id='2693' > lhapdf=326193 </weight>
+<weight id='2694' > lhapdf=326194 </weight>
+<weight id='2695' > lhapdf=326195 </weight>
+<weight id='2696' > lhapdf=326196 </weight>
+<weight id='2697' > lhapdf=326197 </weight>
+<weight id='2698' > lhapdf=326198 </weight>
+<weight id='2699' > lhapdf=326199 </weight>
+<weight id='2700' > lhapdf=326200 </weight>
+<weight id='2800' > lhapdf=326300 </weight>
+<weight id='2801' > lhapdf=326301 </weight>
+<weight id='2802' > lhapdf=326302 </weight>
+<weight id='2803' > lhapdf=326303 </weight>
+<weight id='2804' > lhapdf=326304 </weight>
+<weight id='2805' > lhapdf=326305 </weight>
+<weight id='2806' > lhapdf=326306 </weight>
+<weight id='2807' > lhapdf=326307 </weight>
+<weight id='2808' > lhapdf=326308 </weight>
+<weight id='2809' > lhapdf=326309 </weight>
+<weight id='2810' > lhapdf=326310 </weight>
+<weight id='2811' > lhapdf=326311 </weight>
+<weight id='2812' > lhapdf=326312 </weight>
+<weight id='2813' > lhapdf=326313 </weight>
+<weight id='2814' > lhapdf=326314 </weight>
+<weight id='2815' > lhapdf=326315 </weight>
+<weight id='2816' > lhapdf=326316 </weight>
+<weight id='2817' > lhapdf=326317 </weight>
+<weight id='2818' > lhapdf=326318 </weight>
+<weight id='2819' > lhapdf=326319 </weight>
+<weight id='2820' > lhapdf=326320 </weight>
+<weight id='2821' > lhapdf=326321 </weight>
+<weight id='2822' > lhapdf=326322 </weight>
+<weight id='2823' > lhapdf=326323 </weight>
+<weight id='2824' > lhapdf=326324 </weight>
+<weight id='2825' > lhapdf=326325 </weight>
+<weight id='2826' > lhapdf=326326 </weight>
+<weight id='2827' > lhapdf=326327 </weight>
+<weight id='2828' > lhapdf=326328 </weight>
+<weight id='2829' > lhapdf=326329 </weight>
+<weight id='2830' > lhapdf=326330 </weight>
+<weight id='2831' > lhapdf=326331 </weight>
+<weight id='2832' > lhapdf=326332 </weight>
+<weight id='2833' > lhapdf=326333 </weight>
+<weight id='2834' > lhapdf=326334 </weight>
+<weight id='2835' > lhapdf=326335 </weight>
+<weight id='2836' > lhapdf=326336 </weight>
+<weight id='2837' > lhapdf=326337 </weight>
+<weight id='2838' > lhapdf=326338 </weight>
+<weight id='2839' > lhapdf=326339 </weight>
+<weight id='2840' > lhapdf=326340 </weight>
+<weight id='2841' > lhapdf=326341 </weight>
+<weight id='2842' > lhapdf=326342 </weight>
+<weight id='2843' > lhapdf=326343 </weight>
+<weight id='2844' > lhapdf=326344 </weight>
+<weight id='2845' > lhapdf=326345 </weight>
+<weight id='2846' > lhapdf=326346 </weight>
+<weight id='2847' > lhapdf=326347 </weight>
+<weight id='2848' > lhapdf=326348 </weight>
+<weight id='2849' > lhapdf=326349 </weight>
+<weight id='2850' > lhapdf=326350 </weight>
+<weight id='2851' > lhapdf=326351 </weight>
+<weight id='2852' > lhapdf=326352 </weight>
+<weight id='2853' > lhapdf=326353 </weight>
+<weight id='2854' > lhapdf=326354 </weight>
+<weight id='2855' > lhapdf=326355 </weight>
+<weight id='2856' > lhapdf=326356 </weight>
+<weight id='2857' > lhapdf=326357 </weight>
+<weight id='2858' > lhapdf=326358 </weight>
+<weight id='2859' > lhapdf=326359 </weight>
+<weight id='2860' > lhapdf=326360 </weight>
+<weight id='2861' > lhapdf=326361 </weight>
+<weight id='2862' > lhapdf=326362 </weight>
+<weight id='2863' > lhapdf=326363 </weight>
+<weight id='2864' > lhapdf=326364 </weight>
+<weight id='2865' > lhapdf=326365 </weight>
+<weight id='2866' > lhapdf=326366 </weight>
+<weight id='2867' > lhapdf=326367 </weight>
+<weight id='2868' > lhapdf=326368 </weight>
+<weight id='2869' > lhapdf=326369 </weight>
+<weight id='2870' > lhapdf=326370 </weight>
+<weight id='2871' > lhapdf=326371 </weight>
+<weight id='2872' > lhapdf=326372 </weight>
+<weight id='2873' > lhapdf=326373 </weight>
+<weight id='2874' > lhapdf=326374 </weight>
+<weight id='2875' > lhapdf=326375 </weight>
+<weight id='2876' > lhapdf=326376 </weight>
+<weight id='2877' > lhapdf=326377 </weight>
+<weight id='2878' > lhapdf=326378 </weight>
+<weight id='2879' > lhapdf=326379 </weight>
+<weight id='2880' > lhapdf=326380 </weight>
+<weight id='2881' > lhapdf=326381 </weight>
+<weight id='2882' > lhapdf=326382 </weight>
+<weight id='2883' > lhapdf=326383 </weight>
+<weight id='2884' > lhapdf=326384 </weight>
+<weight id='2885' > lhapdf=326385 </weight>
+<weight id='2886' > lhapdf=326386 </weight>
+<weight id='2887' > lhapdf=326387 </weight>
+<weight id='2888' > lhapdf=326388 </weight>
+<weight id='2889' > lhapdf=326389 </weight>
+<weight id='2890' > lhapdf=326390 </weight>
+<weight id='2891' > lhapdf=326391 </weight>
+<weight id='2892' > lhapdf=326392 </weight>
+<weight id='2893' > lhapdf=326393 </weight>
+<weight id='2894' > lhapdf=326394 </weight>
+<weight id='2895' > lhapdf=326395 </weight>
+<weight id='2896' > lhapdf=326396 </weight>
+<weight id='2897' > lhapdf=326397 </weight>
+<weight id='2898' > lhapdf=326398 </weight>
+<weight id='2899' > lhapdf=326399 </weight>
+<weight id='2900' > lhapdf=326400 </weight>
+<weight id='5000' > lhapdf=13000 </weight>
+<weight id='5001' > lhapdf=13001 </weight>
+<weight id='5002' > lhapdf=13002 </weight>
+<weight id='5003' > lhapdf=13003 </weight>
+<weight id='5004' > lhapdf=13004 </weight>
+<weight id='5005' > lhapdf=13005 </weight>
+<weight id='5006' > lhapdf=13006 </weight>
+<weight id='5007' > lhapdf=13007 </weight>
+<weight id='5008' > lhapdf=13008 </weight>
+<weight id='5009' > lhapdf=13009 </weight>
+<weight id='5010' > lhapdf=13010 </weight>
+<weight id='5011' > lhapdf=13011 </weight>
+<weight id='5012' > lhapdf=13012 </weight>
+<weight id='5013' > lhapdf=13013 </weight>
+<weight id='5014' > lhapdf=13014 </weight>
+<weight id='5015' > lhapdf=13015 </weight>
+<weight id='5016' > lhapdf=13016 </weight>
+<weight id='5017' > lhapdf=13017 </weight>
+<weight id='5018' > lhapdf=13018 </weight>
+<weight id='5019' > lhapdf=13019 </weight>
+<weight id='5020' > lhapdf=13020 </weight>
+<weight id='5021' > lhapdf=13021 </weight>
+<weight id='5022' > lhapdf=13022 </weight>
+<weight id='5023' > lhapdf=13023 </weight>
+<weight id='5024' > lhapdf=13024 </weight>
+<weight id='5025' > lhapdf=13025 </weight>
+<weight id='5026' > lhapdf=13026 </weight>
+<weight id='5027' > lhapdf=13027 </weight>
+<weight id='5028' > lhapdf=13028 </weight>
+<weight id='5029' > lhapdf=13029 </weight>
+<weight id='5030' > lhapdf=13030 </weight>
+<weight id='5031' > lhapdf=13031 </weight>
+<weight id='5032' > lhapdf=13032 </weight>
+<weight id='5033' > lhapdf=13033 </weight>
+<weight id='5034' > lhapdf=13034 </weight>
+<weight id='5035' > lhapdf=13035 </weight>
+<weight id='5036' > lhapdf=13036 </weight>
+<weight id='5037' > lhapdf=13037 </weight>
+<weight id='5038' > lhapdf=13038 </weight>
+<weight id='5039' > lhapdf=13039 </weight>
+<weight id='5040' > lhapdf=13040 </weight>
+<weight id='5041' > lhapdf=13041 </weight>
+<weight id='5042' > lhapdf=13042 </weight>
+<weight id='5043' > lhapdf=13043 </weight>
+<weight id='5044' > lhapdf=13044 </weight>
+<weight id='5045' > lhapdf=13045 </weight>
+<weight id='5046' > lhapdf=13046 </weight>
+<weight id='5047' > lhapdf=13047 </weight>
+<weight id='5048' > lhapdf=13048 </weight>
+<weight id='5049' > lhapdf=13049 </weight>
+<weight id='5050' > lhapdf=13050 </weight>
+<weight id='5051' > lhapdf=13051 </weight>
+<weight id='5052' > lhapdf=13052 </weight>
+<weight id='5053' > lhapdf=13053 </weight>
+<weight id='5054' > lhapdf=13054 </weight>
+<weight id='5055' > lhapdf=13055 </weight>
+<weight id='5056' > lhapdf=13056 </weight>
+<weight id='5060' > lhapdf=13065 </weight>
+<weight id='5070' > lhapdf=13069 </weight>
+<weight id='7000' > lhapdf=25300 </weight>
+<weight id='7001' > lhapdf=25301 </weight>
+<weight id='7002' > lhapdf=25302 </weight>
+<weight id='7003' > lhapdf=25303 </weight>
+<weight id='7004' > lhapdf=25304 </weight>
+<weight id='7005' > lhapdf=25305 </weight>
+<weight id='7006' > lhapdf=25306 </weight>
+<weight id='7007' > lhapdf=25307 </weight>
+<weight id='7008' > lhapdf=25308 </weight>
+<weight id='7009' > lhapdf=25309 </weight>
+<weight id='7010' > lhapdf=25310 </weight>
+<weight id='7011' > lhapdf=25311 </weight>
+<weight id='7012' > lhapdf=25312 </weight>
+<weight id='7013' > lhapdf=25313 </weight>
+<weight id='7014' > lhapdf=25314 </weight>
+<weight id='7015' > lhapdf=25315 </weight>
+<weight id='7016' > lhapdf=25316 </weight>
+<weight id='7017' > lhapdf=25317 </weight>
+<weight id='7018' > lhapdf=25318 </weight>
+<weight id='7019' > lhapdf=25319 </weight>
+<weight id='7020' > lhapdf=25320 </weight>
+<weight id='7021' > lhapdf=25321 </weight>
+<weight id='7022' > lhapdf=25322 </weight>
+<weight id='7023' > lhapdf=25323 </weight>
+<weight id='7024' > lhapdf=25324 </weight>
+<weight id='7025' > lhapdf=25325 </weight>
+<weight id='7026' > lhapdf=25326 </weight>
+<weight id='7027' > lhapdf=25327 </weight>
+<weight id='7028' > lhapdf=25328 </weight>
+<weight id='7029' > lhapdf=25329 </weight>
+<weight id='7030' > lhapdf=25330 </weight>
+<weight id='7031' > lhapdf=25331 </weight>
+<weight id='7032' > lhapdf=25332 </weight>
+<weight id='7033' > lhapdf=25333 </weight>
+<weight id='7034' > lhapdf=25334 </weight>
+<weight id='7035' > lhapdf=25335 </weight>
+<weight id='7036' > lhapdf=25336 </weight>
+<weight id='7037' > lhapdf=25337 </weight>
+<weight id='7038' > lhapdf=25338 </weight>
+<weight id='7039' > lhapdf=25339 </weight>
+<weight id='7040' > lhapdf=25340 </weight>
+<weight id='7041' > lhapdf=25341 </weight>
+<weight id='7042' > lhapdf=25342 </weight>
+<weight id='7043' > lhapdf=25343 </weight>
+<weight id='7044' > lhapdf=25344 </weight>
+<weight id='7045' > lhapdf=25345 </weight>
+<weight id='7046' > lhapdf=25346 </weight>
+<weight id='7047' > lhapdf=25347 </weight>
+<weight id='7048' > lhapdf=25348 </weight>
+<weight id='7049' > lhapdf=25349 </weight>
+<weight id='7050' > lhapdf=25350 </weight>
+<weight id='7060' > lhapdf=25360 </weight>
+<weight id='7061' > lhapdf=25361 </weight>
+<weight id='7062' > lhapdf=25362 </weight>
+<weight id='8000' > lhapdf=42560 </weight>
+<weight id='8001' > lhapdf=42561 </weight>
+<weight id='8002' > lhapdf=42562 </weight>
+<weight id='8003' > lhapdf=42563 </weight>
+<weight id='8004' > lhapdf=42564 </weight>
+<weight id='8005' > lhapdf=42565 </weight>
+<weight id='8006' > lhapdf=42566 </weight>
+<weight id='8007' > lhapdf=42567 </weight>
+<weight id='8008' > lhapdf=42568 </weight>
+<weight id='8009' > lhapdf=42569 </weight>
+<weight id='8010' > lhapdf=42570 </weight>
+<weight id='8011' > lhapdf=42571 </weight>
+<weight id='8012' > lhapdf=42572 </weight>
+<weight id='8013' > lhapdf=42573 </weight>
+<weight id='8014' > lhapdf=42574 </weight>
+<weight id='8015' > lhapdf=42575 </weight>
+<weight id='8016' > lhapdf=42576 </weight>
+<weight id='8017' > lhapdf=42577 </weight>
+<weight id='8018' > lhapdf=42578 </weight>
+<weight id='8019' > lhapdf=42579 </weight>
+<weight id='8020' > lhapdf=42580 </weight>
+<weight id='8021' > lhapdf=42581 </weight>
+<weight id='8022' > lhapdf=42582 </weight>
+<weight id='8023' > lhapdf=42583 </weight>
+<weight id='8024' > lhapdf=42584 </weight>
+<weight id='8025' > lhapdf=42585 </weight>
+<weight id='8026' > lhapdf=42586 </weight>
+<weight id='8027' > lhapdf=42587 </weight>
+<weight id='8028' > lhapdf=42588 </weight>
+<weight id='8029' > lhapdf=42589 </weight>
+<weight id='13000' > lhapdf=61200 </weight>
+<weight id='13001' > lhapdf=61201 </weight>
+<weight id='13002' > lhapdf=61202 </weight>
+<weight id='13003' > lhapdf=61203 </weight>
+<weight id='13004' > lhapdf=61204 </weight>
+<weight id='13005' > lhapdf=61205 </weight>
+<weight id='13006' > lhapdf=61206 </weight>
+<weight id='13007' > lhapdf=61207 </weight>
+<weight id='13008' > lhapdf=61208 </weight>
+<weight id='13009' > lhapdf=61209 </weight>
+<weight id='13010' > lhapdf=61210 </weight>
+<weight id='13011' > lhapdf=61211 </weight>
+<weight id='13012' > lhapdf=61212 </weight>
+<weight id='13013' > lhapdf=61213 </weight>
+<weight id='13014' > lhapdf=61214 </weight>
+<weight id='13015' > lhapdf=61215 </weight>
+<weight id='13016' > lhapdf=61216 </weight>
+<weight id='13017' > lhapdf=61217 </weight>
+<weight id='13018' > lhapdf=61218 </weight>
+<weight id='13019' > lhapdf=61219 </weight>
+<weight id='13020' > lhapdf=61220 </weight>
+<weight id='13021' > lhapdf=61221 </weight>
+<weight id='13022' > lhapdf=61222 </weight>
+<weight id='13023' > lhapdf=61223 </weight>
+<weight id='13024' > lhapdf=61224 </weight>
+<weight id='13025' > lhapdf=61225 </weight>
+<weight id='13026' > lhapdf=61226 </weight>
+<weight id='13027' > lhapdf=61227 </weight>
+<weight id='13028' > lhapdf=61228 </weight>
+<weight id='13050' > lhapdf=61230 </weight>
+<weight id='13051' > lhapdf=61231 </weight>
+<weight id='13052' > lhapdf=61232 </weight>
+<weight id='13053' > lhapdf=61233 </weight>
+<weight id='13054' > lhapdf=61234 </weight>
+<weight id='13055' > lhapdf=61235 </weight>
+<weight id='13056' > lhapdf=61236 </weight>
+<weight id='13057' > lhapdf=61237 </weight>
+<weight id='13058' > lhapdf=61238 </weight>
+<weight id='13059' > lhapdf=61239 </weight>
+<weight id='13060' > lhapdf=61240 </weight>
+<weight id='13061' > lhapdf=61241 </weight>
+<weight id='13062' > lhapdf=61242 </weight>
+<weight id='13063' > lhapdf=61243 </weight>
+<weight id='13100' > lhapdf=61740 </weight>
+<weight id='13101' > lhapdf=61741 </weight>
+<weight id='13102' > lhapdf=61742 </weight>
+<weight id='13103' > lhapdf=61743 </weight>
+<weight id='13104' > lhapdf=61744 </weight>
+<weight id='13105' > lhapdf=61745 </weight>
+<weight id='13106' > lhapdf=61746 </weight>
+<weight id='13107' > lhapdf=61747 </weight>
+<weight id='13108' > lhapdf=61748 </weight>
+<weight id='13109' > lhapdf=61749 </weight>
+<weight id='13110' > lhapdf=61750 </weight>
+<weight id='13111' > lhapdf=61751 </weight>
+<weight id='13112' > lhapdf=61752 </weight>
+<weight id='13113' > lhapdf=61753 </weight>
+<weight id='13114' > lhapdf=61754 </weight>
+<weight id='13115' > lhapdf=61755 </weight>
+<weight id='13116' > lhapdf=61756 </weight>
+<weight id='13117' > lhapdf=61757 </weight>
+<weight id='13118' > lhapdf=61758 </weight>
+<weight id='13119' > lhapdf=61759 </weight>
+<weight id='13120' > lhapdf=61760 </weight>
+<weight id='2000-NNLOPS'> lhapdf=306000 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2001-NNLOPS'> lhapdf=306001 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2002-NNLOPS'> lhapdf=306002 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2003-NNLOPS'> lhapdf=306003 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2004-NNLOPS'> lhapdf=306004 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2005-NNLOPS'> lhapdf=306005 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2006-NNLOPS'> lhapdf=306006 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2007-NNLOPS'> lhapdf=306007 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2008-NNLOPS'> lhapdf=306008 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2009-NNLOPS'> lhapdf=306009 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2010-NNLOPS'> lhapdf=306010 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2011-NNLOPS'> lhapdf=306011 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2012-NNLOPS'> lhapdf=306012 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2013-NNLOPS'> lhapdf=306013 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2014-NNLOPS'> lhapdf=306014 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2015-NNLOPS'> lhapdf=306015 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2016-NNLOPS'> lhapdf=306016 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2017-NNLOPS'> lhapdf=306017 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2018-NNLOPS'> lhapdf=306018 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2019-NNLOPS'> lhapdf=306019 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2020-NNLOPS'> lhapdf=306020 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2021-NNLOPS'> lhapdf=306021 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2022-NNLOPS'> lhapdf=306022 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2023-NNLOPS'> lhapdf=306023 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2024-NNLOPS'> lhapdf=306024 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2025-NNLOPS'> lhapdf=306025 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2026-NNLOPS'> lhapdf=306026 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2027-NNLOPS'> lhapdf=306027 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2028-NNLOPS'> lhapdf=306028 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2029-NNLOPS'> lhapdf=306029 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2030-NNLOPS'> lhapdf=306030 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2031-NNLOPS'> lhapdf=306031 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2032-NNLOPS'> lhapdf=306032 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2033-NNLOPS'> lhapdf=306033 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2034-NNLOPS'> lhapdf=306034 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2035-NNLOPS'> lhapdf=306035 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2036-NNLOPS'> lhapdf=306036 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2037-NNLOPS'> lhapdf=306037 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2038-NNLOPS'> lhapdf=306038 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2039-NNLOPS'> lhapdf=306039 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2040-NNLOPS'> lhapdf=306040 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2041-NNLOPS'> lhapdf=306041 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2042-NNLOPS'> lhapdf=306042 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2043-NNLOPS'> lhapdf=306043 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2044-NNLOPS'> lhapdf=306044 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2045-NNLOPS'> lhapdf=306045 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2046-NNLOPS'> lhapdf=306046 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2047-NNLOPS'> lhapdf=306047 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2048-NNLOPS'> lhapdf=306048 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2049-NNLOPS'> lhapdf=306049 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2050-NNLOPS'> lhapdf=306050 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2051-NNLOPS'> lhapdf=306051 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2052-NNLOPS'> lhapdf=306052 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2053-NNLOPS'> lhapdf=306053 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2054-NNLOPS'> lhapdf=306054 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2055-NNLOPS'> lhapdf=306055 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2056-NNLOPS'> lhapdf=306056 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2057-NNLOPS'> lhapdf=306057 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2058-NNLOPS'> lhapdf=306058 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2059-NNLOPS'> lhapdf=306059 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2060-NNLOPS'> lhapdf=306060 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2061-NNLOPS'> lhapdf=306061 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2062-NNLOPS'> lhapdf=306062 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2063-NNLOPS'> lhapdf=306063 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2064-NNLOPS'> lhapdf=306064 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2065-NNLOPS'> lhapdf=306065 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2066-NNLOPS'> lhapdf=306066 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2067-NNLOPS'> lhapdf=306067 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2068-NNLOPS'> lhapdf=306068 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2069-NNLOPS'> lhapdf=306069 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2070-NNLOPS'> lhapdf=306070 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2071-NNLOPS'> lhapdf=306071 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2072-NNLOPS'> lhapdf=306072 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2073-NNLOPS'> lhapdf=306073 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2074-NNLOPS'> lhapdf=306074 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2075-NNLOPS'> lhapdf=306075 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2076-NNLOPS'> lhapdf=306076 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2077-NNLOPS'> lhapdf=306077 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2078-NNLOPS'> lhapdf=306078 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2079-NNLOPS'> lhapdf=306079 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2080-NNLOPS'> lhapdf=306080 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2081-NNLOPS'> lhapdf=306081 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2082-NNLOPS'> lhapdf=306082 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2083-NNLOPS'> lhapdf=306083 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2084-NNLOPS'> lhapdf=306084 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2085-NNLOPS'> lhapdf=306085 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2086-NNLOPS'> lhapdf=306086 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2087-NNLOPS'> lhapdf=306087 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2088-NNLOPS'> lhapdf=306088 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2089-NNLOPS'> lhapdf=306089 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2090-NNLOPS'> lhapdf=306090 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2091-NNLOPS'> lhapdf=306091 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2092-NNLOPS'> lhapdf=306092 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2093-NNLOPS'> lhapdf=306093 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2094-NNLOPS'> lhapdf=306094 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2095-NNLOPS'> lhapdf=306095 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2096-NNLOPS'> lhapdf=306096 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2097-NNLOPS'> lhapdf=306097 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2098-NNLOPS'> lhapdf=306098 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2099-NNLOPS'> lhapdf=306099 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2100-NNLOPS'> lhapdf=306100 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2101-NNLOPS'> lhapdf=306101 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2102-NNLOPS'> lhapdf=306102 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2104-NNLOPS'> lhapdf=322500 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2105-NNLOPS'> lhapdf=322700 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2106-NNLOPS'> lhapdf=322900 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2107-NNLOPS'> lhapdf=323100 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2108-NNLOPS'> lhapdf=323300 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2109-NNLOPS'> lhapdf=323500 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2110-NNLOPS'> lhapdf=323700 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2111-NNLOPS'> lhapdf=323900 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2200-NNLOPS'> lhapdf=325700 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2201-NNLOPS'> lhapdf=325701 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2202-NNLOPS'> lhapdf=325702 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2203-NNLOPS'> lhapdf=325703 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2204-NNLOPS'> lhapdf=325704 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2205-NNLOPS'> lhapdf=325705 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2206-NNLOPS'> lhapdf=325706 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2207-NNLOPS'> lhapdf=325707 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2208-NNLOPS'> lhapdf=325708 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2209-NNLOPS'> lhapdf=325709 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2210-NNLOPS'> lhapdf=325710 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2211-NNLOPS'> lhapdf=325711 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2212-NNLOPS'> lhapdf=325712 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2213-NNLOPS'> lhapdf=325713 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2214-NNLOPS'> lhapdf=325714 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2215-NNLOPS'> lhapdf=325715 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2216-NNLOPS'> lhapdf=325716 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2217-NNLOPS'> lhapdf=325717 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2218-NNLOPS'> lhapdf=325718 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2219-NNLOPS'> lhapdf=325719 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2220-NNLOPS'> lhapdf=325720 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2221-NNLOPS'> lhapdf=325721 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2222-NNLOPS'> lhapdf=325722 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2223-NNLOPS'> lhapdf=325723 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2224-NNLOPS'> lhapdf=325724 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2225-NNLOPS'> lhapdf=325725 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2226-NNLOPS'> lhapdf=325726 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2227-NNLOPS'> lhapdf=325727 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2228-NNLOPS'> lhapdf=325728 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2229-NNLOPS'> lhapdf=325729 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2230-NNLOPS'> lhapdf=325730 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2231-NNLOPS'> lhapdf=325731 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2232-NNLOPS'> lhapdf=325732 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2233-NNLOPS'> lhapdf=325733 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2234-NNLOPS'> lhapdf=325734 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2235-NNLOPS'> lhapdf=325735 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2236-NNLOPS'> lhapdf=325736 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2237-NNLOPS'> lhapdf=325737 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2238-NNLOPS'> lhapdf=325738 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2239-NNLOPS'> lhapdf=325739 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2240-NNLOPS'> lhapdf=325740 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2241-NNLOPS'> lhapdf=325741 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2242-NNLOPS'> lhapdf=325742 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2243-NNLOPS'> lhapdf=325743 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2244-NNLOPS'> lhapdf=325744 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2245-NNLOPS'> lhapdf=325745 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2246-NNLOPS'> lhapdf=325746 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2247-NNLOPS'> lhapdf=325747 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2248-NNLOPS'> lhapdf=325748 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2249-NNLOPS'> lhapdf=325749 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2250-NNLOPS'> lhapdf=325750 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2251-NNLOPS'> lhapdf=325751 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2252-NNLOPS'> lhapdf=325752 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2253-NNLOPS'> lhapdf=325753 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2254-NNLOPS'> lhapdf=325754 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2255-NNLOPS'> lhapdf=325755 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2256-NNLOPS'> lhapdf=325756 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2257-NNLOPS'> lhapdf=325757 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2258-NNLOPS'> lhapdf=325758 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2259-NNLOPS'> lhapdf=325759 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2260-NNLOPS'> lhapdf=325760 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2261-NNLOPS'> lhapdf=325761 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2262-NNLOPS'> lhapdf=325762 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2263-NNLOPS'> lhapdf=325763 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2264-NNLOPS'> lhapdf=325764 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2265-NNLOPS'> lhapdf=325765 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2266-NNLOPS'> lhapdf=325766 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2267-NNLOPS'> lhapdf=325767 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2268-NNLOPS'> lhapdf=325768 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2269-NNLOPS'> lhapdf=325769 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2270-NNLOPS'> lhapdf=325770 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2271-NNLOPS'> lhapdf=325771 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2272-NNLOPS'> lhapdf=325772 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2273-NNLOPS'> lhapdf=325773 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2274-NNLOPS'> lhapdf=325774 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2275-NNLOPS'> lhapdf=325775 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2276-NNLOPS'> lhapdf=325776 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2277-NNLOPS'> lhapdf=325777 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2278-NNLOPS'> lhapdf=325778 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2279-NNLOPS'> lhapdf=325779 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2280-NNLOPS'> lhapdf=325780 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2281-NNLOPS'> lhapdf=325781 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2282-NNLOPS'> lhapdf=325782 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2283-NNLOPS'> lhapdf=325783 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2284-NNLOPS'> lhapdf=325784 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2285-NNLOPS'> lhapdf=325785 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2286-NNLOPS'> lhapdf=325786 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2287-NNLOPS'> lhapdf=325787 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2288-NNLOPS'> lhapdf=325788 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2289-NNLOPS'> lhapdf=325789 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2290-NNLOPS'> lhapdf=325790 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2291-NNLOPS'> lhapdf=325791 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2292-NNLOPS'> lhapdf=325792 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2293-NNLOPS'> lhapdf=325793 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2294-NNLOPS'> lhapdf=325794 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2295-NNLOPS'> lhapdf=325795 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2296-NNLOPS'> lhapdf=325796 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2297-NNLOPS'> lhapdf=325797 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2298-NNLOPS'> lhapdf=325798 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2299-NNLOPS'> lhapdf=325799 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2300-NNLOPS'> lhapdf=325800 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2400-NNLOPS'> lhapdf=325900 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2401-NNLOPS'> lhapdf=325901 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2402-NNLOPS'> lhapdf=325902 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2403-NNLOPS'> lhapdf=325903 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2404-NNLOPS'> lhapdf=325904 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2405-NNLOPS'> lhapdf=325905 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2406-NNLOPS'> lhapdf=325906 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2407-NNLOPS'> lhapdf=325907 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2408-NNLOPS'> lhapdf=325908 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2409-NNLOPS'> lhapdf=325909 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2410-NNLOPS'> lhapdf=325910 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2411-NNLOPS'> lhapdf=325911 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2412-NNLOPS'> lhapdf=325912 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2413-NNLOPS'> lhapdf=325913 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2414-NNLOPS'> lhapdf=325914 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2415-NNLOPS'> lhapdf=325915 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2416-NNLOPS'> lhapdf=325916 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2417-NNLOPS'> lhapdf=325917 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2418-NNLOPS'> lhapdf=325918 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2419-NNLOPS'> lhapdf=325919 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2420-NNLOPS'> lhapdf=325920 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2421-NNLOPS'> lhapdf=325921 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2422-NNLOPS'> lhapdf=325922 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2423-NNLOPS'> lhapdf=325923 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2424-NNLOPS'> lhapdf=325924 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2425-NNLOPS'> lhapdf=325925 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2426-NNLOPS'> lhapdf=325926 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2427-NNLOPS'> lhapdf=325927 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2428-NNLOPS'> lhapdf=325928 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2429-NNLOPS'> lhapdf=325929 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2430-NNLOPS'> lhapdf=325930 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2431-NNLOPS'> lhapdf=325931 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2432-NNLOPS'> lhapdf=325932 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2433-NNLOPS'> lhapdf=325933 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2434-NNLOPS'> lhapdf=325934 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2435-NNLOPS'> lhapdf=325935 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2436-NNLOPS'> lhapdf=325936 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2437-NNLOPS'> lhapdf=325937 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2438-NNLOPS'> lhapdf=325938 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2439-NNLOPS'> lhapdf=325939 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2440-NNLOPS'> lhapdf=325940 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2441-NNLOPS'> lhapdf=325941 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2442-NNLOPS'> lhapdf=325942 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2443-NNLOPS'> lhapdf=325943 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2444-NNLOPS'> lhapdf=325944 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2445-NNLOPS'> lhapdf=325945 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2446-NNLOPS'> lhapdf=325946 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2447-NNLOPS'> lhapdf=325947 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2448-NNLOPS'> lhapdf=325948 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2449-NNLOPS'> lhapdf=325949 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2450-NNLOPS'> lhapdf=325950 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2451-NNLOPS'> lhapdf=325951 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2452-NNLOPS'> lhapdf=325952 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2453-NNLOPS'> lhapdf=325953 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2454-NNLOPS'> lhapdf=325954 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2455-NNLOPS'> lhapdf=325955 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2456-NNLOPS'> lhapdf=325956 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2457-NNLOPS'> lhapdf=325957 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2458-NNLOPS'> lhapdf=325958 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2459-NNLOPS'> lhapdf=325959 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2460-NNLOPS'> lhapdf=325960 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2461-NNLOPS'> lhapdf=325961 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2462-NNLOPS'> lhapdf=325962 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2463-NNLOPS'> lhapdf=325963 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2464-NNLOPS'> lhapdf=325964 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2465-NNLOPS'> lhapdf=325965 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2466-NNLOPS'> lhapdf=325966 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2467-NNLOPS'> lhapdf=325967 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2468-NNLOPS'> lhapdf=325968 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2469-NNLOPS'> lhapdf=325969 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2470-NNLOPS'> lhapdf=325970 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2471-NNLOPS'> lhapdf=325971 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2472-NNLOPS'> lhapdf=325972 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2473-NNLOPS'> lhapdf=325973 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2474-NNLOPS'> lhapdf=325974 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2475-NNLOPS'> lhapdf=325975 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2476-NNLOPS'> lhapdf=325976 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2477-NNLOPS'> lhapdf=325977 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2478-NNLOPS'> lhapdf=325978 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2479-NNLOPS'> lhapdf=325979 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2480-NNLOPS'> lhapdf=325980 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2481-NNLOPS'> lhapdf=325981 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2482-NNLOPS'> lhapdf=325982 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2483-NNLOPS'> lhapdf=325983 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2484-NNLOPS'> lhapdf=325984 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2485-NNLOPS'> lhapdf=325985 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2486-NNLOPS'> lhapdf=325986 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2487-NNLOPS'> lhapdf=325987 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2488-NNLOPS'> lhapdf=325988 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2489-NNLOPS'> lhapdf=325989 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2490-NNLOPS'> lhapdf=325990 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2491-NNLOPS'> lhapdf=325991 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2492-NNLOPS'> lhapdf=325992 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2493-NNLOPS'> lhapdf=325993 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2494-NNLOPS'> lhapdf=325994 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2495-NNLOPS'> lhapdf=325995 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2496-NNLOPS'> lhapdf=325996 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2497-NNLOPS'> lhapdf=325997 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2498-NNLOPS'> lhapdf=325998 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2499-NNLOPS'> lhapdf=325999 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2500-NNLOPS'> lhapdf=326000 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2600-NNLOPS'> lhapdf=326100 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2601-NNLOPS'> lhapdf=326101 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2602-NNLOPS'> lhapdf=326102 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2603-NNLOPS'> lhapdf=326103 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2604-NNLOPS'> lhapdf=326104 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2605-NNLOPS'> lhapdf=326105 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2606-NNLOPS'> lhapdf=326106 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2607-NNLOPS'> lhapdf=326107 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2608-NNLOPS'> lhapdf=326108 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2609-NNLOPS'> lhapdf=326109 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2610-NNLOPS'> lhapdf=326110 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2611-NNLOPS'> lhapdf=326111 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2612-NNLOPS'> lhapdf=326112 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2613-NNLOPS'> lhapdf=326113 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2614-NNLOPS'> lhapdf=326114 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2615-NNLOPS'> lhapdf=326115 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2616-NNLOPS'> lhapdf=326116 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2617-NNLOPS'> lhapdf=326117 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2618-NNLOPS'> lhapdf=326118 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2619-NNLOPS'> lhapdf=326119 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2620-NNLOPS'> lhapdf=326120 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2621-NNLOPS'> lhapdf=326121 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2622-NNLOPS'> lhapdf=326122 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2623-NNLOPS'> lhapdf=326123 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2624-NNLOPS'> lhapdf=326124 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2625-NNLOPS'> lhapdf=326125 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2626-NNLOPS'> lhapdf=326126 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2627-NNLOPS'> lhapdf=326127 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2628-NNLOPS'> lhapdf=326128 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2629-NNLOPS'> lhapdf=326129 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2630-NNLOPS'> lhapdf=326130 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2631-NNLOPS'> lhapdf=326131 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2632-NNLOPS'> lhapdf=326132 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2633-NNLOPS'> lhapdf=326133 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2634-NNLOPS'> lhapdf=326134 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2635-NNLOPS'> lhapdf=326135 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2636-NNLOPS'> lhapdf=326136 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2637-NNLOPS'> lhapdf=326137 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2638-NNLOPS'> lhapdf=326138 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2639-NNLOPS'> lhapdf=326139 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2640-NNLOPS'> lhapdf=326140 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2641-NNLOPS'> lhapdf=326141 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2642-NNLOPS'> lhapdf=326142 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2643-NNLOPS'> lhapdf=326143 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2644-NNLOPS'> lhapdf=326144 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2645-NNLOPS'> lhapdf=326145 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2646-NNLOPS'> lhapdf=326146 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2647-NNLOPS'> lhapdf=326147 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2648-NNLOPS'> lhapdf=326148 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2649-NNLOPS'> lhapdf=326149 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2650-NNLOPS'> lhapdf=326150 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2651-NNLOPS'> lhapdf=326151 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2652-NNLOPS'> lhapdf=326152 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2653-NNLOPS'> lhapdf=326153 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2654-NNLOPS'> lhapdf=326154 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2655-NNLOPS'> lhapdf=326155 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2656-NNLOPS'> lhapdf=326156 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2657-NNLOPS'> lhapdf=326157 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2658-NNLOPS'> lhapdf=326158 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2659-NNLOPS'> lhapdf=326159 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2660-NNLOPS'> lhapdf=326160 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2661-NNLOPS'> lhapdf=326161 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2662-NNLOPS'> lhapdf=326162 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2663-NNLOPS'> lhapdf=326163 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2664-NNLOPS'> lhapdf=326164 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2665-NNLOPS'> lhapdf=326165 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2666-NNLOPS'> lhapdf=326166 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2667-NNLOPS'> lhapdf=326167 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2668-NNLOPS'> lhapdf=326168 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2669-NNLOPS'> lhapdf=326169 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2670-NNLOPS'> lhapdf=326170 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2671-NNLOPS'> lhapdf=326171 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2672-NNLOPS'> lhapdf=326172 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2673-NNLOPS'> lhapdf=326173 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2674-NNLOPS'> lhapdf=326174 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2675-NNLOPS'> lhapdf=326175 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2676-NNLOPS'> lhapdf=326176 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2677-NNLOPS'> lhapdf=326177 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2678-NNLOPS'> lhapdf=326178 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2679-NNLOPS'> lhapdf=326179 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2680-NNLOPS'> lhapdf=326180 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2681-NNLOPS'> lhapdf=326181 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2682-NNLOPS'> lhapdf=326182 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2683-NNLOPS'> lhapdf=326183 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2684-NNLOPS'> lhapdf=326184 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2685-NNLOPS'> lhapdf=326185 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2686-NNLOPS'> lhapdf=326186 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2687-NNLOPS'> lhapdf=326187 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2688-NNLOPS'> lhapdf=326188 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2689-NNLOPS'> lhapdf=326189 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2690-NNLOPS'> lhapdf=326190 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2691-NNLOPS'> lhapdf=326191 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2692-NNLOPS'> lhapdf=326192 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2693-NNLOPS'> lhapdf=326193 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2694-NNLOPS'> lhapdf=326194 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2695-NNLOPS'> lhapdf=326195 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2696-NNLOPS'> lhapdf=326196 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2697-NNLOPS'> lhapdf=326197 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2698-NNLOPS'> lhapdf=326198 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2699-NNLOPS'> lhapdf=326199 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2700-NNLOPS'> lhapdf=326200 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2800-NNLOPS'> lhapdf=326300 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2801-NNLOPS'> lhapdf=326301 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2802-NNLOPS'> lhapdf=326302 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2803-NNLOPS'> lhapdf=326303 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2804-NNLOPS'> lhapdf=326304 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2805-NNLOPS'> lhapdf=326305 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2806-NNLOPS'> lhapdf=326306 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2807-NNLOPS'> lhapdf=326307 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2808-NNLOPS'> lhapdf=326308 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2809-NNLOPS'> lhapdf=326309 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2810-NNLOPS'> lhapdf=326310 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2811-NNLOPS'> lhapdf=326311 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2812-NNLOPS'> lhapdf=326312 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2813-NNLOPS'> lhapdf=326313 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2814-NNLOPS'> lhapdf=326314 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2815-NNLOPS'> lhapdf=326315 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2816-NNLOPS'> lhapdf=326316 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2817-NNLOPS'> lhapdf=326317 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2818-NNLOPS'> lhapdf=326318 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2819-NNLOPS'> lhapdf=326319 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2820-NNLOPS'> lhapdf=326320 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2821-NNLOPS'> lhapdf=326321 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2822-NNLOPS'> lhapdf=326322 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2823-NNLOPS'> lhapdf=326323 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2824-NNLOPS'> lhapdf=326324 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2825-NNLOPS'> lhapdf=326325 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2826-NNLOPS'> lhapdf=326326 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2827-NNLOPS'> lhapdf=326327 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2828-NNLOPS'> lhapdf=326328 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2829-NNLOPS'> lhapdf=326329 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2830-NNLOPS'> lhapdf=326330 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2831-NNLOPS'> lhapdf=326331 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2832-NNLOPS'> lhapdf=326332 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2833-NNLOPS'> lhapdf=326333 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2834-NNLOPS'> lhapdf=326334 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2835-NNLOPS'> lhapdf=326335 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2836-NNLOPS'> lhapdf=326336 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2837-NNLOPS'> lhapdf=326337 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2838-NNLOPS'> lhapdf=326338 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2839-NNLOPS'> lhapdf=326339 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2840-NNLOPS'> lhapdf=326340 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2841-NNLOPS'> lhapdf=326341 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2842-NNLOPS'> lhapdf=326342 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2843-NNLOPS'> lhapdf=326343 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2844-NNLOPS'> lhapdf=326344 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2845-NNLOPS'> lhapdf=326345 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2846-NNLOPS'> lhapdf=326346 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2847-NNLOPS'> lhapdf=326347 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2848-NNLOPS'> lhapdf=326348 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2849-NNLOPS'> lhapdf=326349 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2850-NNLOPS'> lhapdf=326350 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2851-NNLOPS'> lhapdf=326351 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2852-NNLOPS'> lhapdf=326352 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2853-NNLOPS'> lhapdf=326353 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2854-NNLOPS'> lhapdf=326354 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2855-NNLOPS'> lhapdf=326355 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2856-NNLOPS'> lhapdf=326356 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2857-NNLOPS'> lhapdf=326357 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2858-NNLOPS'> lhapdf=326358 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2859-NNLOPS'> lhapdf=326359 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2860-NNLOPS'> lhapdf=326360 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2861-NNLOPS'> lhapdf=326361 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2862-NNLOPS'> lhapdf=326362 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2863-NNLOPS'> lhapdf=326363 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2864-NNLOPS'> lhapdf=326364 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2865-NNLOPS'> lhapdf=326365 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2866-NNLOPS'> lhapdf=326366 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2867-NNLOPS'> lhapdf=326367 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2868-NNLOPS'> lhapdf=326368 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2869-NNLOPS'> lhapdf=326369 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2870-NNLOPS'> lhapdf=326370 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2871-NNLOPS'> lhapdf=326371 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2872-NNLOPS'> lhapdf=326372 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2873-NNLOPS'> lhapdf=326373 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2874-NNLOPS'> lhapdf=326374 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2875-NNLOPS'> lhapdf=326375 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2876-NNLOPS'> lhapdf=326376 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2877-NNLOPS'> lhapdf=326377 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2878-NNLOPS'> lhapdf=326378 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2879-NNLOPS'> lhapdf=326379 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2880-NNLOPS'> lhapdf=326380 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2881-NNLOPS'> lhapdf=326381 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2882-NNLOPS'> lhapdf=326382 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2883-NNLOPS'> lhapdf=326383 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2884-NNLOPS'> lhapdf=326384 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2885-NNLOPS'> lhapdf=326385 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2886-NNLOPS'> lhapdf=326386 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2887-NNLOPS'> lhapdf=326387 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2888-NNLOPS'> lhapdf=326388 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2889-NNLOPS'> lhapdf=326389 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2890-NNLOPS'> lhapdf=326390 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2891-NNLOPS'> lhapdf=326391 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2892-NNLOPS'> lhapdf=326392 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2893-NNLOPS'> lhapdf=326393 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2894-NNLOPS'> lhapdf=326394 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2895-NNLOPS'> lhapdf=326395 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2896-NNLOPS'> lhapdf=326396 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2897-NNLOPS'> lhapdf=326397 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2898-NNLOPS'> lhapdf=326398 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2899-NNLOPS'> lhapdf=326399 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='2900-NNLOPS'> lhapdf=326400 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5000-NNLOPS'> lhapdf=13000 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5001-NNLOPS'> lhapdf=13001 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5002-NNLOPS'> lhapdf=13002 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5003-NNLOPS'> lhapdf=13003 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5004-NNLOPS'> lhapdf=13004 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5005-NNLOPS'> lhapdf=13005 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5006-NNLOPS'> lhapdf=13006 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5007-NNLOPS'> lhapdf=13007 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5008-NNLOPS'> lhapdf=13008 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5009-NNLOPS'> lhapdf=13009 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5010-NNLOPS'> lhapdf=13010 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5011-NNLOPS'> lhapdf=13011 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5012-NNLOPS'> lhapdf=13012 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5013-NNLOPS'> lhapdf=13013 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5014-NNLOPS'> lhapdf=13014 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5015-NNLOPS'> lhapdf=13015 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5016-NNLOPS'> lhapdf=13016 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5017-NNLOPS'> lhapdf=13017 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5018-NNLOPS'> lhapdf=13018 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5019-NNLOPS'> lhapdf=13019 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5020-NNLOPS'> lhapdf=13020 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5021-NNLOPS'> lhapdf=13021 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5022-NNLOPS'> lhapdf=13022 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5023-NNLOPS'> lhapdf=13023 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5024-NNLOPS'> lhapdf=13024 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5025-NNLOPS'> lhapdf=13025 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5026-NNLOPS'> lhapdf=13026 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5027-NNLOPS'> lhapdf=13027 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5028-NNLOPS'> lhapdf=13028 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5029-NNLOPS'> lhapdf=13029 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5030-NNLOPS'> lhapdf=13030 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5031-NNLOPS'> lhapdf=13031 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5032-NNLOPS'> lhapdf=13032 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5033-NNLOPS'> lhapdf=13033 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5034-NNLOPS'> lhapdf=13034 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5035-NNLOPS'> lhapdf=13035 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5036-NNLOPS'> lhapdf=13036 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5037-NNLOPS'> lhapdf=13037 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5038-NNLOPS'> lhapdf=13038 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5039-NNLOPS'> lhapdf=13039 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5040-NNLOPS'> lhapdf=13040 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5041-NNLOPS'> lhapdf=13041 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5042-NNLOPS'> lhapdf=13042 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5043-NNLOPS'> lhapdf=13043 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5044-NNLOPS'> lhapdf=13044 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5045-NNLOPS'> lhapdf=13045 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5046-NNLOPS'> lhapdf=13046 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5047-NNLOPS'> lhapdf=13047 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5048-NNLOPS'> lhapdf=13048 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5049-NNLOPS'> lhapdf=13049 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5050-NNLOPS'> lhapdf=13050 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5051-NNLOPS'> lhapdf=13051 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5052-NNLOPS'> lhapdf=13052 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5053-NNLOPS'> lhapdf=13053 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5054-NNLOPS'> lhapdf=13054 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5055-NNLOPS'> lhapdf=13055 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5056-NNLOPS'> lhapdf=13056 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5060-NNLOPS'> lhapdf=13065 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='5070-NNLOPS'> lhapdf=13069 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7000-NNLOPS'> lhapdf=25300 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7001-NNLOPS'> lhapdf=25301 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7002-NNLOPS'> lhapdf=25302 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7003-NNLOPS'> lhapdf=25303 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7004-NNLOPS'> lhapdf=25304 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7005-NNLOPS'> lhapdf=25305 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7006-NNLOPS'> lhapdf=25306 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7007-NNLOPS'> lhapdf=25307 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7008-NNLOPS'> lhapdf=25308 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7009-NNLOPS'> lhapdf=25309 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7010-NNLOPS'> lhapdf=25310 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7011-NNLOPS'> lhapdf=25311 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7012-NNLOPS'> lhapdf=25312 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7013-NNLOPS'> lhapdf=25313 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7014-NNLOPS'> lhapdf=25314 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7015-NNLOPS'> lhapdf=25315 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7016-NNLOPS'> lhapdf=25316 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7017-NNLOPS'> lhapdf=25317 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7018-NNLOPS'> lhapdf=25318 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7019-NNLOPS'> lhapdf=25319 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7020-NNLOPS'> lhapdf=25320 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7021-NNLOPS'> lhapdf=25321 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7022-NNLOPS'> lhapdf=25322 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7023-NNLOPS'> lhapdf=25323 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7024-NNLOPS'> lhapdf=25324 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7025-NNLOPS'> lhapdf=25325 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7026-NNLOPS'> lhapdf=25326 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7027-NNLOPS'> lhapdf=25327 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7028-NNLOPS'> lhapdf=25328 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7029-NNLOPS'> lhapdf=25329 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7030-NNLOPS'> lhapdf=25330 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7031-NNLOPS'> lhapdf=25331 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7032-NNLOPS'> lhapdf=25332 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7033-NNLOPS'> lhapdf=25333 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7034-NNLOPS'> lhapdf=25334 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7035-NNLOPS'> lhapdf=25335 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7036-NNLOPS'> lhapdf=25336 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7037-NNLOPS'> lhapdf=25337 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7038-NNLOPS'> lhapdf=25338 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7039-NNLOPS'> lhapdf=25339 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7040-NNLOPS'> lhapdf=25340 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7041-NNLOPS'> lhapdf=25341 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7042-NNLOPS'> lhapdf=25342 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7043-NNLOPS'> lhapdf=25343 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7044-NNLOPS'> lhapdf=25344 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7045-NNLOPS'> lhapdf=25345 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7046-NNLOPS'> lhapdf=25346 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7047-NNLOPS'> lhapdf=25347 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7048-NNLOPS'> lhapdf=25348 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7049-NNLOPS'> lhapdf=25349 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7050-NNLOPS'> lhapdf=25350 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7060-NNLOPS'> lhapdf=25360 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7061-NNLOPS'> lhapdf=25361 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='7062-NNLOPS'> lhapdf=25362 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8000-NNLOPS'> lhapdf=42560 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8001-NNLOPS'> lhapdf=42561 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8002-NNLOPS'> lhapdf=42562 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8003-NNLOPS'> lhapdf=42563 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8004-NNLOPS'> lhapdf=42564 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8005-NNLOPS'> lhapdf=42565 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8006-NNLOPS'> lhapdf=42566 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8007-NNLOPS'> lhapdf=42567 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8008-NNLOPS'> lhapdf=42568 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8009-NNLOPS'> lhapdf=42569 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8010-NNLOPS'> lhapdf=42570 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8011-NNLOPS'> lhapdf=42571 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8012-NNLOPS'> lhapdf=42572 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8013-NNLOPS'> lhapdf=42573 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8014-NNLOPS'> lhapdf=42574 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8015-NNLOPS'> lhapdf=42575 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8016-NNLOPS'> lhapdf=42576 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8017-NNLOPS'> lhapdf=42577 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8018-NNLOPS'> lhapdf=42578 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8019-NNLOPS'> lhapdf=42579 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8020-NNLOPS'> lhapdf=42580 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8021-NNLOPS'> lhapdf=42581 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8022-NNLOPS'> lhapdf=42582 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8023-NNLOPS'> lhapdf=42583 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8024-NNLOPS'> lhapdf=42584 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8025-NNLOPS'> lhapdf=42585 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8026-NNLOPS'> lhapdf=42586 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8027-NNLOPS'> lhapdf=42587 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8028-NNLOPS'> lhapdf=42588 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='8029-NNLOPS'> lhapdf=42589 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13000-NNLOPS'> lhapdf=61200 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13001-NNLOPS'> lhapdf=61201 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13002-NNLOPS'> lhapdf=61202 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13003-NNLOPS'> lhapdf=61203 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13004-NNLOPS'> lhapdf=61204 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13005-NNLOPS'> lhapdf=61205 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13006-NNLOPS'> lhapdf=61206 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13007-NNLOPS'> lhapdf=61207 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13008-NNLOPS'> lhapdf=61208 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13009-NNLOPS'> lhapdf=61209 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13010-NNLOPS'> lhapdf=61210 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13011-NNLOPS'> lhapdf=61211 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13012-NNLOPS'> lhapdf=61212 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13013-NNLOPS'> lhapdf=61213 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13014-NNLOPS'> lhapdf=61214 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13015-NNLOPS'> lhapdf=61215 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13016-NNLOPS'> lhapdf=61216 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13017-NNLOPS'> lhapdf=61217 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13018-NNLOPS'> lhapdf=61218 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13019-NNLOPS'> lhapdf=61219 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13020-NNLOPS'> lhapdf=61220 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13021-NNLOPS'> lhapdf=61221 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13022-NNLOPS'> lhapdf=61222 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13023-NNLOPS'> lhapdf=61223 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13024-NNLOPS'> lhapdf=61224 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13025-NNLOPS'> lhapdf=61225 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13026-NNLOPS'> lhapdf=61226 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13027-NNLOPS'> lhapdf=61227 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13028-NNLOPS'> lhapdf=61228 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13050-NNLOPS'> lhapdf=61230 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13051-NNLOPS'> lhapdf=61231 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13052-NNLOPS'> lhapdf=61232 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13053-NNLOPS'> lhapdf=61233 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13054-NNLOPS'> lhapdf=61234 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13055-NNLOPS'> lhapdf=61235 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13056-NNLOPS'> lhapdf=61236 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13057-NNLOPS'> lhapdf=61237 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13058-NNLOPS'> lhapdf=61238 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13059-NNLOPS'> lhapdf=61239 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13060-NNLOPS'> lhapdf=61240 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13061-NNLOPS'> lhapdf=61241 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13062-NNLOPS'> lhapdf=61242 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13063-NNLOPS'> lhapdf=61243 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13100-NNLOPS'> lhapdf=61740 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13101-NNLOPS'> lhapdf=61741 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13102-NNLOPS'> lhapdf=61742 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13103-NNLOPS'> lhapdf=61743 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13104-NNLOPS'> lhapdf=61744 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13105-NNLOPS'> lhapdf=61745 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13106-NNLOPS'> lhapdf=61746 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13107-NNLOPS'> lhapdf=61747 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13108-NNLOPS'> lhapdf=61748 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13109-NNLOPS'> lhapdf=61749 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13110-NNLOPS'> lhapdf=61750 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13111-NNLOPS'> lhapdf=61751 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13112-NNLOPS'> lhapdf=61752 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13113-NNLOPS'> lhapdf=61753 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13114-NNLOPS'> lhapdf=61754 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13115-NNLOPS'> lhapdf=61755 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13116-NNLOPS'> lhapdf=61756 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13117-NNLOPS'> lhapdf=61757 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13118-NNLOPS'> lhapdf=61758 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13119-NNLOPS'> lhapdf=61759 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+<weight id='13120-NNLOPS'> lhapdf=61760 DYNNLO_mur1_muf1_3D.top MINLO-W1-denom.top</weight>
+</weightgroup>
