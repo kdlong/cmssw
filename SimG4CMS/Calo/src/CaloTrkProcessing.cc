@@ -34,6 +34,7 @@ CaloTrkProcessing::CaloTrkProcessing(const std::string& name,
   eMin_ = m_p.getParameter<double>("EminTrack") * CLHEP::MeV;
   putHistory_ = m_p.getParameter<bool>("PutHistory");
   doFineCalo_ = m_p.getParameter<bool>("DoFineCalo");
+  storeHGCBoundaryCross_ = m_p.getParameter<bool>("StoreHGCBoundaryCross");
   eMinFine_ = m_p.getParameter<double>("EminFineTrack") * CLHEP::MeV;
   eMinFinePhoton_ = m_p.getParameter<double>("EminFinePhoton") * CLHEP::MeV;
 
@@ -242,14 +243,19 @@ void CaloTrkProcessing::update(const G4Step* aStep) {
       }
     }
   }
-  if (doFineCalo_ && (!trkInfo->isInHistory())) {
+  if ((doFineCalo_ || storeHGCBoundaryCross_) && (!trkInfo->isInHistory())) {
     const G4VTouchable* pre_touch = aStep->GetPreStepPoint()->GetTouchable();
-    const G4VTouchable* post_touch = aStep->GetPostStepPoint()->GetTouchable();
-    bool crossHGCBoundary = isItCalo(pre_touch, fineDetectors_) < 0 && isItCalo(post_touch, fineDetectors_) >= 0;
-    if (isItCalo(pre_touch, fineDetectors_) >= 0 || crossHGCBoundary) {
+
+    bool crossedHGCBoundary = false;
+    if (storeHGCBoundaryCross_) { 
+        const G4VTouchable* post_touch = aStep->GetPostStepPoint()->GetTouchable();
+        crossedHGCBoundary = isItCalo(pre_touch, fineDetectors_) < 0 && isItCalo(post_touch, fineDetectors_) >= 0;
+    }
+
+    if (isItCalo(pre_touch, fineDetectors_) >= 0 || crossedHGCBoundary) {
       int pdg = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
       double cut = (pdg == 22) ? eMinFinePhoton_ : eMinFine_;
-      if (crossHGCBoundary || aStep->GetTrack()->GetKineticEnergy() / CLHEP::MeV > cut) {
+      if (crossedHGCBoundary || aStep->GetTrack()->GetKineticEnergy() / CLHEP::MeV > cut) {
         trkInfo->putInHistory();
         trkInfo->setIDfineCalo(id);
       }
