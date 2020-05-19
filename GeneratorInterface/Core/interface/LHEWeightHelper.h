@@ -23,7 +23,9 @@ namespace gen {
         void setHeaderLines(std::vector<std::string> headerLines);
         void parseWeights();
         void buildGroups();
-        std::unique_ptr<WeightGroupInfo> buildGroup(const ParsedWeight& weight);
+        bool isConsistent();
+        void swapHeaders();
+        std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight);
     private:
         std::vector<std::string> headerLines_;
     };

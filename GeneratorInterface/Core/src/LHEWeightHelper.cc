@@ -2,6 +2,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <iostream>
 
+
 using namespace tinyxml2;
 
 namespace gen {
@@ -11,11 +12,17 @@ namespace gen {
 
     void LHEWeightHelper::parseWeights() {
 	parsedWeights_.clear();
-	tinyxml2::XMLDocument xmlDoc;
+        if(!isConsistent()) {
+            swapHeaders();
+        }
+        tinyxml2::XMLDocument xmlDoc;
+        std::cout << xmlDoc.Parse(boost::algorithm::join(headerLines_, "").c_str() ) << std::endl;
+
 	xmlDoc.Parse(("<root>" + boost::algorithm::join(headerLines_, "") + "</root>").c_str());
-	std::vector<std::string> nameAlts_ = {"name", "type"};
+        std::vector<std::string> nameAlts_ = {"name", "type"};
 	tinyxml2::XMLElement* root = xmlDoc.FirstChildElement("root");
-	size_t weightIndex = 0;
+
+        size_t weightIndex = 0;
 	for (auto* e = root->FirstChildElement(); e != nullptr; e = e->NextSiblingElement()) {
 	    std::string groupName = "";
 	    if (strcmp(e->Name(), "weight") == 0) {
@@ -53,10 +60,54 @@ namespace gen {
 	buildGroups();
     }
 
+    bool LHEWeightHelper::isConsistent() {
+        int curLevel = 0;
+
+        for(auto line: headerLines_) {
+            if(line.find("<weightgroup") != std::string::npos) {
+                curLevel++;
+                if(curLevel != 1) {
+                    return false;
+                }
+            } else if(line.find("</weightgroup>") != std::string::npos) {
+                curLevel--;
+                if(curLevel != 0) {
+                    return false;
+                }
+            }
+        }
+        return curLevel == 0;
+    }
+
+    void LHEWeightHelper::swapHeaders() {
+        int curLevel = 0;
+        int open = -1;
+        int close = -1;
+        for(size_t idx = 0; idx < headerLines_.size(); idx++) {
+            std::string line = headerLines_[idx];
+            if(line.find("<weightgroup") != std::string::npos) {
+                curLevel++;
+                if(curLevel != 1) {
+                    open = idx;
+                }
+            } else if(line.find("</weightgroup>") != std::string::npos) {
+                curLevel--;
+                if(curLevel != 0) {
+                    close = idx;
+                }
+            }
+            if(open > -1 && close > -1) {
+                std::swap(headerLines_[open], headerLines_[close]);
+                open = -1;
+                close = -1;
+            }
+        }
+    }
+
     void LHEWeightHelper::buildGroups() {
 	weightGroups_.clear();
 	std::string currentGroupName;
-	for (const auto& weight : parsedWeights_) {
+	for (auto& weight : parsedWeights_) {
 	    if (weight.groupname != currentGroupName) {
 		weightGroups_.push_back(*buildGroup(weight));
 	    }
@@ -68,9 +119,9 @@ namespace gen {
 		updateScaleInfo(weight);
 	    else if (group.weightType() == gen::WeightType::kPdfWeights)
 		updatePdfInfo(weight);
-	}
-	
-	// checks
+        }
+
+        // checks
 	for(auto& wgt : weightGroups_) {
 	    if(! wgt.isWellFormed()) std::cout << "\033[1;31m";
 	    std::cout << std::boolalpha << wgt.name() << " (" << wgt.firstId() << "-" << wgt.lastId() << "): " << wgt.isWellFormed() << std::endl;
@@ -94,14 +145,16 @@ namespace gen {
 	//splitPdfGroups();
     }
 
-    std::unique_ptr<WeightGroupInfo> LHEWeightHelper::buildGroup(const ParsedWeight& weight) {
+    std::unique_ptr<WeightGroupInfo> LHEWeightHelper::buildGroup(ParsedWeight& weight) {
 	if (isScaleWeightGroup(weight))
 	    return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
 	else if (isPdfWeightGroup(weight))
-	    return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
+            return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
 	else if (isMEParamWeightGroup(weight))
 	    return std::make_unique<MEParamWeightGroupInfo>(weight.groupname);
-
-	return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
+        else if (isOrphanPdfWeightGroup(weight))
+            return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
+        
+        return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
     }
 }

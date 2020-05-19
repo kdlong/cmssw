@@ -10,6 +10,7 @@
 #include "SimDataFormats/GeneratorProducts/interface/PdfWeightGroupInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/ScaleWeightGroupInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/MEParamWeightGroupInfo.h"
+#include "LHAPDF/LHAPDF.h"
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 
@@ -49,6 +50,7 @@ namespace gen {
         bool isScaleWeightGroup(const ParsedWeight& weight);
         bool isMEParamWeightGroup(const ParsedWeight& weight);
         bool isPdfWeightGroup(const ParsedWeight& weight);
+        bool isOrphanPdfWeightGroup(ParsedWeight& weight);
         void updateScaleInfo(const ParsedWeight& weight);
         void updatePdfInfo(const ParsedWeight& weight);
         void splitPdfGroups();

@@ -5,7 +5,6 @@ namespace gen {
     WeightHelper::WeightHelper() : pdfSetsInfo(setupPdfSetsInfo())
     {
         model_ = "";
-            // start to read in lhapdf file. Not sure how to get uncType
 	
     }
 
@@ -34,9 +33,21 @@ namespace gen {
             return true;
 
         return std::find_if(pdfSetsInfo.begin(), pdfSetsInfo.end(), 
-                [name] (const PdfSetInfo& setInfo) { return setInfo.name == name; }) != pdfSetsInfo.end();
+                            [name] (const PdfSetInfo& setInfo) { return setInfo.name == name; }) != pdfSetsInfo.end();
     }
 
+    bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
+        std::string lhaidText = searchAttributes("pdf", weight);
+        auto pairLHA = LHAPDF::lookupPDF(stoi(lhaidText));
+        // require pdf set to exist and it to be the first entry (ie 0)
+        // possibly change this requirement
+        if(pairLHA.first != "" && pairLHA.second == 0) {
+            weight.groupname = std::string(pairLHA.first);
+            return true;
+        }
+        return false;
+    }
+    
     bool WeightHelper::isMEParamWeightGroup(const ParsedWeight& weight) {
         return (weight.groupname.find("mg_reweighting") != std::string::npos);
     }
