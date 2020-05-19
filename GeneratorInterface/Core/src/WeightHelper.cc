@@ -38,13 +38,15 @@ namespace gen {
 
     bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
         std::string lhaidText = searchAttributes("pdf", weight);
-        auto pairLHA = LHAPDF::lookupPDF(stoi(lhaidText));
-        // require pdf set to exist and it to be the first entry (ie 0)
-        // possibly change this requirement
-        if(pairLHA.first != "" && pairLHA.second == 0) {
-            weight.groupname = std::string(pairLHA.first);
-            return true;
-        }
+        try {
+            auto pairLHA = LHAPDF::lookupPDF(stoi(lhaidText));
+            // require pdf set to exist and it to be the first entry (ie 0)
+            // possibly change this requirement
+            if(pairLHA.first != "" && pairLHA.second == 0) {
+                weight.groupname = std::string(pairLHA.first);
+                return true;
+            }
+        } catch(...) {}
         return false;
     }
     
