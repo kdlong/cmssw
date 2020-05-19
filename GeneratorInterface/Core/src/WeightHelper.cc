@@ -61,8 +61,8 @@ namespace gen {
     }
 
     std::string WeightHelper::searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const {
+        auto& attributes = weight.attributes;
         for (const auto& lab : attributeNames_.at(label)) {
-            auto& attributes = weight.attributes;
             if (attributes.find(lab) != attributes.end()) {
                 return boost::algorithm::trim_copy_if(attributes.at(lab), boost::is_any_of("\""));
             }
@@ -71,11 +71,10 @@ namespace gen {
     }
 
     std::string WeightHelper::searchAttributesByRegex(const std::string& label, const ParsedWeight& weight) const {
+        auto& content = weight.content;
+        std::smatch match;
         for (const auto& lab : attributeNames_.at(label)) {
-            auto& content = weight.content;
-            
-            std::regex expr(lab+"=([0-9.]+(?:[eE][+-]?[0-9]+)?)");
-            std::smatch match;
+            std::regex expr(lab+"\\s?=\\s?([0-9.]+(?:[eE][+-]?[0-9]+)?)");
             if (std::regex_search(content, match, expr)) {
                 return boost::algorithm::trim_copy(match.str(1));
             }
@@ -113,13 +112,14 @@ namespace gen {
     void WeightHelper::updatePdfInfo(const ParsedWeight& weight) {
         auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
         std::string lhaidText = searchAttributes("pdf", weight);
-	int lhaid = 0;
-	if (!lhaidText.empty()) {
-	    try {
-		lhaid = std::stoi(lhaidText);
-	    }
-	    catch(std::invalid_argument& e) {
-		pdfGroup.setIsWellFormed(false);
+
+        int lhaid = 0;
+        if (!lhaidText.empty()) {
+            try {
+                lhaid = std::stoi(lhaidText);
+            }
+            catch(std::invalid_argument& e) {
+                pdfGroup.setIsWellFormed(false);
 	    }
 
 	    if (!pdfGroup.containsParentLhapdfId(lhaid, weight.index)) {
