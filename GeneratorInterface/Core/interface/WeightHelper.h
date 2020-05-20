@@ -12,6 +12,7 @@
 #include "SimDataFormats/GeneratorProducts/interface/MEParamWeightGroupInfo.h"
 #include "LHAPDF/LHAPDF.h"
 #include <boost/algorithm/string.hpp>
+#include <bits/stdc++.h> 
 #include <fstream>
 
 namespace gen {
@@ -27,6 +28,7 @@ namespace gen {
         std::string groupname;
         std::string content;
         std::unordered_map<std::string, std::string> attributes;
+        size_t wgtGroup_idx;
     };
     
     class WeightHelper {
@@ -51,8 +53,10 @@ namespace gen {
         bool isMEParamWeightGroup(const ParsedWeight& weight);
         bool isPdfWeightGroup(const ParsedWeight& weight);
         bool isOrphanPdfWeightGroup(ParsedWeight& weight);
+        bool isMultiSetPdfGroup(WeightGroupInfo& group);
         void updateScaleInfo(const ParsedWeight& weight);
         void updatePdfInfo(const ParsedWeight& weight);
+        void updatePdfInfo(int lhaid, int index);
         void splitPdfGroups();
         std::vector<PdfSetInfo> setupPdfSetsInfo();
         std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;

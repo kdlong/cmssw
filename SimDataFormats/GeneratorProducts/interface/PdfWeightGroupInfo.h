@@ -2,6 +2,7 @@
 #define SimDataFormats_GeneratorProducts_PdfWeightGroupInfo_h
 
 #include "SimDataFormats/GeneratorProducts/interface/WeightGroupInfo.h"
+#include "LHAPDF/LHAPDF.h"
 #include <iostream>
 #include <set>
 #include <unordered_map>
@@ -35,31 +36,35 @@ namespace gen {
             void copy(const PdfWeightGroupInfo &other);
             virtual PdfWeightGroupInfo* clone() const override;
 
-            void setUncertaintyType(PdfUncertaintyType uncertaintyType) { uncertaintyType_ = uncertaintyType; }
-            void setHasAlphasVariations(bool hasAlphasVars) { hasAlphasVars_ = hasAlphasVars; }
-            void setAlphasUpIndex(int alphasUpIndex) { alphasUpIndex_ = alphasUpIndex; }
-            void setAlphasDownIndex(int alphasDownIndex) { alphasDownIndex_ = alphasDownIndex; }
-            PdfUncertaintyType uncertaintyType() const { return uncertaintyType_; }
-            bool hasAlphasVariations() const { return hasAlphasVars_; }
-            std::vector<WeightMetaInfo> idsContainedInPdfSet(int refLhaid) {
-                std::vector<WeightMetaInfo> setIds;
-                int lhaid = refLhaid;
-                int index = indexOfLhapdfId(lhaid);
-                while (index <= lastId_ && parentLhapdfId(lhaid, index) == refLhaid) {
-                    setIds.push_back(idsContained_.at(index));
+        std::unordered_map<int, int> getLHAPDFids() {return lhapdfIdsContained_;}
+        int getLHAPDFidFromIdx(int idx) const { return lhapdfIdsContained_.at(idx); }
+        void setUncertaintyType(PdfUncertaintyType uncertaintyType) { uncertaintyType_ = uncertaintyType; }
+        void setHasAlphasVariations(bool hasAlphasVars) { hasAlphasVars_ = hasAlphasVars; }
+        void setAlphasUpIndex(int alphasUpIndex) { alphasUpIndex_ = alphasUpIndex; }
+        void setAlphasDownIndex(int alphasDownIndex) { alphasDownIndex_ = alphasDownIndex; }
+        PdfUncertaintyType uncertaintyType() const { return uncertaintyType_; }
+        bool hasAlphasVariations() const { return hasAlphasVars_; }
+        std::vector<WeightMetaInfo> idsContainedInPdfSet(int refLhaid) {
+            std::vector<WeightMetaInfo> setIds;
+            int lhaid = refLhaid;
+            int index = indexOfLhapdfId(lhaid);
+            while (index <= lastId_ && parentLhapdfId(lhaid) == refLhaid) {
+                setIds.push_back(idsContained_.at(index));
                     index++;
                     lhaid = lhapdfIdsContained_[index];
                 }
                 return setIds;
             }
             bool containsMultipleSets() const { return lhapdfIdsContained_.size() > 1; }
-            int parentLhapdfId(int lhaid, int globalIndex) const { return lhaid - (globalIndex - firstId_); }
-            bool containsParentLhapdfId(int lhaid, int globalIndex) const { 
-                if (indexOfLhapdfId(lhaid) != -1)
-                    return true;
-                int parentid = parentLhapdfId(lhaid, globalIndex);
-                return indexOfLhapdfId(parentid) != -1; 
-            }
+        int parentLhapdfId(int lhaid) const {
+            return lhaid - LHAPDF::lookupPDF(lhaid).second;
+        }
+        bool containsParentLhapdfId(int lhaid) const { 
+            if (indexOfLhapdfId(lhaid) != -1)
+                return true;
+                            
+            return indexOfLhapdfId(parentLhapdfId(lhaid)) != -1;
+        }
             bool containsLhapdfId(int lhaid) const { return indexOfLhapdfId(lhaid) != -1; }
             int indexOfLhapdfId(int lhaid) const {
                 for (const auto& id : lhapdfIdsContained_) {
