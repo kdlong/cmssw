@@ -1,0 +1,12 @@
+MadGraph no systematics program
+    - LO
+    - NLO
+MadGraph + systematics program
+    - Standard
+    - with dynamic scale
+MadGraph + reweight
+
+POWHEG 2016
+POWHEG 2017
+
+??
