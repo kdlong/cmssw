@@ -2,222 +2,226 @@
 #include <regex>
 
 namespace gen {
-    WeightHelper::WeightHelper() :
-        pdfSetsInfo({
-            // In principle this can be parsed from $LHAPDF_DATA_PATH/pdfsets.index,
-            // but do we really want to do that? Can also just hardcode a subset...
-            // TODO: Actually we can just take this from LHAPDF
-            {"NNPDF31_nnlo_hessian_pdfas", 306000, kHessianUnc},
-            {"NNPDF31_nnlo_as_0118", 303600, kMonteCarloUnc},
-            {"NNPDF31_nlo_as_0118", 303400, kMonteCarloUnc},
-            {"NNPDF31_nlo_hessian_pdfas", 305800, kHessianUnc},
-            {"NNPDF31_nnlo_as_0108", 322500, kVariationSet}, 
-            {"NNPDF31_nnlo_as_0110", 322700, kVariationSet},
-            {"NNPDF31_nnlo_as_0112", 322900, kVariationSet},
-            {"NNPDF31_nnlo_as_0114", 323100, kVariationSet},
-            {"NNPDF31_nnlo_as_0117", 323300, kVariationSet},
-            {"NNPDF31_nnlo_as_0119", 323500, kVariationSet},
-            {"NNPDF31_nnlo_as_0122", 323700, kVariationSet},
-            {"NNPDF31_nnlo_as_0124", 323900, kVariationSet},
-            {"NNPDF31_nnlo_as_0118_nf_4_mc_hessian", 325500, kHessianUnc},
-            {"NNPDF31_nlo_as_0118_nf_4", 320500, kMonteCarloUnc},
-            {"NNPDF31_nnlo_as_0118_nf_4", 320900, kMonteCarloUnc},
-            {"NNPDF30_nlo_nf_5_pdfas", 292200, kMonteCarloUnc},
-            {"NNPDF30_nnlo_nf_5_pdfas", 292600, kMonteCarloUnc},
-            {"NNPDF30_nnlo_nf_4_pdfas", 292400, kMonteCarloUnc},
-            {"NNPDF30_nlo_nf_4_pdfas", 292000, kMonteCarloUnc},
-            {"NNPDF30_lo_as_0130", 263000, kMonteCarloUnc}, 
-            {"NNPDF30_lo_as_0118", 262000, kMonteCarloUnc}, 
-            {"CT14nnlo", 13000, kHessianUnc},
-            {"CT14nlo", 13100, kHessianUnc},
-            {"CT14nnlo_as_0116", 13065, kVariationSet},
-            {"CT14nnlo_as_0120", 13069, kVariationSet},
-            {"CT14nlo_as_0116", 13163, kVariationSet},
-            {"CT14nlo_as_0120", 13167, kVariationSet},
-            {"CT14lo", 13200, kVariationSet},
-            {"MMHT2014nlo68clas118", 25200, kHessianUnc},
-            {"MMHT2014nnlo68cl", 25300, kHessianUnc},
-            {"MMHT2014lo68cl", 25000, kHessianUnc},
-            {"PDF4LHC15_nlo_100_pdfas", 90200, kMonteCarloUnc},
-            {"PDF4LHC15_nnlo_100_pdfas", 91200, kMonteCarloUnc},
-            {"PDF4LHC15_nlo_30_pdfas", 90400, kMonteCarloUnc},
-            {"PDF4LHC15_nnlo_30_pdfas", 91400, kMonteCarloUnc},
-            {"ABMP16als118_5_nnlo", 42780, kHessianUnc},
-            {"HERAPDF20_NLO_EIG", 61130, kHessianUnc},
-            {"HERAPDF20_NNLO_EIG", 61200, kHessianUnc}, 
-            {"HERAPDF20_NLO_VAR", 61130, kHessianUnc},
-            {"HERAPDF20_NNLO_VAR", 61230, kHessianUnc},
-            {"CT14qed_inc_proton", 13400, kHessianUnc},
-            {"LUXqed17_plus_PDF4LHC15_nnlo_100", 82200, kMonteCarloUnc},
-        })
-    { model_ = ""; }
-    
-    bool WeightHelper::isScaleWeightGroup(const ParsedWeight& weight) {
-        return (weight.groupname.find("scale_variation") != std::string::npos
-                    || weight.groupname.find("Central scale variation") != std::string::npos);
+  WeightHelper::WeightHelper() { model_ = ""; }
+
+  bool WeightHelper::isScaleWeightGroup(const ParsedWeight& weight) {
+    return (weight.groupname.find("scale_variation") != std::string::npos ||
+            weight.groupname.find("Central scale variation") != std::string::npos);
+  }
+
+  bool WeightHelper::isPdfWeightGroup(const ParsedWeight& weight) {
+    const std::string& name = weight.groupname;
+
+    if (name.find("PDF_variation") != std::string::npos)
+      return true;
+    return LHAPDF::lookupLHAPDFID(name) != -1;
+  }
+
+  bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
+    std::string lhaidText = searchAttributes("pdf", weight);
+    try {
+      auto pairLHA = LHAPDF::lookupPDF(stoi(lhaidText));
+      // require pdf set to exist and it to be the first entry (ie 0)
+      // possibly change this requirement
+      if (pairLHA.first != "" && pairLHA.second == 0) {
+        weight.groupname = std::string(pairLHA.first);
+        return true;
+      }
+    } catch (...) {
+      return false;
+    }
+    return false;
+  }
+
+  bool WeightHelper::isMEParamWeightGroup(const ParsedWeight& weight) {
+    return (weight.groupname.find("mg_reweighting") != std::string::npos);
+  }
+
+  std::string WeightHelper::searchAttributes(const std::string& label, const ParsedWeight& weight) const {
+    std::string attribute = searchAttributesByTag(label, weight);
+    return attribute.empty() ? searchAttributesByRegex(label, weight) : attribute;
+    attribute = searchAttributesByRegex(label, weight);
+  }
+
+  std::string WeightHelper::searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const {
+    auto& attributes = weight.attributes;
+    for (const auto& lab : attributeNames_.at(label)) {
+      if (attributes.find(lab) != attributes.end()) {
+        return boost::algorithm::trim_copy_if(attributes.at(lab), boost::is_any_of("\""));
+      }
+    }
+    return "";
+  }
+
+  std::string WeightHelper::searchAttributesByRegex(const std::string& label, const ParsedWeight& weight) const {
+    auto& content = weight.content;
+    std::smatch match;
+    for (const auto& lab : attributeNames_.at(label)) {
+      std::regex floatExpr(lab + "\\s*=\\s*([0-9.]+(?:[eE][+-]?[0-9]+)?)");
+      std::regex strExpr(lab + "\\s*=\\s*([^=]+)");
+      if (std::regex_search(content, match, floatExpr)) {
+        return boost::algorithm::trim_copy(match.str(1));
+      } else if (std::regex_search(content, match, strExpr)) {
+        return boost::algorithm::trim_copy(match.str(1));
+      }
+    }
+    return "";
+  }
+
+  void WeightHelper::updateScaleInfo(const ParsedWeight& weight) {
+    auto& group = weightGroups_.back();
+    auto& scaleGroup = dynamic_cast<gen::ScaleWeightGroupInfo&>(group);
+    std::string muRText = searchAttributes("mur", weight);
+    std::string muFText = searchAttributes("muf", weight);
+
+    if (muRText.empty() || muFText.empty()) {
+      scaleGroup.setIsWellFormed(false);
+      return;
     }
 
-    bool WeightHelper::isPdfWeightGroup(const ParsedWeight& weight) {
-        const std::string& name = weight.groupname;
-        if (name.find("PDF_variation") != std::string::npos)
-            return true;
-
-        return std::find_if(pdfSetsInfo.begin(), pdfSetsInfo.end(), 
-                [name] (const PdfSetInfo& setInfo) { return setInfo.name == name; }) != pdfSetsInfo.end();
+    try {
+      float muR = std::stof(muRText);
+      float muF = std::stof(muFText);
+      std::string dynNumText = searchAttributes("dyn", weight);
+      if (dynNumText.empty()) {
+        scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
+      } else {
+        std::string dynType = searchAttributes("dyn_name", weight);
+        int dynNum = std::stoi(dynNumText);
+        scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF, dynNum, dynType);
+      }
+    } catch (std::invalid_argument& e) {
+      scaleGroup.setIsWellFormed(false);
     }
-
-    bool WeightHelper::isMEParamWeightGroup(const ParsedWeight& weight) {
-        return (weight.groupname.find("mg_reweighting") != std::string::npos);
+    if (scaleGroup.getLhaid() == -1) {
+      std::string lhaidText = searchAttributes("pdf", weight);
+      try {
+        scaleGroup.setLhaid(std::stoi(lhaidText));
+      } catch (std::invalid_argument& e) {
+        scaleGroup.setLhaid(-2);
+      }
     }
+  }
 
-    std::string WeightHelper::searchAttributes(const std::string& label, const ParsedWeight& weight) const {
-        std::string attribute = searchAttributesByTag(label, weight);
-        return attribute.empty() ? searchAttributesByRegex(label, weight) : attribute;
-        attribute = searchAttributesByRegex(label, weight);
+  int WeightHelper::getLhapdfId(const ParsedWeight& weight) {
+    auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
+    std::string lhaidText = searchAttributes("pdf", weight);
+    if (!lhaidText.empty()) {
+      try {
+        return std::stoi(lhaidText);
+      } catch (std::invalid_argument& e) {
+        pdfGroup.setIsWellFormed(false);
+      }
+    } else if (pdfGroup.getLhaIds().size() > 0) {
+      return pdfGroup.getLhaIds().back() + 1;
+    } else {
+      return LHAPDF::lookupLHAPDFID(weight.groupname);
     }
+    return -1;
+  }
 
-    std::string WeightHelper::searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const {
-        for (const auto& lab : attributeNames_.at(label)) {
-            auto& attributes = weight.attributes;
-            if (attributes.find(lab) != attributes.end()) {
-                return boost::algorithm::trim_copy_if(attributes.at(lab), boost::is_any_of("\""));
-            }
+  void WeightHelper::updatePdfInfo(const ParsedWeight& weight) {
+    auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
+    int lhaid = getLhapdfId(weight);
+    if (pdfGroup.getParentLhapdfId() < 0) {
+      int parentId = lhaid - LHAPDF::lookupPDF(lhaid).second;
+      pdfGroup.setParentLhapdfInfo(parentId);
+      pdfGroup.setUncertaintyType(gen::kUnknownUnc);
+
+      std::string description = "";
+      if (pdfGroup.uncertaintyType() == gen::kHessianUnc)
+        description += "Hessian ";
+      else if (pdfGroup.uncertaintyType() == gen::kMonteCarloUnc)
+        description += "Monte Carlo ";
+      description += "Uncertainty sets for LHAPDF set " + LHAPDF::lookupPDF(parentId).first;
+      description += " with LHAID = " + std::to_string(parentId);
+      description += "; ";
+
+      pdfGroup.appendDescription(description);
+    }
+    // after setup parent info, add lhaid
+    pdfGroup.addLhaid(lhaid);
+  }
+
+  // TODO: Could probably recycle this code better
+  std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<double> weights, float w0) {
+    auto weightProduct = std::make_unique<GenWeightProduct>(w0);
+    weightProduct->setNumWeightSets(weightGroups_.size());
+    int weightGroupIndex = 0;
+    // This happens if there are no PS weights, so the weights vector contains only the central GEN weight.
+    // Just add an empty product
+    if (weightGroups_.size() > 1) {
+      for (unsigned int i = 0; i < weights.size(); i++) {
+        addWeightToProduct(weightProduct, weights.at(i), "", i, weightGroupIndex);
+      }
+    }
+    return std::move(weightProduct);
+  }
+
+  void WeightHelper::cleanupOrphanCentralWeight() {
+    std::vector<int> removeList;
+    for (auto it = weightGroups_.begin(); it < weightGroups_.end(); it++) {
+      if (it->weightType() != WeightType::kScaleWeights)
+        continue;
+      auto& baseWeight = dynamic_cast<gen::ScaleWeightGroupInfo&>(*it);
+      if (baseWeight.containsCentralWeight())
+        continue;
+      for (auto subIt = weightGroups_.begin(); subIt < it; subIt++) {
+        if (subIt->weightType() != WeightType::kPdfWeights)
+          continue;
+        auto& subWeight = dynamic_cast<gen::PdfWeightGroupInfo&>(*subIt);
+        if (subWeight.nIdsContained() == 1 && subWeight.getParentLhapdfId() == baseWeight.getLhaid()) {
+          removeList.push_back(subIt - weightGroups_.begin());
+          auto info = subWeight.idsContained().at(0);
+          baseWeight.addContainedId(info.globalIndex, info.id, info.label, 1, 1);
         }
-        return "";
+      }
+    }
+    std::sort(removeList.begin(), removeList.end(), std::greater<int>());
+    for (auto idx : removeList) {
+      weightGroups_.erase(weightGroups_.begin() + idx);
+    }
+  }
+
+  std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<gen::WeightsInfo> weights, float w0) {
+    auto weightProduct = std::make_unique<GenWeightProduct>(w0);
+    weightProduct->setNumWeightSets(weightGroups_.size());
+    int weightGroupIndex = 0;
+    int i = 0;
+    for (const auto& weight : weights) {
+      weightGroupIndex = addWeightToProduct(weightProduct, weight.wgt, weight.id, i++, weightGroupIndex);
+    }
+    return std::move(weightProduct);
+  }
+
+  int WeightHelper::addWeightToProduct(
+      std::unique_ptr<GenWeightProduct>& product, double weight, std::string name, int weightNum, int groupIndex) {
+    groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
+    auto group = weightGroups_[groupIndex];
+    int entry = group.weightVectorEntry(name, weightNum);
+    product->addWeight(weight, groupIndex, entry);
+    return groupIndex;
+  }
+
+  int WeightHelper::findContainingWeightGroup(std::string wgtId, int weightIndex, int previousGroupIndex) {
+    // Start search at previous index, under expectation of ordered weights
+    previousGroupIndex = previousGroupIndex >= 0 ? previousGroupIndex : 0;
+    for (int index = previousGroupIndex; index < std::min(index + 1, static_cast<int>(weightGroups_.size())); index++) {
+      const gen::WeightGroupInfo& weightGroup = weightGroups_[index];
+      if (weightGroup.indexInRange(weightIndex) && weightGroup.containsWeight(wgtId, weightIndex)) {
+        return static_cast<int>(index);
+      }
     }
 
-    std::string WeightHelper::searchAttributesByRegex(const std::string& label, const ParsedWeight& weight) const {
-        for (const auto& lab : attributeNames_.at(label)) {
-            auto& content = weight.content;
-            
-            std::regex expr(lab+"=([0-9]+)");
-            std::smatch match;
-            if (std::regex_search(content, match, expr)) {
-                return boost::algorithm::trim_copy(match.str(1));
-            }
-        }
-        return "";
+    // Fall back to unordered search
+    int counter = 0;
+    for (auto weightGroup : weightGroups_) {
+      if (weightGroup.containsWeight(wgtId, weightIndex))
+        return counter;
+      counter++;
     }
-
-    void WeightHelper::updateScaleInfo(const ParsedWeight& weight) {
-        auto& group = weightGroups_.back();
-        auto& scaleGroup = dynamic_cast<gen::ScaleWeightGroupInfo&>(group);
-        std::string muRText = searchAttributes("mur", weight);
-        std::string muFText = searchAttributes("mur", weight);
-        if (muRText.empty() || muFText.empty()) {
-            scaleGroup.setIsWellFormed(false);
-            return;
-        }
-
-        try {
-            float muR = std::stof(muRText);
-            float muF = std::stof(muFText);
-            scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
-        }
-        catch(std::invalid_argument& e) {
-            scaleGroup.setIsWellFormed(false);
-        }
-    }
-
-    void WeightHelper::updatePdfInfo(const ParsedWeight& weight) {
-        auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
-        std::string lhaidText = searchAttributes("pdf", weight);
-        int lhaid = 0;
-        if (!lhaidText.empty()) {
-            try {
-                lhaid = std::stoi(lhaidText);
-            }
-            catch(std::invalid_argument& e) {
-                pdfGroup.setIsWellFormed(false);
-            }
-
-            if (!pdfGroup.containsParentLhapdfId(lhaid, weight.index)) {
-                std::string description = "";
-                auto pdfInfo = std::find_if(pdfSetsInfo.begin(), pdfSetsInfo.end(),
-                    [lhaid] (const PdfSetInfo& setInfo) { return setInfo.lhapdfId == lhaid; });
-                if (pdfInfo != pdfSetsInfo.end()) {
-                    pdfGroup.setUncertaintyType(pdfInfo->uncertaintyType);
-                    if (pdfInfo->uncertaintyType == gen::kHessianUnc)
-                        description += "Hessian ";
-                    else if (pdfInfo->uncertaintyType == gen::kMonteCarloUnc)
-                        description += "Monte Carlo ";
-                    description += "Uncertainty sets for LHAPDF set " + pdfInfo->name;
-                    description += " with LHAID = " + std::to_string(lhaid);
-                    description += "; ";
-                }
-                //else
-                //    description += "Uncertainty sets for LHAPDF set with LHAID = " + std::to_string(lhaid);
-                pdfGroup.addLhapdfId(lhaid, weight.index);
-                pdfGroup.appendDescription(description);
-            }
-        }
-        else
-            pdfGroup.setIsWellFormed(false);
-    }
-
-    // TODO: Could probably recycle this code better
-    std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<double> weights, float w0) {
-        auto weightProduct = std::make_unique<GenWeightProduct>(w0);
-        weightProduct->setNumWeightSets(weightGroups_.size());
-        int weightGroupIndex = 0;
-        for (unsigned int i = 0; i < weights.size(); i++) {
-            addWeightToProduct(weightProduct, weights.at(i), "", i, weightGroupIndex);
-        }
-        return std::move(weightProduct);
-    }
-
-    void WeightHelper::splitPdfGroups() {
-    //    std::vector<gen::PdfWeightGroupInfo> groupsToSplit;
-    //    for (auto& group: weightGroups_) {
-    //        if (group.weightType() == gen::WeightType::kPdfWeights) {
-    //            gen::PdfWeightGroupInfo& = dynamic_cast<gen::PdfWeightGroupInfo&>(group);
-    //            if (group.containsMultipleSets())
-    //                groupsToSplit.push_back(group);
-    //        }
-    //    }
-    }
-
-    std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<gen::WeightsInfo> weights, float w0) {
-        auto weightProduct = std::make_unique<GenWeightProduct>(w0);
-        weightProduct->setNumWeightSets(weightGroups_.size());
-        int weightGroupIndex = 0;
-        int i = 0;
-        for (const auto& weight : weights) {
-            weightGroupIndex = addWeightToProduct(weightProduct, weight.wgt, weight.id, i++, weightGroupIndex);
-        }
-        return std::move(weightProduct);
-    }
-
-    int WeightHelper::addWeightToProduct(std::unique_ptr<GenWeightProduct>& product, 
-            double weight, std::string name, int weightNum, int groupIndex) {
-        groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
-        auto group = weightGroups_[groupIndex];
-        int entry = group.weightVectorEntry(name, weightNum);
-        product->addWeight(weight, groupIndex, entry);
-        return groupIndex;
-    }
-
-    int WeightHelper::findContainingWeightGroup(std::string wgtId, int weightIndex, int previousGroupIndex) {
-        // Start search at previous index, under expectation of ordered weights
-        previousGroupIndex = previousGroupIndex >=0 ? previousGroupIndex : 0;
-        for (int index = previousGroupIndex; 
-                index < std::min(index+1, static_cast<int>(weightGroups_.size())); index++) {
-            const gen::WeightGroupInfo& weightGroup = weightGroups_[index];
-            if (weightGroup.indexInRange(weightIndex) && weightGroup.containsWeight(wgtId, weightIndex)) {
-                return static_cast<int>(index);
-            }
-        }
-
-        // Fall back to unordered search
-        int counter = 0;
-        for (auto weightGroup : weightGroups_) {
-            if (weightGroup.containsWeight(wgtId, weightIndex))
-                return counter;
-            counter++;
-        }
-        // Needs to be properly handled
-        throw std::range_error("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex)
-                + "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
-    }
-}
-
+    // Needs to be properly handled
+    throw std::range_error("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex) +
+                           "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
+  }
+}  // namespace gen

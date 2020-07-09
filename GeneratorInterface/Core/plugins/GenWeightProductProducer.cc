@@ -29,7 +29,7 @@ class GenWeightProductProducer : public edm::one::EDProducer<edm::BeginLuminosit
 public:
   explicit GenWeightProductProducer(const edm::ParameterSet& iConfig);
   ~GenWeightProductProducer() override;
-  
+
 private:
   std::vector<std::string> weightNames_;
   gen::GenWeightHelper weightHelper_;
@@ -44,24 +44,19 @@ private:
 //
 // constructors and destructor
 //
-GenWeightProductProducer::GenWeightProductProducer(const edm::ParameterSet& iConfig) :
-    genLumiInfoToken_(consumes<GenLumiInfoHeader, edm::InLumi>(iConfig.getParameter<edm::InputTag>("genInfo"))),
-    genEventToken_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genInfo"))),
-    genLumiInfoHeadTag_(mayConsume<GenLumiInfoHeader, edm::InLumi>(iConfig.getParameter<edm::InputTag>("genLumiInfoHeader")))
-{
+GenWeightProductProducer::GenWeightProductProducer(const edm::ParameterSet& iConfig)
+    : genLumiInfoToken_(consumes<GenLumiInfoHeader, edm::InLumi>(iConfig.getParameter<edm::InputTag>("genInfo"))),
+      genEventToken_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genInfo"))),
+      genLumiInfoHeadTag_(
+          mayConsume<GenLumiInfoHeader, edm::InLumi>(iConfig.getParameter<edm::InputTag>("genLumiInfoHeader"))) {
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
 }
 
-
-GenWeightProductProducer::~GenWeightProductProducer()
-{
-}
-
+GenWeightProductProducer::~GenWeightProductProducer() {}
 
 // ------------ method called to produce the data  ------------
-void
-GenWeightProductProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void GenWeightProductProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::Handle<GenEventInfoProduct> genEventInfo;
   iEvent.getByToken(genEventToken_, genEventInfo);
 
@@ -70,30 +65,27 @@ GenWeightProductProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
   iEvent.put(std::move(weightProduct));
 }
 
-void
-GenWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock& iLumi, edm::EventSetup const& iSetup) {
-    edm::Handle<GenLumiInfoHeader> genLumiInfoHead;
-    iLumi.getByToken(genLumiInfoHeadTag_, genLumiInfoHead);
-    if (genLumiInfoHead.isValid()) {
-        std::string label = genLumiInfoHead->configDescription();
-        boost::replace_all(label,"-","_");
-        weightHelper_.setModel(label);
-    }
+void GenWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock& iLumi, edm::EventSetup const& iSetup) {
+  edm::Handle<GenLumiInfoHeader> genLumiInfoHead;
+  iLumi.getByToken(genLumiInfoHeadTag_, genLumiInfoHead);
+  if (genLumiInfoHead.isValid()) {
+    std::string label = genLumiInfoHead->configDescription();
+    boost::replace_all(label, "-", "_");
+    weightHelper_.setModel(label);
+  }
 
-    if (weightNames_.size() == 0) {
-        edm::Handle<GenLumiInfoHeader> genLumiInfoHandle;
-        iLumi.getByToken(genLumiInfoToken_, genLumiInfoHandle);
+  if (weightNames_.size() == 0) {
+    edm::Handle<GenLumiInfoHeader> genLumiInfoHandle;
+    iLumi.getByToken(genLumiInfoToken_, genLumiInfoHandle);
 
-        weightNames_ = genLumiInfoHandle->weightNames();
-        weightHelper_.parseWeightGroupsFromNames(weightNames_);
-    }
-    auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();
-    for (auto& weightGroup : weightHelper_.weightGroups()) {
-        weightInfoProduct->addWeightGroupInfo(weightGroup.clone());
-    }
-    iLumi.put(std::move(weightInfoProduct));
+    weightNames_ = genLumiInfoHandle->weightNames();
+    weightHelper_.parseWeightGroupsFromNames(weightNames_);
+  }
+  auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();
+  for (auto& weightGroup : weightHelper_.weightGroups()) {
+    weightInfoProduct->addWeightGroupInfo(weightGroup.clone());
+  }
+  iLumi.put(std::move(weightInfoProduct));
 }
 
 DEFINE_FWK_MODULE(GenWeightProductProducer);
-
-

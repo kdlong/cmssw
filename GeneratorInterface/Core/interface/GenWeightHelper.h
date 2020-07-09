@@ -16,15 +16,14 @@
 #include <tinyxml2.h>
 
 namespace gen {
-    class GenWeightHelper : public WeightHelper {
-    public:
-        GenWeightHelper();
+  class GenWeightHelper : public WeightHelper {
+  public:
+    GenWeightHelper();
 
-        void parseWeightGroupsFromNames(std::vector<std::string> weightNames);
-    private:
-    };
-}
+    void parseWeightGroupsFromNames(std::vector<std::string> weightNames);
+
+  private:
+  };
+}  // namespace gen
 
 #endif
-
-
