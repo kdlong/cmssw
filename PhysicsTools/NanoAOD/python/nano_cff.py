@@ -11,12 +11,12 @@ from PhysicsTools.NanoAOD.extraflags_cff import *
 from PhysicsTools.NanoAOD.ttbarCategorization_cff import *
 from PhysicsTools.NanoAOD.genparticles_cff import *
 from PhysicsTools.NanoAOD.particlelevel_cff import *
-from PhysicsTools.NanoAOD.genWeightsTable_cfi import *
 from PhysicsTools.NanoAOD.vertices_cff import *
 from PhysicsTools.NanoAOD.met_cff import *
 from PhysicsTools.NanoAOD.triggerObjects_cff import *
 from PhysicsTools.NanoAOD.isotracks_cff import *
 from PhysicsTools.NanoAOD.NanoAODEDMEventContent_cff import *
+from PhysicsTools.NanoAOD.genWeightsTable_cfi import *
 
 from Configuration.Eras.Modifier_run2_miniAOD_80XLegacy_cff import run2_miniAOD_80XLegacy
 from Configuration.Eras.Modifier_run2_nanoAOD_94X2016_cff import run2_nanoAOD_94X2016
@@ -24,9 +24,6 @@ from Configuration.Eras.Modifier_run2_nanoAOD_94XMiniAODv1_cff import run2_nanoA
 from Configuration.Eras.Modifier_run2_nanoAOD_94XMiniAODv2_cff import run2_nanoAOD_94XMiniAODv2
 from Configuration.Eras.Modifier_run2_nanoAOD_102Xv1_cff import run2_nanoAOD_102Xv1
 from Configuration.Eras.Modifier_run2_nanoAOD_106Xv1_cff import run2_nanoAOD_106Xv1
-from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
-from Configuration.Eras.Modifier_run2_tau_ul_2016_cff import run2_tau_ul_2016
-from Configuration.Eras.Modifier_run2_tau_ul_2018_cff import run2_tau_ul_2018
 
 nanoMetadata = cms.EDProducer("UniqueStringProducer",
     strings = cms.PSet(
@@ -97,6 +94,24 @@ for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016: # to be updated wh
     )
 
 
+genWeightsTable = cms.EDProducer("GenWeightsTableProducer",
+    genEvent = cms.InputTag("generator"),
+    genLumiInfoHeader = cms.InputTag("generator"),
+    lheInfo = cms.VInputTag(cms.InputTag("externalLHEProducer"), cms.InputTag("source")),
+    preferredPDFs = cms.VPSet( # see https://lhapdf.hepforge.org/pdfsets.html
+        cms.PSet( name = cms.string("PDF4LHC15_nnlo_30_pdfas"), lhaid = cms.uint32(91400) ),
+        cms.PSet( name = cms.string("NNPDF31_nnlo_hessian_pdfas"), lhaid = cms.uint32(306000) ),
+        cms.PSet( name = cms.string("NNPDF30_nlo_as_0118"), lhaid = cms.uint32(260000) ), # for some 92X samples. Note that the nominal weight, 260000, is not included in the LHE ...
+        cms.PSet( name = cms.string("NNPDF30_lo_as_0130"), lhaid = cms.uint32(262000) ), # some MLM 80X samples have only this (e.g. /store/mc/RunIISummer16MiniAODv2/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v2/120000/02A210D6-F5C3-E611-B570-008CFA197BD4.root )
+        cms.PSet( name = cms.string("NNPDF30_nlo_nf_4_pdfas"), lhaid = cms.uint32(292000) ), # some FXFX 80X samples have only this (e.g. WWTo1L1Nu2Q, WWTo4Q)
+        cms.PSet( name = cms.string("NNPDF30_nlo_nf_5_pdfas"), lhaid = cms.uint32(292200) ), # some FXFX 80X samples have only this (e.g. DYJetsToLL_Pt, WJetsToLNu_Pt, DYJetsToNuNu_Pt)
+    ),
+    namedWeightIDs = cms.vstring(),
+    namedWeightLabels = cms.vstring(),
+    lheWeightPrecision = cms.int32(14),
+    maxPdfWeights = cms.uint32(150), 
+    debug = cms.untracked.bool(False),
+)
 lheInfoTable = cms.EDProducer("LHETablesProducer",
     lheInfo = cms.VInputTag(cms.InputTag("externalLHEProducer"), cms.InputTag("source")),
     precision = cms.int32(14),
@@ -193,10 +208,10 @@ def nanoAOD_activateVID(process):
         setupAllVIDIdsInModule(process,modname,setupVIDElectronSelection)
     process.electronSequence.insert(process.electronSequence.index(process.bitmapVIDForEle),process.egmGsfElectronIDSequence)
     for modifier in run2_miniAOD_80XLegacy, :
-        modifier.toModify(process.electronMVAValueMapProducer, srcMiniAOD = "slimmedElectronsUpdated")
+        modifier.toModify(process.electronMVAValueMapProducer, src = "slimmedElectronsUpdated")
         modifier.toModify(process.egmGsfElectronIDs, physicsObjectSrc = "slimmedElectronsUpdated")
     for modifier in run2_nanoAOD_94XMiniAODv1,run2_nanoAOD_94XMiniAODv2,run2_nanoAOD_94X2016 ,run2_nanoAOD_102Xv1:
-        modifier.toModify(process.electronMVAValueMapProducer, srcMiniAOD = "slimmedElectronsTo106X")
+        modifier.toModify(process.electronMVAValueMapProducer, src = "slimmedElectronsTo106X")
         modifier.toModify(process.egmGsfElectronIDs, physicsObjectSrc = "slimmedElectronsTo106X")
         
  
@@ -206,7 +221,7 @@ def nanoAOD_activateVID(process):
         setupAllVIDIdsInModule(process,modname,setupVIDPhotonSelection)
     process.photonSequence.insert(process.photonSequence.index(bitmapVIDForPho),process.egmPhotonIDSequence)
     for modifier in run2_miniAOD_80XLegacy,run2_nanoAOD_94XMiniAODv1,run2_nanoAOD_94XMiniAODv2,run2_nanoAOD_94X2016 ,run2_nanoAOD_102Xv1:
-        modifier.toModify(process.photonMVAValueMapProducer, srcMiniAOD = "slimmedPhotonsTo106X")
+        modifier.toModify(process.photonMVAValueMapProducer, src = "slimmedPhotonsTo106X")
         modifier.toModify(process.egmPhotonIDs, physicsObjectSrc = "slimmedPhotonsTo106X")
     return process
 
@@ -280,15 +295,7 @@ def nanoAOD_customizeCommon(process):
                                      addDeepBoostedJet=nanoAOD_addDeepInfoAK8_switch.nanoAOD_addDeepBoostedJet_switch,
                                      addDeepDoubleX=nanoAOD_addDeepInfoAK8_switch.nanoAOD_addDeepDoubleX_switch,
                                      jecPayload=nanoAOD_addDeepInfoAK8_switch.jecPayload)
-    addTauIds_switch = cms.PSet(
-        nanoAOD_addTauIds_switch = cms.untracked.bool(True)
-    )
-    run2_miniAOD_80XLegacy.toModify(addTauIds_switch, nanoAOD_addTauIds_switch = cms.untracked.bool(False))
-    ((run2_miniAOD_devel | run2_tau_ul_2016 | run2_tau_ul_2018) & \
-    (~(run2_nanoAOD_94X2016 | run2_nanoAOD_94XMiniAODv1 | run2_nanoAOD_94XMiniAODv2 | run2_nanoAOD_102Xv1 | run2_nanoAOD_106Xv1))).toModify(addTauIds_switch,
-                                                                                                                                           nanoAOD_addTauIds_switch = cms.untracked.bool(False))
-    if addTauIds_switch.nanoAOD_addTauIds_switch:
-        process = nanoAOD_addTauIds(process)
+    (run2_nanoAOD_94XMiniAODv1 | run2_nanoAOD_94X2016 | run2_nanoAOD_94XMiniAODv2 | run2_nanoAOD_102Xv1 | run2_nanoAOD_106Xv1).toModify(process, lambda p : nanoAOD_addTauIds(p))
     return process
 
 def nanoAOD_customizeData(process):

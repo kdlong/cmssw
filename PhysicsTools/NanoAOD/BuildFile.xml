@@ -5,6 +5,7 @@
 <use   name="DataFormats/Candidate"/>
 <use   name="DataFormats/NanoAOD"/>
 <use   name="boost"/>
+<use   name="tinyxml2"/>
 <export>
   <lib   name="1"/>
 </export>
