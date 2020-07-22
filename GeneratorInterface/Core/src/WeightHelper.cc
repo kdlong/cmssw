@@ -150,7 +150,7 @@ namespace gen {
     int weightGroupIndex = 0;
     // This happens if there are no PS weights, so the weights vector contains only the central GEN weight.
     // Just add an empty product
-    if (weightGroups_.size() > 1) {
+    if (weights.size() > 1) {
       for (unsigned int i = 0; i < weights.size(); i++) {
         addWeightToProduct(weightProduct, weights.at(i), "", i, weightGroupIndex);
       }

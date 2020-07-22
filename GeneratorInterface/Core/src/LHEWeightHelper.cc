@@ -135,7 +135,8 @@ namespace gen {
       }
 
       // split PDF groups
-      if (weightGroups_.back().weightType() == gen::WeightType::kPdfWeights) {
+      bool splitPDFs = false;
+      if (weightGroups_.back().weightType() == gen::WeightType::kPdfWeights && splitPDFs) {
         auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
         int lhaid = getLhapdfId(weight);
         if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.getParentLhapdfId() > 0) {
