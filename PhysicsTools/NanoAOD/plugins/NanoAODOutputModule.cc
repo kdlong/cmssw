@@ -137,7 +137,6 @@ private:
 //
 // constructors and destructor
 //
-<<<<<<< HEAD
 NanoAODOutputModule::NanoAODOutputModule(edm::ParameterSet const& pset):
   edm::one::OutputModuleBase::OutputModuleBase(pset),
   edm::one::OutputModule<>(pset),
@@ -149,10 +148,6 @@ NanoAODOutputModule::NanoAODOutputModule(edm::ParameterSet const& pset):
   m_fakeName(pset.getUntrackedParameter<bool>("fakeNameForCrab", false)),
   m_autoFlush(pset.getUntrackedParameter<int>("autoFlush", -10000000)),
   m_processHistoryRegistry()
-{
-}
-
-NanoAODOutputModule::~NanoAODOutputModule()
 {
 }
 

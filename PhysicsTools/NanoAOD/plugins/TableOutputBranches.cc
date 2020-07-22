@@ -86,6 +86,7 @@ void TableOutputBranches::fill(const nanoaod::FlatTable &tab, TTree &tree, bool 
     for (auto & pair : m_floatBranches) fillColumn<float>(pair, tab);
     for (auto & pair : m_intBranches) fillColumn<int>(pair, tab);
     for (auto & pair : m_uint8Branches) fillColumn<uint8_t>(pair, tab);
+  }
 }
 
 
