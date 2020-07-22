@@ -76,14 +76,13 @@ public:
                              const char* typeName,
                              const WeightGroupDataContainer& weightInfos,
                              WeightsContainer& allWeights) const {
-    size_t typeCount = 0;
-    gen::WeightType previousType = gen::WeightType::kUnknownWeights;
+    std::unordered_map<gen::WeightType, int> typeCount = {};
+    for (auto& type : gen::allWeightTypes)
+      typeCount[type] = 0; 
 
     for (const auto& groupInfo : weightInfos) {
       std::string entryName = typeName;
       gen::WeightType weightType = groupInfo.group->weightType();
-      if (previousType != weightType)
-        typeCount = 0;
 
       std::string name = weightTypeNames_.at(weightType);
       std::string label = groupInfo.group->name();
@@ -102,17 +101,16 @@ public:
 
       entryName.append(name);
       entryName.append("Weight");
-      if (typeCount > 0) {
+      if (typeCount[weightType] > 0) {
         entryName.append("AltSet");
-        entryName.append(std::to_string(typeCount));
+        entryName.append(std::to_string(typeCount[weightType]));
       }
 
       lheWeightTables->emplace_back(weights.size(), entryName, false);
       lheWeightTables->back().addColumn<float>(
           "", weights, label, nanoaod::FlatTable::FloatColumn, lheWeightPrecision_);
 
-      typeCount++;
-      previousType = weightType;
+      typeCount[weightType]++;
     }
   }
 

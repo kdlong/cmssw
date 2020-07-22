@@ -89,7 +89,7 @@ void LHEWeightProductProducer::endRun(edm::Run const& run, edm::EventSetup const
 void LHEWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) {
   edm::Handle<GenWeightInfoProduct> lheWeightInfoHandle;
   lumi.getByToken(lheWeightInfoToken_, lheWeightInfoHandle);
-  // Turn this off for now, not working properly in some of my private LHE prod
+  
   if (lheWeightInfoHandle.isValid()) {
     foundWeightProduct_ = true;
     return;
