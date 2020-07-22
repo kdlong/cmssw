@@ -59,28 +59,17 @@ namespace gen {
   void WeightGroupInfo::addContainedId(int weightEntry, std::string id, std::string label = "") {
     if (firstId_ == -1 || weightEntry < firstId_) {
       firstId_ = weightEntry;
-      // Reset to reflect that indices will be shifted
-      for (auto& entry : idsContained_)
+      for (auto& entry : idsContained_)  // Reset if indices need to be shifted
         entry.localIndex = entry.globalIndex - firstId_;
     }
     if (weightEntry > lastId_)
       lastId_ = weightEntry;
 
-    WeightMetaInfo info;
-    info.globalIndex = weightEntry;
-    info.localIndex = weightEntry - firstId_;
-    info.id = id;
-    info.label = label;
-
-    if (idsContained_.size() < info.localIndex) {
-      idsContained_.resize(info.localIndex);
-      idsContained_.insert(idsContained_.begin() + info.localIndex, info);
-    } else if (idsContained_.size() == info.localIndex) {
-      idsContained_.push_back(info);
-    } else {
-      idsContained_.resize(info.localIndex + 1);
-      idsContained_[info.localIndex] = info;
-    }
+    size_t localIndex = weightEntry - firstId_;
+    WeightMetaInfo info = {static_cast<size_t>(weightEntry), localIndex, id, label};
+    // logic to insert for all cases e.g. inserting in the middle of the vector
+    idsContained_.resize(lastId_ - firstId_);
+    idsContained_.insert(idsContained_.begin() + localIndex, info);
   }
 
   std::vector<WeightMetaInfo> WeightGroupInfo::containedIds() const { return idsContained_; }

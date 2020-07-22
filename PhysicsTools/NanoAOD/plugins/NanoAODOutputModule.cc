@@ -299,7 +299,6 @@ NanoAODOutputModule::openFile(edm::FileBlock const&) {
   m_runTables.clear();
   const auto& keeps = keptProducts();
   for (const auto& keep : keeps[edm::InEvent]) {
-    std::cout << keep.first->className() << std::endl;
     if (keep.first->className() == "nanoaod::FlatTable") {
       m_tableTokens.emplace_back(keep.second);
     } else if (keep.first->className() == "std::vector<nanoaod::FlatTable>") {

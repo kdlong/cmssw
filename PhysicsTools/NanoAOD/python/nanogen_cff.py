@@ -11,7 +11,6 @@ genWeights = cms.EDProducer("GenWeightProductProducer",
     genLumiInfoHeader = cms.InputTag("generator"))
 
 lheWeights = cms.EDProducer("LHEWeightProductProducer",
-    # Need to make this a vector
     lheSourceLabel = cms.string("externalLHEProducer"))
 
 lheWeightsTable = cms.EDProducer(

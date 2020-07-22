@@ -8,6 +8,7 @@
 #include "SimDataFormats/GeneratorProducts/interface/WeightsInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/UnknownWeightGroupInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/PdfWeightGroupInfo.h"
+#include "SimDataFormats/GeneratorProducts/interface/PartonShowerWeightGroupInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/ScaleWeightGroupInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/MEParamWeightGroupInfo.h"
 #include "LHAPDF/LHAPDF.h"
@@ -45,9 +46,11 @@ namespace gen {
     bool isScaleWeightGroup(const ParsedWeight& weight);
     bool isMEParamWeightGroup(const ParsedWeight& weight);
     bool isPdfWeightGroup(const ParsedWeight& weight);
+    bool isPartonShowerWeightGroup(const ParsedWeight& weight);
     bool isOrphanPdfWeightGroup(ParsedWeight& weight);
     void updateScaleInfo(const ParsedWeight& weight);
     void updatePdfInfo(const ParsedWeight& weight);
+    void updatePartonShowerInfo(const ParsedWeight& weight);
     void cleanupOrphanCentralWeight();
 
     int getLhapdfId(const ParsedWeight& weight);
@@ -61,7 +64,13 @@ namespace gen {
         {"mur", {"muR", "MUR", "mur", "renscfact"}},
         {"pdf", {"PDF", "PDF set", "lhapdf", "pdf", "pdf set", "pdfset"}},
         {"dyn", {"DYN_SCALE"}},
-        {"dyn_name", {"dyn_scale_choice"}}};
+        {"dyn_name", {"dyn_scale_choice"}},
+        {"up", {"_up", "Hi"}},
+        {"down", {"_dn", "Lo"}}};
+    void printWeights();
+    std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight);
+    void buildGroups();
+    std::string searchString(const std::string& label, const std::string& name);
   };
 }  // namespace gen
 

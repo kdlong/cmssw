@@ -17,6 +17,12 @@ namespace gen {
     return LHAPDF::lookupLHAPDFID(name) != -1;
   }
 
+  bool WeightHelper::isPartonShowerWeightGroup(const ParsedWeight& weight) {
+    // In case of mixed case (or is this necessary?)
+    const std::string& name = boost::to_lower_copy(weight.groupname);
+    return name.find("isr") != std::string::npos || name.find("fsr") != std::string::npos;
+  }
+
   bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
     std::string lhaidText = searchAttributes("pdf", weight);
     try {
@@ -49,6 +55,14 @@ namespace gen {
       if (attributes.find(lab) != attributes.end()) {
         return boost::algorithm::trim_copy_if(attributes.at(lab), boost::is_any_of("\""));
       }
+    }
+    return "";
+  }
+
+  std::string WeightHelper::searchString(const std::string& label, const std::string& name) {
+    for (const auto& lab : attributeNames_.at(label)) {
+      if (name.find(lab) != std::string::npos)
+        return name.substr(0, name.find(lab));
     }
     return "";
   }
@@ -143,6 +157,17 @@ namespace gen {
     pdfGroup.addLhaid(lhaid);
   }
 
+  void WeightHelper::updatePartonShowerInfo(const ParsedWeight& weight) {
+    auto& psGroup = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(weightGroups_.back());
+    bool isUp = true;
+    std::string subName = searchString("up", weight.id);
+    if (subName.empty()) {
+      isUp = false;
+      subName = searchString("down", weight.id);
+    }
+    psGroup.updateWeight(weight.index, weight.id, subName, isUp);
+  }
+
   // TODO: Could probably recycle this code better
   std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<double> weights, float w0) {
     auto weightProduct = std::make_unique<GenWeightProduct>(w0);
@@ -224,4 +249,94 @@ namespace gen {
     throw std::range_error("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex) +
                            "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
   }
+
+  void WeightHelper::printWeights() {
+    // checks
+    for (auto& wgt : weightGroups_) {
+      if (!wgt.isWellFormed())
+        std::cout << "\033[1;31m";
+      std::cout << std::boolalpha << wgt.name() << " (" << wgt.firstId() << "-" << wgt.lastId()
+                << "): " << wgt.isWellFormed() << std::endl;
+      if (wgt.weightType() == gen::WeightType::kScaleWeights) {
+        auto& wgtScale = dynamic_cast<gen::ScaleWeightGroupInfo&>(wgt);
+        std::cout << wgtScale.centralIndex() << " ";
+        std::cout << wgtScale.muR1muF2Index() << " ";
+        std::cout << wgtScale.muR1muF05Index() << " ";
+        std::cout << wgtScale.muR2muF1Index() << " ";
+        std::cout << wgtScale.muR2muF2Index() << " ";
+        std::cout << wgtScale.muR2muF05Index() << " ";
+        std::cout << wgtScale.muR05muF1Index() << " ";
+        std::cout << wgtScale.muR05muF2Index() << " ";
+        std::cout << wgtScale.muR05muF05Index() << " \n";
+        for (auto name : wgtScale.getDynNames()) {
+          std::cout << name << ": ";
+          std::cout << wgtScale.getScaleIndex(1.0, 1.0, name) << " ";
+          std::cout << wgtScale.getScaleIndex(1.0, 2.0, name) << " ";
+          std::cout << wgtScale.getScaleIndex(1.0, 0.5, name) << " ";
+          std::cout << wgtScale.getScaleIndex(2.0, 1.0, name) << " ";
+          std::cout << wgtScale.getScaleIndex(2.0, 2.0, name) << " ";
+          std::cout << wgtScale.getScaleIndex(2.0, 0.5, name) << " ";
+          std::cout << wgtScale.getScaleIndex(0.5, 1.0, name) << " ";
+          std::cout << wgtScale.getScaleIndex(0.5, 2.0, name) << " ";
+          std::cout << wgtScale.getScaleIndex(0.5, 0.5, name) << "\n";
+        }
+
+      } else if (wgt.weightType() == gen::WeightType::kPdfWeights) {
+        std::cout << wgt.description() << "\n";
+      } else if (wgt.weightType() == gen::WeightType::kPartonShowerWeights) {
+        auto& wgtPS = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(wgt);
+        for (auto group : wgtPS.getWeightNames()) {
+          std::cout << group << ": up " << wgtPS.getUpIndex(group);
+          std::cout << " - down " << wgtPS.getDownIndex(group) << std::endl;
+        }
+      }
+      if (!wgt.isWellFormed())
+        std::cout << "\033[0m";
+    }
+  }
+
+  std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) {
+    if (isScaleWeightGroup(weight))
+      return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
+    else if (isPdfWeightGroup(weight))
+      return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
+    else if (isMEParamWeightGroup(weight))
+      return std::make_unique<MEParamWeightGroupInfo>(weight.groupname);
+    else if (isPartonShowerWeightGroup(weight))
+      return std::make_unique<PartonShowerWeightGroupInfo>("shower");
+    else if (isOrphanPdfWeightGroup(weight))
+      return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
+
+    return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
+  }
+
+  void WeightHelper::buildGroups() {
+    weightGroups_.clear();
+    size_t currentGroupIdx = -1;
+    for (auto& weight : parsedWeights_) {
+      if (currentGroupIdx != weight.wgtGroup_idx) {
+        weightGroups_.push_back(*buildGroup(weight));
+        currentGroupIdx = weight.wgtGroup_idx;
+      }
+
+      // split PDF groups
+      if (weightGroups_.back().weightType() == gen::WeightType::kPdfWeights) {
+        auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
+        int lhaid = getLhapdfId(weight);
+        if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.getParentLhapdfId() > 0) {
+          weightGroups_.push_back(*buildGroup(weight));
+        }
+      }
+      WeightGroupInfo& group = weightGroups_.back();
+      group.addContainedId(weight.index, weight.id, weight.content);
+      if (group.weightType() == gen::WeightType::kScaleWeights)
+        updateScaleInfo(weight);
+      else if (group.weightType() == gen::WeightType::kPdfWeights)
+        updatePdfInfo(weight);
+      else if (group.weightType() == gen::WeightType::kPartonShowerWeights)
+        updatePartonShowerInfo(weight);
+    }
+    cleanupOrphanCentralWeight();
+  }
+
 }  // namespace gen
