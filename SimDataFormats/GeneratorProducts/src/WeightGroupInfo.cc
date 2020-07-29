@@ -72,8 +72,8 @@ namespace gen {
     info.id = id;
     info.label = label;
 
-    if (idsContained_.size() < info.localIndex) {
-      idsContained_.resize(info.localIndex);
+    if (idsContained_.size() > info.localIndex) {
+      idsContained_.resize(lastId_ - firstId_);
       idsContained_.insert(idsContained_.begin() + info.localIndex, info);
     } else if (idsContained_.size() == info.localIndex) {
       idsContained_.push_back(info);
