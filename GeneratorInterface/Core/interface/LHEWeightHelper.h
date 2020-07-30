@@ -22,10 +22,8 @@ namespace gen {
     LHEWeightHelper() : WeightHelper(){};
     void setHeaderLines(std::vector<std::string> headerLines);
     void parseWeights();
-    void buildGroups();
     bool isConsistent();
     void swapHeaders();
-    std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight);
 
   private:
     std::vector<std::string> headerLines_;

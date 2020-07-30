@@ -62,6 +62,9 @@ namespace gen {
         {"pdf", {"PDF", "PDF set", "lhapdf", "pdf", "pdf set", "pdfset"}},
         {"dyn", {"DYN_SCALE"}},
         {"dyn_name", {"dyn_scale_choice"}}};
+    void printWeights();
+    std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight);
+    void buildGroups();
   };
 }  // namespace gen
 
