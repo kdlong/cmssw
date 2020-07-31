@@ -40,7 +40,9 @@ namespace gen {
         parsedWeights_.push_back({attributes["id"], index++, curGroup, text, attributes, groupIndex});
       } else {
         parsedWeights_.push_back(
-            {"", index++, weightName, weightName, std::unordered_map<std::string, std::string>(), groupIndex++});
+            {weightName, index++, weightName, weightName, std::unordered_map<std::string, std::string>(), groupIndex++});
+        if (isPartonShowerWeightGroup(parsedWeights_.back()))
+          parsedWeights_.back().wgtGroup_idx = -1;  // all parton showers are grouped together
       }
       // Working on the not-so-nice assumption that all non-LHE gen weights are PS weights
       // else if (weightGroups_.size() == 0) {
@@ -48,7 +50,7 @@ namespace gen {
       // }
     }
     buildGroups();
-    //printWeights();
+    printWeights();
   }
 
   inline std::string GenWeightHelper::trim(std::string &s) {

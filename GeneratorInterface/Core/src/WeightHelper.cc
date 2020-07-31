@@ -17,6 +17,12 @@ namespace gen {
     return LHAPDF::lookupLHAPDFID(name) != -1;
   }
 
+  bool WeightHelper::isPartonShowerWeightGroup(const ParsedWeight& weight) {
+    // In case of mixed case (or is this necessary?)
+    const std::string& name = boost::to_lower_copy(weight.groupname);
+    return name.find("isr") != std::string::npos || name.find("fsr") != std::string::npos;
+  }
+
   bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
     std::string lhaidText = searchAttributes("pdf", weight);
     try {
@@ -49,6 +55,14 @@ namespace gen {
       if (attributes.find(lab) != attributes.end()) {
         return boost::algorithm::trim_copy_if(attributes.at(lab), boost::is_any_of("\""));
       }
+    }
+    return "";
+  }
+
+  std::string WeightHelper::searchString(const std::string& label, const std::string& name) {
+    for (const auto& lab : attributeNames_.at(label)) {
+      if (name.find(lab) != std::string::npos)
+        return name.substr(0, name.find(lab));
     }
     return "";
   }
@@ -141,6 +155,17 @@ namespace gen {
     }
     // after setup parent info, add lhaid
     pdfGroup.addLhaid(lhaid);
+  }
+
+  void WeightHelper::updatePartonShowerInfo(const ParsedWeight& weight) {
+    auto& psGroup = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(weightGroups_.back());
+    bool isUp = true;
+    std::string subName = searchString("up", weight.id);
+    if (subName.empty()) {
+      isUp = false;
+      subName = searchString("down", weight.id);
+    }
+    psGroup.updateWeight(weight.index, weight.id, subName, isUp);
   }
 
   // TODO: Could probably recycle this code better
@@ -258,6 +283,12 @@ namespace gen {
 
       } else if (wgt.weightType() == gen::WeightType::kPdfWeights) {
         std::cout << wgt.description() << "\n";
+      } else if (wgt.weightType() == gen::WeightType::kPartonShowerWeights) {
+        auto& wgtPS = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(wgt);
+        for (auto group : wgtPS.getWeightNames()) {
+          std::cout << group << ": up " << wgtPS.getUpIndex(group);
+          std::cout << " - down " << wgtPS.getDownIndex(group) << std::endl;
+        }
       }
       if (!wgt.isWellFormed())
         std::cout << "\033[0m";
@@ -271,6 +302,8 @@ namespace gen {
       return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
     else if (isMEParamWeightGroup(weight))
       return std::make_unique<MEParamWeightGroupInfo>(weight.groupname);
+    else if (isPartonShowerWeightGroup(weight))
+      return std::make_unique<PartonShowerWeightGroupInfo>("shower");
     else if (isOrphanPdfWeightGroup(weight))
       return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
 
@@ -300,6 +333,8 @@ namespace gen {
         updateScaleInfo(weight);
       else if (group.weightType() == gen::WeightType::kPdfWeights)
         updatePdfInfo(weight);
+      else if (group.weightType() == gen::WeightType::kPartonShowerWeights)
+        updatePartonShowerInfo(weight);
     }
     cleanupOrphanCentralWeight();
   }
