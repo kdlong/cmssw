@@ -48,25 +48,33 @@ public:
 
   void produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
     edm::Handle<GenWeightProduct> lheWeightHandle;
+    bool foundLheWeights = false;
     for (auto& token : lheWeightTokens_) {
       iEvent.getByToken(token, lheWeightHandle);
       if (lheWeightHandle.isValid()) {
-        break;
+          foundLheWeights = true;
+          break;
       }
     }
 
-    const GenWeightProduct* lheWeightProduct = lheWeightHandle.product();
-    WeightsContainer lheWeights = lheWeightProduct->weights();
+    WeightsContainer lheWeights;
+    if (foundLheWeights) {
+      const GenWeightProduct* lheWeightProduct = lheWeightHandle.product();
+      lheWeights = lheWeightProduct->weights();
+    }
 
     edm::Handle<GenWeightProduct> genWeightHandle;
     iEvent.getByToken(genWeightToken_, genWeightHandle);
     const GenWeightProduct* genWeightProduct = genWeightHandle.product();
     WeightsContainer genWeights = genWeightProduct->weights();
 
-    auto lheWeightTables = std::make_unique<std::vector<nanoaod::FlatTable>>();
     auto const& weightInfos = *luminosityBlockCache(iEvent.getLuminosityBlock().index());
 
-    addWeightGroupToTable(lheWeightTables, "LHE", weightInfos.at(inLHE), lheWeights);
+    auto lheWeightTables = std::make_unique<std::vector<nanoaod::FlatTable>>();
+    if (foundLheWeights) {
+        std::cout << "Adding LHEweights\n";
+        addWeightGroupToTable(lheWeightTables, "LHE", weightInfos.at(inLHE), lheWeights);
+    }
     addWeightGroupToTable(lheWeightTables, "Gen", weightInfos.at(inGen), genWeights);
 
     iEvent.put(std::move(lheWeightTables));
@@ -89,7 +97,7 @@ public:
 
       auto& weights = allWeights.at(groupInfo.index);
       label.append("; ");
-      if (weightType == gen::WeightType::kScaleWeights && groupInfo.group->isWellFormed() &&
+      if (false && weightType == gen::WeightType::kScaleWeights && groupInfo.group->isWellFormed() &&
           groupInfo.group->nIdsContained() < 10) {
         weights = orderedScaleWeights(weights, dynamic_cast<const gen::ScaleWeightGroupInfo*>(groupInfo.group));
         label.append(
@@ -118,10 +126,12 @@ public:
                                                                   edm::EventSetup const&) const override {
     // Set equal to the max number of groups
     // subtrack 1 for each weight group you find
+    bool foundLheWeights = false;
     edm::Handle<GenWeightInfoProduct> lheWeightInfoHandle;
     for (auto& token : lheWeightInfoTokens_) {
       iLumi.getByToken(token, lheWeightInfoHandle);
       if (lheWeightInfoHandle.isValid()) {
+        foundLheWeights = true;
         break;
       }
     }
@@ -135,8 +145,10 @@ public:
 
     WeightGroupsToStore weightsToStore;
     for (auto weightType : gen::allWeightTypes) {
-      auto lheWeights = weightDataPerType(lheWeightInfoHandle, weightType, storePerType[weightType]);
-      weightsToStore.at(inLHE).insert(weightsToStore.at(inLHE).end(), lheWeights.begin(), lheWeights.end());
+      if (foundLheWeights) { 
+        auto lheWeights = weightDataPerType(lheWeightInfoHandle, weightType, storePerType[weightType]);
+        weightsToStore.at(inLHE).insert(weightsToStore.at(inLHE).end(), lheWeights.begin(), lheWeights.end());
+      }
 
       auto genWeights = weightDataPerType(genWeightInfoHandle, weightType, storePerType[weightType]);
       weightsToStore.at(inGen).insert(weightsToStore.at(inGen).end(), genWeights.begin(), genWeights.end());
