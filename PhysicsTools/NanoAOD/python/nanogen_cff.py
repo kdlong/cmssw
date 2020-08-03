@@ -11,7 +11,8 @@ genWeights = cms.EDProducer("GenWeightProductProducer",
     genLumiInfoHeader = cms.InputTag("generator"))
 
 lheWeights = cms.EDProducer("LHEWeightProductProducer",
-    lheSourceLabel = cms.string("externalLHEProducer"))
+    lheSourceLabels = cms.vstring(["externalLHEProducer", "source"])
+)
 
 lheWeightsTable = cms.EDProducer(
     "LHEWeightsTableProducer",
@@ -77,7 +78,7 @@ nanogenSequence = cms.Sequence(
 
 nanogenMiniSequence = cms.Sequence(
     genWeights+
-    #lheWeights+
+    lheWeights+
     nanoMetadata+
     mergedGenParticles+
     genParticles2HepMC+

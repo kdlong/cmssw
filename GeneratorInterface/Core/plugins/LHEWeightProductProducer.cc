@@ -24,6 +24,7 @@
 #include "GeneratorInterface/Core/interface/LHEWeightHelper.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Utilities/interface/transform.h"
 
 class LHEWeightProductProducer : public edm::one::EDProducer<edm::BeginLuminosityBlockProducer, edm::one::WatchRuns> {
 public:
@@ -32,11 +33,12 @@ public:
 
 private:
   gen::LHEWeightHelper weightHelper_;
-  std::string lheLabel_;
-  edm::EDGetTokenT<LHERunInfoProduct> lheRunInfoToken_;
-  edm::EDGetTokenT<LHEEventProduct> lheEventToken_;
-  const edm::EDGetTokenT<GenWeightInfoProduct> lheWeightInfoToken_;
+  std::vector<std::string> lheLabels_;
+  std::vector<edm::EDGetTokenT<LHEEventProduct>> lheEventTokens_;
+  std::vector<edm::EDGetTokenT<LHERunInfoProduct>> lheRunInfoTokens_;
+  std::vector<edm::EDGetTokenT<GenWeightInfoProduct>> lheWeightInfoTokens_;
   bool foundWeightProduct_ = false;
+  bool hasLhe_ = false;
 
   void produce(edm::Event&, const edm::EventSetup&) override;
   void beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) override;
@@ -46,10 +48,13 @@ private:
 
 // TODO: Accept a vector of strings (source, externalLHEProducer) exit if neither are found
 LHEWeightProductProducer::LHEWeightProductProducer(const edm::ParameterSet& iConfig)
-    : lheLabel_(iConfig.getParameter<std::string>("lheSourceLabel")),
-      lheRunInfoToken_(consumes<LHERunInfoProduct, edm::InRun>(lheLabel_)),
-      lheEventToken_(consumes<LHEEventProduct>(lheLabel_)),
-      lheWeightInfoToken_(consumes<GenWeightInfoProduct, edm::InLumi>(lheLabel_)) {
+    : lheLabels_(iConfig.getParameter<std::vector<std::string>>("lheSourceLabels")),
+      lheEventTokens_(edm::vector_transform(lheLabels_,
+            [this](const std::string& tag) { return mayConsume<LHEEventProduct>(tag); })),
+      lheRunInfoTokens_(edm::vector_transform(lheLabels_,
+            [this](const std::string& tag) { return mayConsume<LHERunInfoProduct, edm::InRun>(tag); })),
+      lheWeightInfoTokens_(edm::vector_transform(lheLabels_,
+            [this](const std::string& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })) {
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
 }
@@ -58,19 +63,33 @@ LHEWeightProductProducer::~LHEWeightProductProducer() {}
 
 // ------------ method called to produce the data  ------------
 void LHEWeightProductProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  if (foundWeightProduct_)
+  if (foundWeightProduct_ || !hasLhe_)
     return;
 
   edm::Handle<LHEEventProduct> lheEventInfo;
-  iEvent.getByToken(lheEventToken_, lheEventInfo);
-  // Read weights from LHEEventProduct
+  for (auto& token : lheEventTokens_) {
+    iEvent.getByToken(token, lheEventInfo);
+    if (lheEventInfo.isValid()) {
+        break;
+    }
+  }
+
   auto weightProduct = weightHelper_.weightProduct(lheEventInfo->weights(), lheEventInfo->originalXWGTUP());
   iEvent.put(std::move(weightProduct));
 }
 
 void LHEWeightProductProducer::beginRun(edm::Run const& run, edm::EventSetup const& es) {
   edm::Handle<LHERunInfoProduct> lheRunInfoHandle;
-  run.getByLabel(lheLabel_, lheRunInfoHandle);
+  for (auto& label : lheLabels_) {
+    run.getByLabel(label, lheRunInfoHandle);
+    if (lheRunInfoHandle.isValid()) {
+        hasLhe_ = true;
+        break;
+    }
+  }
+  if (!hasLhe_)
+      return;
+
 
   typedef std::vector<LHERunInfoProduct::Header>::const_iterator header_cit;
   LHERunInfoProduct::Header headerWeightInfo;
@@ -88,12 +107,18 @@ void LHEWeightProductProducer::endRun(edm::Run const& run, edm::EventSetup const
 
 void LHEWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) {
   edm::Handle<GenWeightInfoProduct> lheWeightInfoHandle;
-  lumi.getByToken(lheWeightInfoToken_, lheWeightInfoHandle);
-  
-  if (lheWeightInfoHandle.isValid()) {
-    foundWeightProduct_ = true;
-    return;
+
+  for (auto& token : lheWeightInfoTokens_) {
+    lumi.getByToken(token, lheWeightInfoHandle);
+    if (lheWeightInfoHandle.isValid()) {
+      foundWeightProduct_ = true;
+      return;
+    }
   }
+
+  if (!hasLhe_)
+      return;
+
   weightHelper_.parseWeights();
 
   auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();

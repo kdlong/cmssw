@@ -18,9 +18,10 @@ namespace gen {
   }
 
   bool WeightHelper::isPartonShowerWeightGroup(const ParsedWeight& weight) {
-    // In case of mixed case (or is this necessary?)
     const std::string& name = boost::to_lower_copy(weight.groupname);
-    return name.find("isr") != std::string::npos || name.find("fsr") != std::string::npos;
+    // But "Nominal" and "Baseline" weights in the PS group
+    return name.find("isr") != std::string::npos || name.find("fsr") != std::string::npos ||
+            name.find("nominal") != std::string::npos || name.find("baseline") != std::string::npos;
   }
 
   bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
@@ -29,7 +30,7 @@ namespace gen {
       auto pairLHA = LHAPDF::lookupPDF(stoi(lhaidText));
       // require pdf set to exist and it to be the first entry (ie 0)
       // possibly change this requirement
-      if (pairLHA.first != "" && pairLHA.second == 0) {
+      if (!pairLHA.first.empty() && pairLHA.second == 0) {
         weight.groupname = std::string(pairLHA.first);
         return true;
       }
@@ -82,8 +83,8 @@ namespace gen {
     return "";
   }
 
-  void WeightHelper::updateScaleInfo(const ParsedWeight& weight) {
-    auto& group = weightGroups_.back();
+  void WeightHelper::updateScaleInfo(const ParsedWeight& weight, int index) {
+    auto& group = weightGroups_[index];
     auto& scaleGroup = dynamic_cast<gen::ScaleWeightGroupInfo&>(group);
     std::string muRText = searchAttributes("mur", weight);
     std::string muFText = searchAttributes("muf", weight);
@@ -117,8 +118,7 @@ namespace gen {
     }
   }
 
-  int WeightHelper::getLhapdfId(const ParsedWeight& weight) {
-    auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
+  int WeightHelper::getLhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) {
     std::string lhaidText = searchAttributes("pdf", weight);
     if (!lhaidText.empty()) {
       try {
@@ -134,9 +134,9 @@ namespace gen {
     return -1;
   }
 
-  void WeightHelper::updatePdfInfo(const ParsedWeight& weight) {
-    auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
-    int lhaid = getLhapdfId(weight);
+  void WeightHelper::updatePdfInfo(const ParsedWeight& weight, int index) {
+    auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[index]);
+    int lhaid = getLhapdfId(weight, pdfGroup);
     if (pdfGroup.getParentLhapdfId() < 0) {
       int parentId = lhaid - LHAPDF::lookupPDF(lhaid).second;
       pdfGroup.setParentLhapdfInfo(parentId);
@@ -157,8 +157,8 @@ namespace gen {
     pdfGroup.addLhaid(lhaid);
   }
 
-  void WeightHelper::updatePartonShowerInfo(const ParsedWeight& weight) {
-    auto& psGroup = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(weightGroups_.back());
+  void WeightHelper::updatePartonShowerInfo(const ParsedWeight& weight, int index) {
+    auto& psGroup = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(weightGroups_[index]);
     bool isUp = true;
     std::string subName = searchString("up", weight.id);
     if (subName.empty()) {
@@ -177,7 +177,8 @@ namespace gen {
     // Just add an empty product
     if (weights.size() > 1) {
       for (unsigned int i = 0; i < weights.size(); i++) {
-        addWeightToProduct(weightProduct, weights.at(i), "", i, weightGroupIndex);
+        std::string id = std::to_string(i);
+        addWeightToProduct(weightProduct, weights.at(i), id, i, weightGroupIndex);
       }
     }
     return std::move(weightProduct);
@@ -312,29 +313,34 @@ namespace gen {
 
   void WeightHelper::buildGroups() {
     weightGroups_.clear();
-    size_t currentGroupIdx = -1;
+    int currentGroupIdx = -1;
     for (auto& weight : parsedWeights_) {
-      if (currentGroupIdx != weight.wgtGroup_idx) {
+      if (weight.wgtGroup_idx < static_cast<int>(weightGroups_.size())) {
+        currentGroupIdx = weight.wgtGroup_idx;
+      }
+      else if ((currentGroupIdx+1) == weight.wgtGroup_idx) {
         weightGroups_.push_back(*buildGroup(weight));
         currentGroupIdx = weight.wgtGroup_idx;
       }
+      else
+        throw std::range_error("Invalid group index " + currentGroupIdx);
 
       // split PDF groups
-      if (weightGroups_.back().weightType() == gen::WeightType::kPdfWeights) {
-        auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_.back());
-        int lhaid = getLhapdfId(weight);
+      if (weightGroups_[currentGroupIdx].weightType() == gen::WeightType::kPdfWeights) {
+        auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[currentGroupIdx]);
+        int lhaid = getLhapdfId(weight, pdfGroup);
         if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.getParentLhapdfId() > 0) {
           weightGroups_.push_back(*buildGroup(weight));
         }
       }
-      WeightGroupInfo& group = weightGroups_.back();
+      WeightGroupInfo& group = weightGroups_[currentGroupIdx];
       group.addContainedId(weight.index, weight.id, weight.content);
       if (group.weightType() == gen::WeightType::kScaleWeights)
-        updateScaleInfo(weight);
+        updateScaleInfo(weight, currentGroupIdx);
       else if (group.weightType() == gen::WeightType::kPdfWeights)
-        updatePdfInfo(weight);
+        updatePdfInfo(weight, currentGroupIdx);
       else if (group.weightType() == gen::WeightType::kPartonShowerWeights)
-        updatePartonShowerInfo(weight);
+        updatePartonShowerInfo(weight, currentGroupIdx);
     }
     cleanupOrphanCentralWeight();
   }

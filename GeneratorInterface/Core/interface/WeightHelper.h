@@ -19,11 +19,11 @@
 namespace gen {
   struct ParsedWeight {
     std::string id;
-    size_t index;
+    int index;
     std::string groupname;
     std::string content;
     std::unordered_map<std::string, std::string> attributes;
-    size_t wgtGroup_idx;
+    int wgtGroup_idx;
   };
 
   class WeightHelper {
@@ -48,12 +48,12 @@ namespace gen {
     bool isPdfWeightGroup(const ParsedWeight& weight);
     bool isPartonShowerWeightGroup(const ParsedWeight& weight);
     bool isOrphanPdfWeightGroup(ParsedWeight& weight);
-    void updateScaleInfo(const ParsedWeight& weight);
-    void updatePdfInfo(const ParsedWeight& weight);
-    void updatePartonShowerInfo(const ParsedWeight& weight);
+    void updateScaleInfo(const ParsedWeight& weight, int index);
+    void updatePdfInfo(const ParsedWeight& weight, int index);
+    void updatePartonShowerInfo(const ParsedWeight& weight, int index);
     void cleanupOrphanCentralWeight();
 
-    int getLhapdfId(const ParsedWeight& weight);
+    int getLhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup);
     std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByRegex(const std::string& label, const ParsedWeight& weight) const;

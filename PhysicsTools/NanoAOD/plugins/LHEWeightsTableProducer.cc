@@ -72,7 +72,6 @@ public:
 
     auto lheWeightTables = std::make_unique<std::vector<nanoaod::FlatTable>>();
     if (foundLheWeights) {
-        std::cout << "Adding LHEweights\n";
         addWeightGroupToTable(lheWeightTables, "LHE", weightInfos.at(inLHE), lheWeights);
     }
     addWeightGroupToTable(lheWeightTables, "Gen", weightInfos.at(inGen), genWeights);
