@@ -57,6 +57,7 @@ LHEWeightProductProducer::LHEWeightProductProducer(const edm::ParameterSet& iCon
             [this](const std::string& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })) {
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
+  weightHelper_.setFailIfInvalidXML(iConfig.getUntrackedParameter<bool>("failIfInvalidXML", false));
 }
 
 LHEWeightProductProducer::~LHEWeightProductProducer() {}

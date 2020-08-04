@@ -12,6 +12,7 @@ genWeights = cms.EDProducer("GenWeightProductProducer",
 
 lheWeights = cms.EDProducer("LHEWeightProductProducer",
     lheSourceLabels = cms.vstring(["externalLHEProducer", "source"])
+    failIfInvalidXML = cms.untracked.bool(True)
 )
 
 lheWeightsTable = cms.EDProducer(

@@ -26,8 +26,9 @@ process.out = cms.OutputModule("PoolOutputModule",
                 'keep GenWeightInfoProduct_test*Weights*_*_*',])
 )
 
-#process.testLHEWeights = cms.EDProducer("LHEWeightProductProducer",
-#    lheSourceLabel = cms.string("externalLHEProducer"))
+# process.testLHEWeights = cms.EDProducer("LHEWeightProductProducer",
+#    lheSourceLabel = cms.string("externalLHEProducer"),
+#    failIfValidXML = cms.untracked.bool(True))
 
 process.testGenWeights = cms.EDProducer("GenWeightProductProducer",
     genInfo = cms.InputTag("generator"),
