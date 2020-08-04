@@ -2,6 +2,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <iostream>
+#include <stdexcept>
 
 using namespace tinyxml2;
 
@@ -11,7 +12,11 @@ namespace gen {
   void LHEWeightHelper::parseWeights() {
     parsedWeights_.clear();
 
-    if (!isConsistent()) {
+    if (!isConsistent() && failIfInvalidXML_) {
+      throw std::runtime_error( "XML in LHE is not consistent: Most likely, tags were swapped.\n" \
+                                "To turn on fault fixing, use 'setFailIfInvalidXML(false)'\n" \
+                                "WARNING: the tag swapping may lead to weights associated with the incorrect group");
+    } else if (!isConsistent()) {
       swapHeaders();
     }
 
@@ -29,7 +34,10 @@ namespace gen {
     if (xmlError != 0) {
       std::cerr << "Error in lhe xml file" << std::endl;
       xmlDoc.PrintError();
-      return;
+      if(failIfInvalidXML_)
+        throw std::runtime_error("XML is unreadable because of above error.");
+      else
+        return;
     }
 
     std::vector<std::string> nameAlts_ = {"name", "type"};

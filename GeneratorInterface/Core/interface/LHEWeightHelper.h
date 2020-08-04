@@ -24,9 +24,10 @@ namespace gen {
     void parseWeights();
     bool isConsistent();
     void swapHeaders();
-
+    void setFailIfInvalidXML(bool value) { failIfInvalidXML_ = value; }
   private:
     std::vector<std::string> headerLines_;
+    bool failIfInvalidXML_ = false;
   };
 }  // namespace gen
 
