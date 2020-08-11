@@ -160,10 +160,10 @@ namespace gen {
   void WeightHelper::updatePartonShowerInfo(const ParsedWeight& weight, int index) {
     auto& psGroup = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(weightGroups_[index]);
     bool isUp = true;
-    std::string subName = searchString("up", weight.id);
+    std::string subName = searchString("up", weight.content);
     if (subName.empty()) {
       isUp = false;
-      subName = searchString("down", weight.id);
+      subName = searchString("down", weight.content);
     }
     psGroup.updateWeight(weight.index, weight.id, subName, isUp);
   }
