@@ -21,7 +21,7 @@ namespace gen {
     const std::string& name = boost::to_lower_copy(weight.groupname);
     // But "Nominal" and "Baseline" weights in the PS group
     return name.find("isr") != std::string::npos || name.find("fsr") != std::string::npos ||
-            name.find("nominal") != std::string::npos || name.find("baseline") != std::string::npos;
+           name.find("nominal") != std::string::npos || name.find("baseline") != std::string::npos;
   }
 
   bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
@@ -41,7 +41,9 @@ namespace gen {
   }
 
   bool WeightHelper::isMEParamWeightGroup(const ParsedWeight& weight) {
-    return (weight.groupname.find("mg_reweighting") != std::string::npos);
+    return (weight.groupname.find("mg_reweighting") != std::string::npos ||
+            weight.groupname.find("variation") != std::string::npos);
+    // variation used for blanket of all variations, might need to change
   }
 
   std::string WeightHelper::searchAttributes(const std::string& label, const ParsedWeight& weight) const {
@@ -166,6 +168,12 @@ namespace gen {
       subName = searchString("down", weight.content);
     }
     psGroup.updateWeight(weight.index, weight.id, subName, isUp);
+  }
+
+  void WeightHelper::updateMEParamInfo(const ParsedWeight& weight, int index) {
+    auto& meGroup = dynamic_cast<gen::MEParamWeightGroupInfo&>(weightGroups_[index]);
+    std::string variation = searchAttributes("me_variation", weight);
+    meGroup.updateWeight(weight.index, weight.id, std::stof(variation));
   }
 
   // TODO: Could probably recycle this code better
@@ -317,12 +325,10 @@ namespace gen {
     for (auto& weight : parsedWeights_) {
       if (weight.wgtGroup_idx < static_cast<int>(weightGroups_.size())) {
         currentGroupIdx = weight.wgtGroup_idx;
-      }
-      else if ((currentGroupIdx+1) == weight.wgtGroup_idx) {
+      } else if ((currentGroupIdx + 1) == weight.wgtGroup_idx) {
         weightGroups_.push_back(*buildGroup(weight));
         currentGroupIdx = weight.wgtGroup_idx;
-      }
-      else
+      } else
         throw std::range_error("Invalid group index " + currentGroupIdx);
 
       // split PDF groups
@@ -341,6 +347,9 @@ namespace gen {
         updatePdfInfo(weight, currentGroupIdx);
       else if (group.weightType() == gen::WeightType::kPartonShowerWeights)
         updatePartonShowerInfo(weight, currentGroupIdx);
+      else if (group.weightType() == gen::WeightType::kMEParamWeights) {
+        updateMEParamInfo(weight, currentGroupIdx);
+      }
     }
     cleanupOrphanCentralWeight();
   }

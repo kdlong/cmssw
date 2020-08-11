@@ -14,6 +14,16 @@ namespace gen {
     virtual ~MEParamWeightGroupInfo() override {}
     void copy(const MEParamWeightGroupInfo& other);
     virtual MEParamWeightGroupInfo* clone() const override;
+    int getCentralIndex() { return centralIdx; }
+    int getVariationIndex(int sig) { return massValue.at(numSigma + sig).second; }
+    double getVariationValue(int sig) { return massValue.at(numSigma + sig).first; }
+    void updateWeight(int globalIndex, std::string id, double weight);
+
+  private:
+    std::vector<std::pair<double, int>> massValue;
+    double central;
+    int centralIdx;
+    int numSigma;
   };
 }  // namespace gen
 

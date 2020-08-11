@@ -49,6 +49,7 @@ namespace gen {
     bool isPartonShowerWeightGroup(const ParsedWeight& weight);
     bool isOrphanPdfWeightGroup(ParsedWeight& weight);
     void updateScaleInfo(const ParsedWeight& weight, int index);
+    void updateMEParamInfo(const ParsedWeight& weight, int index);
     void updatePdfInfo(const ParsedWeight& weight, int index);
     void updatePartonShowerInfo(const ParsedWeight& weight, int index);
     void cleanupOrphanCentralWeight();
@@ -66,7 +67,9 @@ namespace gen {
         {"dyn", {"DYN_SCALE"}},
         {"dyn_name", {"dyn_scale_choice"}},
         {"up", {"_up", "Hi"}},
-        {"down", {"_dn", "Lo"}}};
+        {"down", {"_dn", "Lo"}},
+        {"me_variation", {"mass", "sthw2", "width"}},
+    };
     void printWeights();
     std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight);
     void buildGroups();
