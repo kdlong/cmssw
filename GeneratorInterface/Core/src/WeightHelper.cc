@@ -173,7 +173,14 @@ namespace gen {
   void WeightHelper::updateMEParamInfo(const ParsedWeight& weight, int index) {
     auto& meGroup = dynamic_cast<gen::MEParamWeightGroupInfo&>(weightGroups_[index]);
     std::string variation = searchAttributes("me_variation", weight);
-    meGroup.updateWeight(weight.index, weight.id, std::stof(variation));
+    if (!variation.empty()) {
+      meGroup.updateWeight(weight.index, weight.id, std::stof(variation));
+    } else {
+      std::vector<std::string> split_content;
+      std::string content = boost::algorithm::trim_copy(weight.content);
+      boost::split(split_content, content, boost::is_any_of("\n"));
+      meGroup.updateWeight(weight.index, weight.id, split_content);
+    }
   }
 
   // TODO: Could probably recycle this code better

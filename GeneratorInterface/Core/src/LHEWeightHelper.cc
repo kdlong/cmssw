@@ -13,9 +13,10 @@ namespace gen {
     parsedWeights_.clear();
 
     if (!isConsistent() && failIfInvalidXML_) {
-      throw std::runtime_error( "XML in LHE is not consistent: Most likely, tags were swapped.\n" \
-                                "To turn on fault fixing, use 'setFailIfInvalidXML(false)'\n" \
-                                "WARNING: the tag swapping may lead to weights associated with the incorrect group");
+      throw std::runtime_error(
+          "XML in LHE is not consistent: Most likely, tags were swapped.\n"
+          "To turn on fault fixing, use 'setFailIfInvalidXML(false)'\n"
+          "WARNING: the tag swapping may lead to weights associated with the incorrect group");
     } else if (!isConsistent()) {
       swapHeaders();
     }
@@ -34,7 +35,7 @@ namespace gen {
     if (xmlError != 0) {
       std::cerr << "Error in lhe xml file" << std::endl;
       xmlDoc.PrintError();
-      if(failIfInvalidXML_)
+      if (failIfInvalidXML_)
         throw std::runtime_error("XML is unreadable because of above error.");
       else
         return;
@@ -44,7 +45,6 @@ namespace gen {
 
     int weightIndex = 0;
     int groupIndex = 0;
-    //for (auto* e = root->FirstChildElement(); e != nullptr; e = e->NextSiblingElement()) {
     for (auto* e = xmlDoc.RootElement(); e != nullptr; e = e->NextSiblingElement()) {
       std::string groupName = "";
       if (strcmp(e->Name(), "weight") == 0) {

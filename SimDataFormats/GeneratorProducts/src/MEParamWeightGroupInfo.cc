@@ -18,4 +18,9 @@ namespace gen {
     }
   }
 
+  void MEParamWeightGroupInfo::updateWeight(int globalIndex, std::string id, std::vector<std::string>& content) {
+    size_t localIndex = weightMetaInfoByGlobalIndex(id, globalIndex).localIndex;
+    splitContent[localIndex] = content;
+  }
+
 }  // namespace gen
