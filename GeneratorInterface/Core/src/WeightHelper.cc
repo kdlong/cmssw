@@ -171,6 +171,7 @@ namespace gen {
   }
 
   void WeightHelper::updateMEParamInfo(const ParsedWeight& weight, int index) {
+    std::cout << "Access by index " << index << std::endl;
     auto& meGroup = dynamic_cast<gen::MEParamWeightGroupInfo&>(weightGroups_[index]);
     std::string variation = searchAttributes("me_variation", weight);
     if (!variation.empty()) {
@@ -240,6 +241,8 @@ namespace gen {
     groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
     auto group = weightGroups_[groupIndex];
     int entry = group.weightVectorEntry(name, weightNum);
+    if (debug_)
+        std::cout << "Adding weight " << entry << " to group " << groupIndex << std::endl;
     product->addWeight(weight, groupIndex, entry);
     return groupIndex;
   }
@@ -312,6 +315,10 @@ namespace gen {
   }
 
   std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) {
+    if (debug_) {
+        std::cout << "Building group for weight group " << weight.groupname 
+                  << " weight content is " << weight.content << std::endl;
+    }
     if (isScaleWeightGroup(weight))
       return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
     else if (isPdfWeightGroup(weight))
@@ -328,36 +335,52 @@ namespace gen {
 
   void WeightHelper::buildGroups() {
     weightGroups_.clear();
-    int currentGroupIdx = -1;
+    int currentGroupIdx = 0;
+    int groupOffset = 0;
     for (auto& weight : parsedWeights_) {
-      if (weight.wgtGroup_idx < static_cast<int>(weightGroups_.size())) {
-        currentGroupIdx = weight.wgtGroup_idx;
-      } else if ((currentGroupIdx + 1) == weight.wgtGroup_idx) {
+      std::cout << "currentGroupIdx is " << currentGroupIdx << " groupOffset is " << groupOffset << std::endl;
+      std::cout << "weightGroups size is " << weightGroups_.size() << std::endl;
+      weight.wgtGroup_idx += groupOffset;
+      currentGroupIdx = weight.wgtGroup_idx;
+      if (debug_)
+        std::cout << "Building group for weight " << weight.content << " group " 
+                  << weight.groupname << " group index " << weight.wgtGroup_idx << std::endl;
+
+      int numGroups = static_cast<int>(weightGroups_.size());
+      if (weight.wgtGroup_idx == numGroups) {
+        std::cout << "Adding weight\n";
         weightGroups_.push_back(*buildGroup(weight));
-        currentGroupIdx = weight.wgtGroup_idx;
-      } else
+      } else if (weight.wgtGroup_idx >= numGroups)
         throw std::range_error("Invalid group index " + currentGroupIdx);
 
       // split PDF groups
+      std::cout << "now weightGroups size is " << weightGroups_.size() << std::endl;
       if (weightGroups_[currentGroupIdx].weightType() == gen::WeightType::kPdfWeights) {
         auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[currentGroupIdx]);
         int lhaid = getLhapdfId(weight, pdfGroup);
         if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.getParentLhapdfId() > 0) {
           weightGroups_.push_back(*buildGroup(weight));
+          groupOffset++;
         }
       }
+      std::cout << "Access by index\n";
       WeightGroupInfo& group = weightGroups_[currentGroupIdx];
+      std::cout << "Accessed by index\n";
       group.addContainedId(weight.index, weight.id, weight.content);
       if (group.weightType() == gen::WeightType::kScaleWeights)
         updateScaleInfo(weight, currentGroupIdx);
-      else if (group.weightType() == gen::WeightType::kPdfWeights)
+      else if (group.weightType() == gen::WeightType::kPdfWeights) {
+        std::cout << "Updating pdf info\n";
         updatePdfInfo(weight, currentGroupIdx);
+      }
       else if (group.weightType() == gen::WeightType::kPartonShowerWeights)
         updatePartonShowerInfo(weight, currentGroupIdx);
       else if (group.weightType() == gen::WeightType::kMEParamWeights) {
+        std::cout << "Updating info\n";
         updateMEParamInfo(weight, currentGroupIdx);
       }
     }
+    std::cout << "Cleaning weights\n";
     cleanupOrphanCentralWeight();
   }
 

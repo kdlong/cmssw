@@ -83,4 +83,21 @@ namespace gen {
   std::vector<WeightMetaInfo> WeightGroupInfo::containedIds() const { return idsContained_; }
 
   bool WeightGroupInfo::indexInRange(int index) const { return (index <= lastId_ && index >= firstId_); }
+
+  void WeightGroupInfo::cacheWeightIndicesByLabel() {
+      for (const auto& weight : idsContained_)
+        weightLabelsToIndices_[weight.label] = weight.localIndex;
+  }
+
+  int WeightGroupInfo::weightIndexFromLabel(std::string weightLabel) const {
+      if (weightLabelsToIndices_.find(weightLabel) != weightLabelsToIndices_.end())
+          return static_cast<int>(weightLabelsToIndices_.at(weightLabel));
+    
+      auto it = std::find_if(idsContained_.begin(), idsContained_.end(), 
+              [weightLabel](const auto& w) { return weightLabel == w.label; });
+      if (it == idsContained_.end())
+          return -1;
+      return std::distance(idsContained_.begin(), it);
+  }
+
 }  // namespace gen

@@ -38,6 +38,9 @@ namespace gen {
     int findContainingWeightGroup(std::string wgtId, int weightIndex, int previousGroupIndex);
 
   protected:
+    // TODO: Make this only print from one thread a la 
+    // https://github.com/kdlong/cmssw/blob/master/PhysicsTools/NanoAOD/plugins/GenWeightsTableProducer.cc#L1069
+    bool debug_ = true;
     std::string model_;
     std::vector<ParsedWeight> parsedWeights_;
     std::map<std::string, std::string> currWeightAttributeMap_;

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <vector>
 #include <array>
+#include <unordered_map>
 
 namespace gen {
   struct WeightMetaInfo {
@@ -69,6 +70,8 @@ namespace gen {
     void setWeightType(WeightType type) { weightType_ = type; }
     void setFirstId(int firstId) { firstId_ = firstId; }
     void setLastId(int lastId) { lastId_ = lastId; }
+    // Call before doing lots of searches by label
+    void cacheWeightIndicesByLabel();
 
     std::string name() const { return name_; }
     std::string description() const { return description_; }
@@ -81,6 +84,7 @@ namespace gen {
     // Store whether the group was fully parsed succesfully
     void setIsWellFormed(bool wellFormed) { isWellFormed_ = wellFormed; }
     bool isWellFormed() const { return isWellFormed_; }
+    int weightIndexFromLabel(std::string weightLabel) const;
 
   protected:
     bool isWellFormed_;
@@ -91,6 +95,7 @@ namespace gen {
     std::vector<WeightMetaInfo> idsContained_;
     int firstId_;
     int lastId_;
+    std::unordered_map<std::string, size_t> weightLabelsToIndices_;
   };
 }  // namespace gen
 
