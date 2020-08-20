@@ -17,10 +17,16 @@ namespace gen {
     virtual ~PartonShowerWeightGroupInfo() override {}
     void copy(const PartonShowerWeightGroupInfo &other);
     virtual PartonShowerWeightGroupInfo *clone() const override;
-    void updateWeight(int globalIndex, std::string id, std::string subName, bool isUp);
 
-    size_t getUpIndex(std::string weightName) { return weightNameToUpDown[weightName].first; }
-    size_t getDownIndex(std::string weightName) { return weightNameToUpDown[weightName].second; }
+    // TODO: replace these general functions with specific ones
+    int upIndex(std::string weightName) { 
+      int index = weightIndexFromLabel(weightName+"Hi");
+      return index >= 0 ? index : weightIndexFromLabel(weightName+"_up"); 
+    }
+    int downIndex(std::string weightName) {
+      int index = weightIndexFromLabel(weightName+"Low");
+      return index >= 0 ? index : weightIndexFromLabel(weightName+"_dn"); 
+    }
     std::vector<std::string> getWeightNames() const { return weightNames; }
 
   private:

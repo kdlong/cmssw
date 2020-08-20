@@ -38,7 +38,7 @@ namespace gen {
     void setMuRMuFIndex(
         int globalIndex, std::string id, float muR, float muF, size_t dynNum = -1, std::string dynName = "");
     void addContainedId(int weightEntry, std::string id, std::string label, float muR, float muF);
-    int getLhaid() { return lhaid_; }
+    int lhaid() { return lhaid_; }
     void setLhaid(int lhaid) { lhaid_ = lhaid; }
     // Is a variation of the functional form of the dynamic scale
     bool isFunctionalFormVariation();

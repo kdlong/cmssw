@@ -90,8 +90,11 @@ namespace gen {
   }
 
   int WeightGroupInfo::weightIndexFromLabel(std::string weightLabel) const {
-      if (weightLabelsToIndices_.find(weightLabel) != weightLabelsToIndices_.end())
-          return static_cast<int>(weightLabelsToIndices_.at(weightLabel));
+      if (!weightLabelsToIndices_.empty()) {
+        if (weightLabelsToIndices_.find(weightLabel) != weightLabelsToIndices_.end())
+            return static_cast<int>(weightLabelsToIndices_.at(weightLabel));
+        return -1;
+      }
     
       auto it = std::find_if(idsContained_.begin(), idsContained_.end(), 
               [weightLabel](const auto& w) { return weightLabel == w.label; });

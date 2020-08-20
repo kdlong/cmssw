@@ -110,7 +110,7 @@ namespace gen {
     } catch (std::invalid_argument& e) {
       scaleGroup.setIsWellFormed(false);
     }
-    if (scaleGroup.getLhaid() == -1) {
+    if (scaleGroup.lhaid() == -1) {
       std::string lhaidText = searchAttributes("pdf", weight);
       try {
         scaleGroup.setLhaid(std::stoi(lhaidText));
@@ -120,7 +120,7 @@ namespace gen {
     }
   }
 
-  int WeightHelper::getLhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) {
+  int WeightHelper::lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) {
     std::string lhaidText = searchAttributes("pdf", weight);
     if (!lhaidText.empty()) {
       try {
@@ -128,8 +128,8 @@ namespace gen {
       } catch (std::invalid_argument& e) {
         pdfGroup.setIsWellFormed(false);
       }
-    } else if (pdfGroup.getLhaIds().size() > 0) {
-      return pdfGroup.getLhaIds().back() + 1;
+    } else if (pdfGroup.lhaIds().size() > 0) {
+      return pdfGroup.lhaIds().back() + 1;
     } else {
       return LHAPDF::lookupLHAPDFID(weight.groupname);
     }
@@ -138,8 +138,8 @@ namespace gen {
 
   void WeightHelper::updatePdfInfo(const ParsedWeight& weight, int index) {
     auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[index]);
-    int lhaid = getLhapdfId(weight, pdfGroup);
-    if (pdfGroup.getParentLhapdfId() < 0) {
+    int lhaid = lhapdfId(weight, pdfGroup);
+    if (pdfGroup.parentLhapdfId() < 0) {
       int parentId = lhaid - LHAPDF::lookupPDF(lhaid).second;
       pdfGroup.setParentLhapdfInfo(parentId);
       pdfGroup.setUncertaintyType(gen::kUnknownUnc);
@@ -159,6 +159,8 @@ namespace gen {
     pdfGroup.addLhaid(lhaid);
   }
 
+<<<<<<< HEAD
+=======
   void WeightHelper::updatePartonShowerInfo(const ParsedWeight& weight, int index) {
     auto& psGroup = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(weightGroups_[index]);
     bool isUp = true;
@@ -171,7 +173,6 @@ namespace gen {
   }
 
   void WeightHelper::updateMEParamInfo(const ParsedWeight& weight, int index) {
-    std::cout << "Access by index " << index << std::endl;
     auto& meGroup = dynamic_cast<gen::MEParamWeightGroupInfo&>(weightGroups_[index]);
     std::string variation = searchAttributes("me_variation", weight);
     if (!variation.empty()) {
@@ -184,6 +185,7 @@ namespace gen {
     }
   }
 
+>>>>>>> 8357fffbfb3... Add basic MEParam weight functionality
   // TODO: Could probably recycle this code better
   std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<double> weights, float w0) {
     auto weightProduct = std::make_unique<GenWeightProduct>(w0);
@@ -212,7 +214,7 @@ namespace gen {
         if (subIt->weightType() != WeightType::kPdfWeights)
           continue;
         auto& subWeight = dynamic_cast<gen::PdfWeightGroupInfo&>(*subIt);
-        if (subWeight.nIdsContained() == 1 && subWeight.getParentLhapdfId() == baseWeight.getLhaid()) {
+        if (subWeight.nIdsContained() == 1 && subWeight.parentLhapdfId() == baseWeight.lhaid()) {
           removeList.push_back(subIt - weightGroups_.begin());
           auto info = subWeight.idsContained().at(0);
           baseWeight.addContainedId(info.globalIndex, info.id, info.label, 1, 1);
@@ -305,8 +307,8 @@ namespace gen {
       } else if (wgt.weightType() == gen::WeightType::kPartonShowerWeights) {
         auto& wgtPS = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(wgt);
         for (auto group : wgtPS.getWeightNames()) {
-          std::cout << group << ": up " << wgtPS.getUpIndex(group);
-          std::cout << " - down " << wgtPS.getDownIndex(group) << std::endl;
+          std::cout << group << ": up " << wgtPS.upIndex(group);
+          std::cout << " - down " << wgtPS.downIndex(group) << std::endl;
         }
       }
       if (!wgt.isWellFormed())
@@ -338,8 +340,6 @@ namespace gen {
     int currentGroupIdx = 0;
     int groupOffset = 0;
     for (auto& weight : parsedWeights_) {
-      std::cout << "currentGroupIdx is " << currentGroupIdx << " groupOffset is " << groupOffset << std::endl;
-      std::cout << "weightGroups size is " << weightGroups_.size() << std::endl;
       weight.wgtGroup_idx += groupOffset;
       currentGroupIdx = weight.wgtGroup_idx;
       if (debug_)
@@ -348,39 +348,27 @@ namespace gen {
 
       int numGroups = static_cast<int>(weightGroups_.size());
       if (weight.wgtGroup_idx == numGroups) {
-        std::cout << "Adding weight\n";
         weightGroups_.push_back(*buildGroup(weight));
       } else if (weight.wgtGroup_idx >= numGroups)
         throw std::range_error("Invalid group index " + currentGroupIdx);
 
       // split PDF groups
-      std::cout << "now weightGroups size is " << weightGroups_.size() << std::endl;
       if (weightGroups_[currentGroupIdx].weightType() == gen::WeightType::kPdfWeights) {
         auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[currentGroupIdx]);
-        int lhaid = getLhapdfId(weight, pdfGroup);
-        if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.getParentLhapdfId() > 0) {
+        int lhaid = lhapdfId(weight, pdfGroup);
+        if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.parentLhapdfId() > 0) {
           weightGroups_.push_back(*buildGroup(weight));
           groupOffset++;
         }
       }
-      std::cout << "Access by index\n";
       WeightGroupInfo& group = weightGroups_[currentGroupIdx];
-      std::cout << "Accessed by index\n";
       group.addContainedId(weight.index, weight.id, weight.content);
       if (group.weightType() == gen::WeightType::kScaleWeights)
         updateScaleInfo(weight, currentGroupIdx);
       else if (group.weightType() == gen::WeightType::kPdfWeights) {
-        std::cout << "Updating pdf info\n";
         updatePdfInfo(weight, currentGroupIdx);
       }
-      else if (group.weightType() == gen::WeightType::kPartonShowerWeights)
-        updatePartonShowerInfo(weight, currentGroupIdx);
-      else if (group.weightType() == gen::WeightType::kMEParamWeights) {
-        std::cout << "Updating info\n";
-        updateMEParamInfo(weight, currentGroupIdx);
-      }
     }
-    std::cout << "Cleaning weights\n";
     cleanupOrphanCentralWeight();
   }
 
