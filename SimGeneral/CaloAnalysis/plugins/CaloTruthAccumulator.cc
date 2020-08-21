@@ -1,4 +1,4 @@
-#define DEBUG false
+#define DEBUG true
 #if DEBUG
 // boost optional (used by boost graph) results in some false positives with
 // -Wmaybe-uninitialized

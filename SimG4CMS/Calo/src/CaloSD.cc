@@ -90,7 +90,8 @@ CaloSD::CaloSD(const std::string& name,
   incidentEnergy = edepositEM = edepositHAD = 0.f;
 
   primAncestor = cleanIndex = totalHits = primIDSaved = 0;
-  forceSave = false;
+  //forceSave = false;
+  forceSave = true;
 
   edm::LogVerbatim("CaloSim") << "CaloSD: Minimum energy of track for saving it " << energyCut / CLHEP::GeV
                               << " GeV\n        Use of HitID Map " << useMap << "\n        Check last " << nCheckedHits
@@ -572,7 +573,8 @@ void CaloSD::endEvent() {}
 
 int CaloSD::getTrackID(const G4Track* aTrack) {
   int primaryID = 0;
-  forceSave = false;
+  //forceSave = false;
+  forceSave = true;
   TrackInformation* trkInfo = cmsTrackInformation(aTrack);
   if (trkInfo) {
     primaryID = (useFineCaloID_) ? trkInfo->getIDfineCalo() : trkInfo->getIDonCaloSurface();

@@ -28,7 +28,7 @@ WindowNTupler = cms.EDAnalyzer("WindowNTupler",
     
     removeFrameSimclusters=cms.bool(True),
     
-    minEta=cms.double(1.6),
+    minEta=cms.double(1.4),
     maxEta=cms.double(3.1),
     # window size in phi and eta
     etaFrameWidth=cms.double(0.1),

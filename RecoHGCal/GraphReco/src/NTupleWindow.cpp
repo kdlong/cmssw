@@ -341,7 +341,7 @@ void NTupleWindow::fillFeatureArrays(){
 void NTupleWindow::fillTruthArrays(){
 
     createDetIDHitAssociation();
-    cleanSimclusters();
+    //cleanSimclusters();
     calculateSimclusterFeatures();
     calculateTruthFractions();
     fillTruthAssignment();
