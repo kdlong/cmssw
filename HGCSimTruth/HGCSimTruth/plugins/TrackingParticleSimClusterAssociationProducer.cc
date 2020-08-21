@@ -26,7 +26,7 @@
 //
 
 typedef edm::AssociationMap<edm::OneToManyWithQuality<
-    TrackingParticleCollection, SimClusterCollection, double>> TrackingParticleToSimCluster;
+    TrackingParticleCollection, SimClusterCollection, float>> TrackingParticleToSimCluster;
 
 class TrackingParticleSimClusterAssociationProducer : public edm::global::EDProducer<> {
 public:

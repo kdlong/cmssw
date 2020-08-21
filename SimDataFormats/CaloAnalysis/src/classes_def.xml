@@ -24,21 +24,25 @@
   <class name="SimClusterHistory"/>
   <class name="edm::Wrapper<std::vector<SimClusterHistory>>"/>
   <class name="std::vector<SimClusterHistory>"/>
-  <class name="edm::helpers::KeyVal<edm::RefProd<std::vector<TrackingParticle> >,
-                                               edm::RefProd<std::vector<SimCluster> > >" />
-  <class name="edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,double,unsigned int> >"/>
-  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,double,unsigned int> > >"/>
-  <class name="edm::helpers::KeyVal<edm::RefProd<std::vector<SimCluster> >,edm::RefToBaseProd<reco::Track> >" />
-  <class name="edm::helpers::KeyVal<edm::RefToBaseProd<reco::Track>,edm::RefProd<std::vector<SimCluster> > >" />
-  <class name="std::map<unsigned int,edm::helpers::KeyVal<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,std::vector<std::pair<edm::RefToBase<reco::Track>,double> > > >" />
-  <class name="std::map<unsigned int,edm::helpers::KeyVal<edm::RefToBase<reco::Track>,std::vector<std::pair<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,double> > > >" />
+  <class name="edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,float,unsigned int> >" />
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,float,unsigned int> > >" />
+  <class name="edm::helpers::KeyVal<edm::Ref<std::vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<std::vector<TrackingParticle>,TrackingParticle> >,std::vector<std::pair<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,int> > >" />
+  <class name="std::map<unsigned int,edm::helpers::KeyVal<edm::Ref<std::vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<std::vector<TrackingParticle>,TrackingParticle> >,std::vector<std::pair<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,float> > > >" />
 
-  <class name="edm::helpers::KeyVal<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,std::vector<std::pair<edm::RefToBase<reco::Track>,double> > >" />
-  <class name="edm::helpers::KeyVal<edm::RefToBase<reco::Track>,std::vector<std::pair<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,double> > >" />
+  <class name="edm::helpers::KeyVal<edm::RefProd<std::vector<SimCluster> >,edm::RefProd<std::vector<TrackingParticle> > >" />  
+  <class name="edm::helpers::KeyVal<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,std::vector<std::pair<edm::Ref<std::vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<std::vector<TrackingParticle>,TrackingParticle> >,float> > >" />
+  <class name="std::map<unsigned int,edm::helpers::KeyVal<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,std::vector<std::pair<edm::Ref<std::vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<std::vector<TrackingParticle>,TrackingParticle> >,float> > > >" />
 
-  <class name="std::vector<std::pair<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,double> >" />
-  <class name="edm::Ref<vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<vector<SimCluster>,SimCluster>> "/>
-  <class name="edm::helpers::KeyVal<edm::Ref<vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<vector<TrackingParticle>,TrackingParticle> >,vector<pair<edm::Ref<vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<vector<SimCluster>,SimCluster> >,double> >>"/>
-  <class name="edm::Ref<vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<vector<TrackingParticle>,TrackingParticle> >"/>
-  <class name="vector<pair<edm::Ref<vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<vector<SimCluster>,SimCluster> >,double> >"/>
+  <class name="edm::helpers::KeyVal<edm::RefProd<std::vector<TrackingParticle> >,edm::RefProd<std::vector<SimCluster> > >" />  
+  <class name="edm::helpers::KeyVal<edm::Ref<std::vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<std::vector<TrackingParticle>,TrackingParticle> >,std::vector<std::pair<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,float> > >" />
+
+ <class name="edm::Association<std::vector<SimCluster> >"/>
+ <class name="edm::Wrapper<edm::Association<std::vector<SimCluster> > >"/>
+ <class name="std::vector<std::pair<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,float> >" />
+ <class name="std::pair<edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,float>" />
+ <class name="std::vector<std::pair<edm::Ref<std::vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<std::vector<TrackingParticle>,TrackingParticle> >,float> >" />
+ <class name="std::pair<edm::Ref<std::vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<std::vector<TrackingParticle>,TrackingParticle> >,float>" />
+ <class name="pair<const unsigned int,edm::helpers::KeyVal<edm::Ref<vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<vector<TrackingParticle>,TrackingParticle> >,vector<pair<edm::Ref<vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<vector<SimCluster>,SimCluster> >,float> > > >"/>
+ <class name="edm::helpers::KeyVal<edm::Ref<vector<TrackingParticle>,TrackingParticle,edm::refhelper::FindUsingAdvance<vector<TrackingParticle>,TrackingParticle> >,vector<pair<edm::Ref<vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<vector<SimCluster>,SimCluster> >,float> > >"/>
+ <class name="edm::helpers::KeyVal<edm::RefProd<vector<TrackingParticle> >,edm::RefProd<vector<SimCluster> > >"/>
 </lcgdict>
