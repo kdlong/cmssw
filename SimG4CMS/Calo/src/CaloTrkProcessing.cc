@@ -35,6 +35,7 @@ CaloTrkProcessing::CaloTrkProcessing(const std::string& name,
   putHistory_ = m_p.getParameter<bool>("PutHistory");
   doFineCalo_ = m_p.getParameter<bool>("DoFineCalo");
   storeHGCBoundaryCross_ = m_p.getParameter<bool>("StoreHGCBoundaryCross");
+  storeAllTracksCalo_ = m_p.getParameter<bool>("StoreAllTracksCalo");
   eMinFine_ = m_p.getParameter<double>("EminFineTrack") * CLHEP::MeV;
   eMinFinePhoton_ = m_p.getParameter<double>("EminFinePhoton") * CLHEP::MeV;
 
@@ -186,6 +187,32 @@ void CaloTrkProcessing::update(const G4Step* aStep) {
     edm::LogError("CaloSim") << "CaloTrkProcessing: No trk info !!!! abort ";
     throw cms::Exception("Unknown", "CaloTrkProcessing") << "cannot get trkInfo for Track " << id << "\n";
   }
+
+  if (doFineCalo_ || storeAllTracksCalo_) {
+    if (!trkInfo->isInHistory()){
+      // For fine calo, put every single track in history
+      trkInfo->putInHistory();
+      if (storeAllTracksCalo_) trkInfo->storeTrack(true);
+#ifdef EDM_ML_DEBUG
+      edm::LogInfo("DoFineCalo")
+        << "Putting in history:"
+        << " Track " << id
+        << " vertex=("
+          << theTrack->GetVertexPosition().x() << ","
+          << theTrack->GetVertexPosition().y() << ","
+          << theTrack->GetVertexPosition().z() << ")"
+        << " position=("
+          << theTrack->GetPosition().x() << ","
+          << theTrack->GetPosition().y() << ","
+          << theTrack->GetPosition().z() << ")"
+        << " energy=" << theTrack->GetKineticEnergy()
+        << " getIDfineCalo=" << trkInfo->getIDfineCalo()
+        << " getIDonCaloSurface=" << trkInfo->getIDonCaloSurface()
+        << " parentID=" << theTrack->GetParentID()
+        ;
+#endif
+      }
+    }
 
   if (testBeam_) {
     if (trkInfo->getIDonCaloSurface() == 0) {
