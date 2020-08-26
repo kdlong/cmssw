@@ -12,8 +12,6 @@ class CaloHitID {
 public:
   CaloHitID(
       uint32_t unitID, double timeSlice, int trackID, uint16_t depth = 0, float tSlice = 1, bool ignoreTkID = false);
-  CaloHitID(
-      uint32_t unitID, double timeSlice, int trackID, int fineTrackID, uint16_t depth = 0, float tSlice = 1, bool ignoreTkID = false);
   CaloHitID(float tSlice = 1, bool ignoreTkID = false);
   CaloHitID(const CaloHitID&);
   const CaloHitID& operator=(const CaloHitID&);
@@ -25,7 +23,6 @@ public:
   int trackID() const { return theTrackID; }
   uint16_t depth() const { return theDepth; }
   void setID(uint32_t unitID, double timeSlice, int trackID, uint16_t depth = 0);
-  void setID(uint32_t unitID, double timeSlice, int trackID, int fineTrackID, uint16_t depth = 0);
   void reset();
 
   bool hasFineTrackID() const { return hasFineTrackID_; }

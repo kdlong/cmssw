@@ -11,11 +11,6 @@ CaloHitID::CaloHitID(uint32_t unitID, double timeSlice, int trackID, uint16_t de
   setID(unitID, timeSlice, trackID, depth);
 }
 
-CaloHitID::CaloHitID(uint32_t unitID, double timeSlice, int trackID, int fineTrackID, uint16_t depth, float tSlice, bool ignoreTkID)
-    : timeSliceUnit(tSlice), ignoreTrackID(ignoreTkID) {
-  setID(unitID, timeSlice, trackID, fineTrackID, depth);
-}
-
 CaloHitID::CaloHitID(float tSlice, bool ignoreTkID) : timeSliceUnit(tSlice), ignoreTrackID(ignoreTkID) { reset(); }
 
 CaloHitID::CaloHitID(const CaloHitID& id) {
@@ -26,7 +21,8 @@ CaloHitID::CaloHitID(const CaloHitID& id) {
   theDepth = id.theDepth;
   timeSliceUnit = id.timeSliceUnit;
   ignoreTrackID = id.ignoreTrackID;
-  if (id.hasFineTrackID_) setFineTrackID(id.theFineTrackID);
+  hasFineTrackID_ = id.hasFineTrackID_;
+  theFineTrackID = id.theFineTrackID;
 }
 
 const CaloHitID& CaloHitID::operator=(const CaloHitID& id) {
@@ -37,7 +33,8 @@ const CaloHitID& CaloHitID::operator=(const CaloHitID& id) {
   theDepth = id.theDepth;
   timeSliceUnit = id.timeSliceUnit;
   ignoreTrackID = id.ignoreTrackID;
-  if (id.hasFineTrackID_) setFineTrackID(id.theFineTrackID);
+  hasFineTrackID_ = id.hasFineTrackID_;
+  theFineTrackID = id.theFineTrackID;
   return *this;
 }
 
@@ -47,15 +44,6 @@ void CaloHitID::setID(uint32_t unitID, double timeSlice, int trackID, uint16_t d
   theUnitID = unitID;
   theTimeSlice = timeSlice;
   theTrackID = trackID;
-  theTimeSliceID = (int)(theTimeSlice / timeSliceUnit);
-  theDepth = depth;
-}
-
-void CaloHitID::setID(uint32_t unitID, double timeSlice, int trackID, int fineTrackID, uint16_t depth) {
-  theUnitID = unitID;
-  theTimeSlice = timeSlice;
-  theTrackID = trackID;
-  setFineTrackID(fineTrackID);
   theTimeSliceID = (int)(theTimeSlice / timeSliceUnit);
   theDepth = depth;
 }

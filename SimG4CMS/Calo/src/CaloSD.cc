@@ -383,6 +383,7 @@ CaloG4Hit* CaloSD::createNewHit(const G4Step* aStep, const G4Track* theTrack) {
   edm::LogInfo("DoFineCalo")
     << "Creating new hit " << aHit->getUnitID()
     << "; currentID.trackID=" << currentID.trackID()
+    << " currentID.getFineTrackID=" << currentID.getFineTrackID()
     << " theTrack=" << theTrack->GetTrackID()
       << " (parentTrackId=" << theTrack->GetParentID()
       << " getIDfineCalo=" << trkInfo->getIDfineCalo()
@@ -759,6 +760,10 @@ bool CaloSD::saveHit(CaloG4Hit* aHit) {
   int fineTrackID;
   bool ok = true;
 
+  double time = aHit->getTimeSlice();
+  if (corrTOFBeam)
+    time += correctT;
+
   // Do track bookkeeping a little differently for fine tracking
   if (doFineCalo_){
     tkID = aHit->getTrackID();
@@ -786,6 +791,13 @@ bool CaloSD::saveHit(CaloG4Hit* aHit) {
       ok = false;
       throw cms::Exception("Unknown", "CaloSD") << "m_trackManager not set, saveHit ok=false!";
       }
+#ifdef EDM_ML_DEBUG
+    edm::LogInfo("DoFineCalo")
+      << "Saving hit " << aHit->getUnitID()
+      << " with trackID=" << tkID << " fineTrackID=" << fineTrackID;
+#endif
+    slave.get()->processHits(
+      aHit->getUnitID(), aHit->getEM() / CLHEP::GeV, aHit->getHadr() / CLHEP::GeV, time, tkID, fineTrackID, aHit->getDepth());
     }
   // Regular, not-fine way:
   else {
@@ -802,15 +814,9 @@ bool CaloSD::saveHit(CaloG4Hit* aHit) {
       tkID = aHit->getTrackID();
       ok = false;
     }
-    // Will default to aHit->getTrackID() if not set
-    fineTrackID = aHit->getID().getFineTrackID();
+    slave.get()->processHits(
+      aHit->getUnitID(), aHit->getEM() / CLHEP::GeV, aHit->getHadr() / CLHEP::GeV, time, tkID, aHit->getDepth());
   }
-
-#ifdef EDM_ML_DEBUG
-  edm::LogInfo("DoFineCalo")
-    << "Saving hit " << aHit->getUnitID()
-    << " with trackID=" << tkID << " fineTrackID=" << fineTrackID;
-#endif
 
 #ifdef EDM_ML_DEBUG
   if (!ok)
@@ -818,11 +824,7 @@ bool CaloSD::saveHit(CaloG4Hit* aHit) {
   edm::LogVerbatim("CaloSim") << "CalosD: Track ID " << aHit->getTrackID() << " changed to " << tkID
                               << " by SimTrackManager Status " << ok;
 #endif
-  double time = aHit->getTimeSlice();
-  if (corrTOFBeam)
-    time += correctT;
-  slave.get()->processHits(
-      aHit->getUnitID(), aHit->getEM() / CLHEP::GeV, aHit->getHadr() / CLHEP::GeV, time, tkID, fineTrackID, aHit->getDepth());
+
 #ifdef EDM_ML_DEBUG
   edm::LogVerbatim("CaloSim") << "CaloSD: Store Hit at " << std::hex << aHit->getUnitID() << std::dec << " "
                               << aHit->getDepth() << " due to " << tkID << " in time " << time << " of energy "
@@ -850,7 +852,7 @@ void CaloSD::update(const BeginOfTrack* trk) {
 
     // clean the hits information
 
-    if ((!doFineCalo_) && theHC->entries() > 0)
+    if (theHC->entries() > 0)
       cleanHitCollection();
   }
 }
