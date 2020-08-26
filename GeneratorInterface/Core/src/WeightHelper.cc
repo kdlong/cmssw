@@ -159,33 +159,6 @@ namespace gen {
     pdfGroup.addLhaid(lhaid);
   }
 
-<<<<<<< HEAD
-=======
-  void WeightHelper::updatePartonShowerInfo(const ParsedWeight& weight, int index) {
-    auto& psGroup = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(weightGroups_[index]);
-    bool isUp = true;
-    std::string subName = searchString("up", weight.content);
-    if (subName.empty()) {
-      isUp = false;
-      subName = searchString("down", weight.content);
-    }
-    psGroup.updateWeight(weight.index, weight.id, subName, isUp);
-  }
-
-  void WeightHelper::updateMEParamInfo(const ParsedWeight& weight, int index) {
-    auto& meGroup = dynamic_cast<gen::MEParamWeightGroupInfo&>(weightGroups_[index]);
-    std::string variation = searchAttributes("me_variation", weight);
-    if (!variation.empty()) {
-      meGroup.updateWeight(weight.index, weight.id, std::stof(variation));
-    } else {
-      std::vector<std::string> split_content;
-      std::string content = boost::algorithm::trim_copy(weight.content);
-      boost::split(split_content, content, boost::is_any_of("\n"));
-      meGroup.updateWeight(weight.index, weight.id, split_content);
-    }
-  }
-
->>>>>>> 8357fffbfb3... Add basic MEParam weight functionality
   // TODO: Could probably recycle this code better
   std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<double> weights, float w0) {
     auto weightProduct = std::make_unique<GenWeightProduct>(w0);
