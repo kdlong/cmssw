@@ -224,7 +224,7 @@ WindowNTupler::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    std::vector<TrackWithHGCalPos> proptracks;
    edm::Handle<edm::View<reco::Track>> tracksHandle;
    iEvent.getByToken(tracksToken_, tracksHandle);
-   std::vector<int> trackTruthIdx(tracksHandle->size(), -2);
+   std::vector<int> trackTruthIdx;
    for(size_t i = 0; i < tracksHandle->size(); i++){
        edm::RefToBase<reco::Track> track(tracksHandle, i);
        if(fabs(track->eta())< 1.5 || fabs(track->eta())>3.0) 
@@ -239,7 +239,7 @@ WindowNTupler::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
        }
        catch (edm::Exception const &) {
            // No trackingParticle match, this is a fake
-           trackTruthIdx.at(i) = -1;
+           trackTruthIdx.push_back(-1);
            continue;
        } 
        for (auto& tpWithQual : trackingPartsWithQual) {
@@ -250,17 +250,19 @@ WindowNTupler::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
            }
            catch (edm::Exception const &) { 
                // Give a unique ID, not matching any simClusters
-               trackTruthIdx.at(i) = insimclusters.size()+i;
+               trackTruthIdx.push_back(insimclusters.size()+i);
                continue;
            }
            
            // This should be a loop, but need to figure out how to assign to SC.
            // Maybe also need to group multiple SCs together if they share a track
            SimClusterRef simClusRef = assocSimClusters.at(0); 
-           trackTruthIdx.at(i) = simClusRef.key();
+           trackTruthIdx.push_back(simClusRef.key());
        }
    }
    std::cout << "The size of the in simclusters is " << insimclusters.size() << std::endl;
+   std::cout << "The size of the full trackingCollection is " << tracksHandle->size() << std::endl;
+   std::cout << "The size of the tracks in acceptance is " << proptracks.size() << std::endl;
    for (auto i : trackTruthIdx)
        std::cout << "Track truth index is " << i << std::endl;
 
