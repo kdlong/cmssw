@@ -73,6 +73,7 @@ nanogenSequence = cms.Sequence(
     particleLevelTables+
     metGenTable+
     genWeightsTable+
+    lheWeightsTable+
     lheInfoTable
 )
 
