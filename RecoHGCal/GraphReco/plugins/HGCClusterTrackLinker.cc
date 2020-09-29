@@ -32,19 +32,21 @@ public:
 
 HGCClusterTrackLinker::HGCClusterTrackLinker(const edm::ParameterSet& config) :
     tracksToken_(consumes<edm::View<reco::Track>>(config.getParameter<edm::InputTag>("tracks"))),
-    pfCandsToken_(consumes<reco::PFCandidateCollection>(config.getParameter<edm::InputTag>("pfCands")))
-{}
+    pfCandsToken_(consumes<reco::PFCandidateCollection>(config.getParameter<edm::InputTag>("pfCands"))) {
+  produces<reco::PFCandidateCollection>();
+}
 
 void HGCClusterTrackLinker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::Handle<reco::PFCandidateCollection> pfCands;
   iEvent.getByToken(pfCandsToken_, pfCands);
-    
 
   edm::Handle<edm::View<reco::Track>> tracks;
   iEvent.getByToken(tracksToken_, tracks);
 
   ticl::TICLLayerTile candTile;
   ticl::TICLLayerTile tracksTile;
+    
+  auto out = std::make_unique<reco::PFCandidateCollection>();
 
   for (size_t i = 0; i < tracks->size(); i++) {
     edm::RefToBase<reco::Track> track(tracks, i);
@@ -54,26 +56,40 @@ void HGCClusterTrackLinker::produce(edm::Event& iEvent, const edm::EventSetup& i
 
   for (size_t ip = 0; ip < pfCands->size(); ip++) {
     reco::PFCandidateRef pfCand(pfCands, ip);
-    candTile.fill(pfCand->eta(), pfCand->phi(), ip);
+    if (pfCand->charge())
+        candTile.fill(pfCand->eta(), pfCand->phi(), ip);
   }
 
   for (size_t bin = 0; bin < static_cast<size_t>(candTile.nBins()); bin++) {
-    const std::vector<unsigned int>& trackIndices = tracksTile[bin]; 
     const std::vector<unsigned int>& candIndices = candTile[bin]; 
-    std::cout << "----------------------------------------------------------\n";
-    std::cout << "For global bin " << bin;
-    std::cout << " found " << trackIndices.size() << " tracks and " << candIndices.size() << " pfcands" << std::endl;
+    if (!candIndices.size())
+        continue;
+
+    std::vector<unsigned int> trackIndices = tracksTile[bin]; 
     for (auto& tidx : trackIndices) {
         edm::RefToBase<reco::Track> track(tracks, tidx);
-      std::cout << "Associated track with index " << tidx;
-      std::cout << "Track has eta,phi,pt" << track->eta() << ", " << track->phi() << ", " << track->pt() << std::endl;
     }
     for (auto& cidx : candIndices) {
       reco::PFCandidateRef pfCand(pfCands, cidx);
-      std::cout << "Associated cand with index " << cidx;
-      std::cout << "PFCand has eta,phi,pt" << pfCand->eta() << ", " << pfCand->phi() << ", " << pfCand->pt() << std::endl;
+      out->push_back(*pfCand->clone());
+    }
+    // Sort now so we prioritizes matches for higher pt clusters
+    std::sort(out->begin(), out->end(), [](auto& a, auto& b) { return a.pt() > b.pt(); });
+
+    for (auto& cand : *out) {
+      if (trackIndices.size()) {
+        // Find best match (just set to the first one for now)
+        // Can do closest in pt or mix of closest in pt and eta/phi
+        int tidx = 0;
+        edm::RefToBase<reco::Track> matchingTrack(tracks, trackIndices.at(tidx));
+        trackIndices.erase(trackIndices.begin()+tidx);
+
+        cand.setTrackRef(matchingTrack.castTo<reco::TrackRef>());
+      }
     }
   }
+
+  iEvent.put(std::move(out));
 }
 
 DEFINE_FWK_MODULE(HGCClusterTrackLinker);
