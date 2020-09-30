@@ -78,9 +78,16 @@ void HGCClusterTrackLinker::produce(edm::Event& iEvent, const edm::EventSetup& i
 
     for (auto& cand : *out) {
       if (trackIndices.size()) {
-        // Find best match (just set to the first one for now)
-        // Can do closest in pt or mix of closest in pt and eta/phi
-        int tidx = 0;
+        // Find best match. Current just closest in pt, can do 
+        // a smarter mix of closest in pt and eta/phi or something else
+        std::vector<float> ptdiffs;
+        ptdiffs.reserve(trackIndices.size());
+        for (size_t entry : trackIndices) {
+          edm::RefToBase<reco::Track> t(tracks, entry);
+          ptdiffs.push_back(std::abs(t->pt()-cand.pt()));
+        }
+
+        size_t tidx = std::distance(ptdiffs.begin(), std::min_element(ptdiffs.begin(), ptdiffs.end()));
         edm::RefToBase<reco::Track> matchingTrack(tracks, trackIndices.at(tidx));
         trackIndices.erase(trackIndices.begin()+tidx);
 
