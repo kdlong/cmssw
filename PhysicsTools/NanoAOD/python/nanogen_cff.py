@@ -5,6 +5,7 @@ from PhysicsTools.NanoAOD.genparticles_cff import *
 from PhysicsTools.NanoAOD.particlelevel_cff import *
 from PhysicsTools.NanoAOD.lheInfoTable_cfi import *
 from PhysicsTools.NanoAOD.genWeightsTable_cfi import *
+from PhysicsTools.NanoAOD.common_cff import CandVars
 
 genWeights = cms.EDProducer("GenWeightProductProducer",
     genInfo = cms.InputTag("generator"),
@@ -105,6 +106,10 @@ def nanoGenCommonCustomize(process):
     process.particleLevel.lepMinPt = 0.
     process.particleLevel.lepMaxEta = 999.
     process.genJetFlavourTable.jetFlavourInfos = "genJetFlavourAssociation"
+    # Same as default RECO
+    setGenPhiPrecision(process, CandVars.pt.precision)
+    setGenPtPrecision(process, CandVars.eta.precision)
+    setGenPhiPrecision(process, CandVars.phi.precision)
 
 def customizeNanoGENFromMini(process):
     process.nanoAOD_step.insert(0, process.genParticles2HepMCHiggsVtx)
@@ -158,14 +163,26 @@ def pruneGenParticlesMini(process):
     return process
 
 def setGenFullPrecision(process):
-    process.genParticleTable.variables.pt.precision = 23
-    process.genParticleTable.variables.eta.precision = 23
-    process.genParticleTable.variables.phi.precision = 23
-    process.genJetTable.variables.pt.precision = 23
-    process.genJetTable.variables.eta.precision = 23
-    process.genJetTable.variables.phi.precision = 23
-    process.metGenTable.variables.pt.precision = 23
-    process.metGenTable.variables.phi.precision = 23
+    setGenPtPrecision(process, 23)
+    setGenEtaPrecision(process, 23)
+    setGenPhiPrecision(process, 23)
+
+def setGenPtPrecision(process, precision):
+    process.genParticleTable.variables.pt.precision = precision
+    process.genJetTable.variables.pt.precision = precision
+    process.metMCTable.variables.pt.precision = precision
+    return process
+
+def setGenEtaPrecision(process, precision):
+    process.genParticleTable.variables.eta.precision = precision
+    process.genJetTable.variables.eta.precision = precision
+    process.metMCTable.variables.eta.precision = precision
+    return process
+
+def setGenPhiPrecision(process, precision):
+    process.genParticleTable.variables.phi.precision = precision
+    process.genJetTable.variables.phi.precision = precision
+    process.metMCTable.variables.phi.precision = precision
     return process
 
 def setLHEFullPrecision(process):
