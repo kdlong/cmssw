@@ -630,8 +630,10 @@ public:
                 if (lheDebug) {
                   std::cout << "    " << lines[iLine];
                 }
-                if (std::regex_search(
-                      lines[iLine], groups, ismg26x ? scalewmg26x : (ismg26xNew ? scalewmg26xNew : scalew))) {
+                if(std::regex_search(lines[iLine], groups,  scalew))
+                  ismg26xNew = false;
+
+                if (std::regex_search(lines[iLine], groups, ismg26x ? scalewmg26x : (ismg26xNew ? scalewmg26xNew : scalew))) {
                   if (lheDebug)
                     std::cout << "    >>> Scale weight " << groups[1].str() << " for " << groups[3].str() << " , "
                               << groups[4].str() << " , " << groups[5].str() << std::endl;
