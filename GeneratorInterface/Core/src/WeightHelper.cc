@@ -11,7 +11,6 @@ namespace gen {
 
   bool WeightHelper::isPdfWeightGroup(const ParsedWeight& weight) {
     const std::string& name = weight.groupname;
-
     if (name.find("PDF_variation") != std::string::npos)
       return true;
     return LHAPDF::lookupLHAPDFID(name) != -1;
@@ -19,25 +18,25 @@ namespace gen {
 
   bool WeightHelper::isPartonShowerWeightGroup(const ParsedWeight& weight) {
     const std::string& name = boost::to_lower_copy(weight.groupname);
-    // But "Nominal" and "Baseline" weights in the PS group
     return name.find("isr") != std::string::npos || name.find("fsr") != std::string::npos ||
            name.find("nominal") != std::string::npos || name.find("baseline") != std::string::npos;
   }
 
   bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
-    std::string lhaidText = searchAttributes("pdf", weight);
+    std::pair<std::string, int> pairLHA;
     try {
-      auto pairLHA = LHAPDF::lookupPDF(stoi(lhaidText));
-      // require pdf set to exist and it to be the first entry (ie 0)
-      // possibly change this requirement
-      if (!pairLHA.first.empty() && pairLHA.second == 0) {
-        weight.groupname = std::string(pairLHA.first);
-        return true;
-      }
-    } catch (...) {
+      pairLHA = LHAPDF::lookupPDF(stoi(searchAttributes("pdf", weight)));
+    } catch(...) {
       return false;
     }
-    return false;
+
+    if (!pairLHA.first.empty() && pairLHA.second == 0) {
+      weight.groupname = std::string(pairLHA.first);
+      return true;
+    } else {
+      return false;
+    }
+
   }
 
   bool WeightHelper::isMEParamWeightGroup(const ParsedWeight& weight) {
@@ -49,7 +48,6 @@ namespace gen {
   std::string WeightHelper::searchAttributes(const std::string& label, const ParsedWeight& weight) const {
     std::string attribute = searchAttributesByTag(label, weight);
     return attribute.empty() ? searchAttributesByRegex(label, weight) : attribute;
-    attribute = searchAttributesByRegex(label, weight);
   }
 
   std::string WeightHelper::searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const {
@@ -58,14 +56,6 @@ namespace gen {
       if (attributes.find(lab) != attributes.end()) {
         return boost::algorithm::trim_copy_if(attributes.at(lab), boost::is_any_of("\""));
       }
-    }
-    return "";
-  }
-
-  std::string WeightHelper::searchString(const std::string& label, const std::string& name) {
-    for (const auto& lab : attributeNames_.at(label)) {
-      if (name.find(lab) != std::string::npos)
-        return name.substr(0, name.find(lab));
     }
     return "";
   }
