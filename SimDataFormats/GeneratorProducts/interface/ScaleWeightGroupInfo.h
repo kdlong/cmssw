@@ -12,12 +12,11 @@ namespace gen {
     std::vector<size_t> muIndices_;
     bool containsCentral_ = false;
     int lhaid_ = -1;
+    bool hasAllWeights = false;
     // Dyn_scale
     std::vector<std::string> dynNames_;
     std::vector<std::vector<size_t>> dynVec_;
 
-    void setMuRMuFIndex(WeightMetaInfo& info, float muR, float muF);
-    void setMuRMuFIndex(WeightMetaInfo& info, float muR, float muF, size_t dynNum, std::string dynName);
     inline int getIndex(int muR, int muF) const { return 3 * muR + muF; }
     inline bool isValidValue(float mu) const { return mu == 0.5 || mu == 1.0 || mu == 2.0; }
 
@@ -35,10 +34,11 @@ namespace gen {
     void copy(const ScaleWeightGroupInfo& other);
     virtual ScaleWeightGroupInfo* clone() const override;
     bool containsCentralWeight() const { return containsCentral_; }
+    void addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF);
+    bool isWellFormed() { return isWellFormed_ && hasAllWeights; }
 
-    void setMuRMuFIndex(
-        int globalIndex, std::string id, float muR, float muF, size_t dynNum = -1, std::string dynName = "");
-    void addContainedId(int weightEntry, std::string id, std::string label, float muR, float muF);
+    void setMuRMuFIndex(int globalIndex, std::string id, float muR, float muF);
+    void setDyn(int globalIndex, std::string id, float muR, float muF, size_t dynNum, std::string dynName);
     int lhaid() { return lhaid_; }
     void setLhaid(int lhaid) { lhaid_ = lhaid; }
     // Is a variation of the functional form of the dynamic scale

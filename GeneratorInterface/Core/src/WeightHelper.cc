@@ -86,44 +86,43 @@ namespace gen {
   }
 
   void WeightHelper::updateScaleInfo(const ParsedWeight& weight, int index) {
-    auto& group = weightGroups_[index];
-    auto& scaleGroup = dynamic_cast<gen::ScaleWeightGroupInfo&>(group);
+    auto& scaleGroup = dynamic_cast<gen::ScaleWeightGroupInfo&>(weightGroups_[index]);
+
     std::string muRText = searchAttributes("mur", weight);
     std::string muFText = searchAttributes("muf", weight);
-
-    if (muRText.empty() || muFText.empty()) {
+    std::string dynNumText = searchAttributes("dyn", weight);
+    float muR, muF;
+    try {
+      muR = std::stof(muRText);
+      muF = std::stof(muFText);
+    } catch (...) {
       scaleGroup.setIsWellFormed(false);
       return;
+      /// do something
     }
 
-    try {
-      float muR = std::stof(muRText);
-      float muF = std::stof(muFText);
-      std::string dynNumText = searchAttributes("dyn", weight);
-      if (dynNumText.empty()) {
-        scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
-      } else {
-        std::string dynType = searchAttributes("dyn_name", weight);
+    if (dynNumText.empty()) {
+      scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
+    } else {
+      std::string dynType = searchAttributes("dyn_name", weight);
+      try {
         int dynNum = std::stoi(dynNumText);
-        scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF, dynNum, dynType);
+        scaleGroup.setDyn(weight.index, weight.id, muR, muF, dynNum, dynType);
+      } catch (...) {
+        scaleGroup.setIsWellFormed(false);
+        /// do something here
       }
-    } catch (std::invalid_argument& e) {
-      scaleGroup.setIsWellFormed(false);
     }
+
     if (scaleGroup.lhaid() == -1) {
       std::string lhaidText = searchAttributes("pdf", weight);
       try {
         scaleGroup.setLhaid(std::stoi(lhaidText));
-      } catch (std::invalid_argument& e) {
+      } catch (...) {
         scaleGroup.setLhaid(-2);
+        // do something here
       }
     }
-    if (!(scaleGroup.centralIndex() >= 0 && scaleGroup.muR05muF05Index() >= 0 && 
-        scaleGroup.muR1muF05Index() >= 0 && scaleGroup.muR2muF05Index() >= 0 && 
-        scaleGroup.muR05muF1Index() >= 0 && scaleGroup.muR05muF2Index() >= 0 &&
-        scaleGroup.muR1muF2Index() >= 0 && scaleGroup.muR2muF2Index() >= 0 &&
-        scaleGroup.muR2muF2Index() >= 0))
-      scaleGroup.setIsWellFormed(true);
   }
 
   int WeightHelper::lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) {
@@ -222,8 +221,7 @@ namespace gen {
     bool isUnassociated = false;
     try {
       groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
-    }
-    catch (const std::range_error& e) {
+    } catch (const std::range_error& e) {
       std::cerr << "WARNING: " << e.what() << std::endl;
       isUnassociated = true;
 
@@ -245,7 +243,7 @@ namespace gen {
     }
     int entry = !isUnassociated ? group.weightVectorEntry(name, weightNum) : group.nIdsContained();
     if (debug_)
-        std::cout << "Adding weight " << entry << " to group " << groupIndex << std::endl;
+      std::cout << "Adding weight " << entry << " to group " << groupIndex << std::endl;
     product->addWeight(weight, groupIndex, entry);
     return groupIndex;
   }
@@ -308,12 +306,12 @@ namespace gen {
       } else if (wgt.weightType() == gen::WeightType::kPartonShowerWeights) {
         auto& wgtPS = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(wgt);
         if (wgtPS.containedIds().size() == DEFAULT_PSWEIGHT_LENGTH)
-            wgtPS.setIsWellFormed(true);
+          wgtPS.setIsWellFormed(true);
 
         wgtPS.cacheWeightIndicesByLabel();
         std::vector<std::string> labels = wgtPS.weightLabels();
         if (labels.size() > FIRST_PSWEIGHT_ENTRY && labels.at(FIRST_PSWEIGHT_ENTRY).find(":") != std::string::npos &&
-                labels.at(FIRST_PSWEIGHT_ENTRY).find("=") != std::string::npos) {
+            labels.at(FIRST_PSWEIGHT_ENTRY).find("=") != std::string::npos) {
           wgtPS.setNameIsPythiaSyntax(true);
         }
       }
@@ -324,8 +322,8 @@ namespace gen {
 
   std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) {
     if (debug_) {
-        std::cout << "Building group for weight group " << weight.groupname 
-                  << " weight content is " << weight.content << std::endl;
+      std::cout << "Building group for weight group " << weight.groupname << " weight content is " << weight.content
+                << std::endl;
     }
     if (isScaleWeightGroup(weight))
       return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
@@ -349,8 +347,8 @@ namespace gen {
       weight.wgtGroup_idx += groupOffset;
       currentGroupIdx = weight.wgtGroup_idx;
       if (debug_)
-        std::cout << "Building group for weight " << weight.content << " group " 
-                  << weight.groupname << " group index " << weight.wgtGroup_idx << std::endl;
+        std::cout << "Building group for weight " << weight.content << " group " << weight.groupname << " group index "
+                  << weight.wgtGroup_idx << std::endl;
 
       int numGroups = static_cast<int>(weightGroups_.size());
       if (weight.wgtGroup_idx == numGroups) {

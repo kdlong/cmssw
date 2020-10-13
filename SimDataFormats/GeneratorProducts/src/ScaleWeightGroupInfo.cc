@@ -28,16 +28,8 @@ namespace gen {
     setMuRMuFIndex(globalIndex, id, muR, muF);
   }
 
-  void ScaleWeightGroupInfo::setMuRMuFIndex(
-      int globalIndex, std::string id, float muR, float muF, size_t dynNum, std::string dynName) {
-    auto metaInfo = weightMetaInfoByGlobalIndex(id, globalIndex);
-    if ((int)dynNum == -1)
-      setMuRMuFIndex(metaInfo, muR, muF);
-    else
-      setMuRMuFIndex(metaInfo, muR, muF, dynNum, dynName);
-  }
-
-  void ScaleWeightGroupInfo::setMuRMuFIndex(WeightMetaInfo& info, float muR, float muF) {
+  void ScaleWeightGroupInfo::setMuRMuFIndex(int globalIndex, std::string id, float muR, float muF) {
+    auto info = weightMetaInfoByGlobalIndex(id, globalIndex);
     int index = getIndex(muR, muF);
     if (index < 0 || index > 8 || !(isValidValue(muR) && isValidValue(muF))) {
       isWellFormed_ = false;
@@ -46,15 +38,18 @@ namespace gen {
     if (index == 4)
       containsCentral_ = true;
     muIndices_[index] = info.localIndex;
+
+    for (int muidx : muIndices_) {
+      if (muidx == -1)
+        return;
+    }
+    hasAllWeights = true;
   }
 
-  void ScaleWeightGroupInfo::setMuRMuFIndex(
-      WeightMetaInfo& info, float muR, float muF, size_t dynNum, std::string dynName) {
+  void ScaleWeightGroupInfo::setDyn(
+      int globalIndex, std::string id, float muR, float muF, size_t dynNum, std::string dynName) {
+    auto info = weightMetaInfoByGlobalIndex(id, globalIndex);
     int index = getIndex(muR, muF);
-    if (index < 0 || index > 8 || !(isValidValue(muR) && isValidValue(muF))) {
-      isWellFormed_ = false;
-      return;
-    }
     // resize if too small
     if (dynVec_.at(index).size() < dynNum + 1) {
       for (auto& dynIt : dynVec_)
