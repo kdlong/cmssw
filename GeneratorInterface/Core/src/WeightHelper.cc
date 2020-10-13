@@ -278,17 +278,17 @@ namespace gen {
         std::cout << wgtScale.muR05muF1Index() << " ";
         std::cout << wgtScale.muR05muF2Index() << " ";
         std::cout << wgtScale.muR05muF05Index() << " \n";
-        for (auto name : wgtScale.getDynNames()) {
+        for (auto name : wgtScale.dynNames()) {
           std::cout << name << ": ";
-          std::cout << wgtScale.getScaleIndex(1.0, 1.0, name) << " ";
-          std::cout << wgtScale.getScaleIndex(1.0, 2.0, name) << " ";
-          std::cout << wgtScale.getScaleIndex(1.0, 0.5, name) << " ";
-          std::cout << wgtScale.getScaleIndex(2.0, 1.0, name) << " ";
-          std::cout << wgtScale.getScaleIndex(2.0, 2.0, name) << " ";
-          std::cout << wgtScale.getScaleIndex(2.0, 0.5, name) << " ";
-          std::cout << wgtScale.getScaleIndex(0.5, 1.0, name) << " ";
-          std::cout << wgtScale.getScaleIndex(0.5, 2.0, name) << " ";
-          std::cout << wgtScale.getScaleIndex(0.5, 0.5, name) << "\n";
+          std::cout << wgtScale.scaleIndex(1.0, 1.0, name) << " ";
+          std::cout << wgtScale.scaleIndex(1.0, 2.0, name) << " ";
+          std::cout << wgtScale.scaleIndex(1.0, 0.5, name) << " ";
+          std::cout << wgtScale.scaleIndex(2.0, 1.0, name) << " ";
+          std::cout << wgtScale.scaleIndex(2.0, 2.0, name) << " ";
+          std::cout << wgtScale.scaleIndex(2.0, 0.5, name) << " ";
+          std::cout << wgtScale.scaleIndex(0.5, 1.0, name) << " ";
+          std::cout << wgtScale.scaleIndex(0.5, 2.0, name) << " ";
+          std::cout << wgtScale.scaleIndex(0.5, 0.5, name) << "\n";
         }
 
       } else if (wgt.weightType() == gen::WeightType::kPdfWeights) {
