@@ -74,9 +74,7 @@ namespace gen {
     return "";
   }
 
-  void WeightHelper::updateScaleInfo(const ParsedWeight& weight, int index) {
-    auto& scaleGroup = dynamic_cast<gen::ScaleWeightGroupInfo&>(weightGroups_[index]);
-
+  void WeightHelper::updateScaleInfo(gen::ScaleWeightGroupInfo& scaleGroup, const ParsedWeight& weight) {
     std::string muRText = searchAttributes("mur", weight);
     std::string muFText = searchAttributes("muf", weight);
     std::string dynNumText = searchAttributes("dyn", weight);
@@ -133,8 +131,7 @@ namespace gen {
     return -1;
   }
 
-  void WeightHelper::updatePdfInfo(const ParsedWeight& weight, int index) {
-    auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[index]);
+  void WeightHelper::updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight) {
     int lhaid = lhapdfId(weight, pdfGroup);
     if (pdfGroup.parentLhapdfId() < 0) {
       int parentId = lhaid - LHAPDF::lookupPDF(lhaid).second;
@@ -333,11 +330,9 @@ namespace gen {
 
   void WeightHelper::buildGroups() {
     weightGroups_.clear();
-    int currentGroupIdx = 0;
     int groupOffset = 0;
     for (auto& weight : parsedWeights_) {
       weight.wgtGroup_idx += groupOffset;
-      currentGroupIdx = weight.wgtGroup_idx;
       if (debug_)
         std::cout << "Building group for weight " << weight.content << " group " << weight.groupname << " group index "
                   << weight.wgtGroup_idx << std::endl;
@@ -346,23 +341,24 @@ namespace gen {
       if (weight.wgtGroup_idx == numGroups) {
         weightGroups_.push_back(*buildGroup(weight));
       } else if (weight.wgtGroup_idx >= numGroups)
-        throw std::range_error("Invalid group index " + currentGroupIdx);
+        throw std::range_error("Invalid group index " + weight.wgtGroup_idx);
 
       // split PDF groups
-      if (weightGroups_[currentGroupIdx].weightType() == gen::WeightType::kPdfWeights) {
-        auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[currentGroupIdx]);
+      if (weightGroups_[weight.wgtGroup_idx].weightType() == gen::WeightType::kPdfWeights) {
+        auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[weight.wgtGroup_idx]);
         int lhaid = lhapdfId(weight, pdfGroup);
         if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.parentLhapdfId() > 0) {
           weightGroups_.push_back(*buildGroup(weight));
           groupOffset++;
+          weight.wgtGroup_idx++;
         }
       }
-      WeightGroupInfo& group = weightGroups_[currentGroupIdx];
+      WeightGroupInfo& group = weightGroups_[weight.wgtGroup_idx];
       group.addContainedId(weight.index, weight.id, weight.content);
       if (group.weightType() == gen::WeightType::kScaleWeights)
-        updateScaleInfo(weight, currentGroupIdx);
+        updateScaleInfo(dynamic_cast<gen::ScaleWeightGroupInfo&>(group), weight);
       else if (group.weightType() == gen::WeightType::kPdfWeights) {
-        updatePdfInfo(weight, currentGroupIdx);
+        updatePdfInfo(dynamic_cast<gen::PdfWeightGroupInfo&>(group), weight);
       }
     }
     cleanupOrphanCentralWeight();

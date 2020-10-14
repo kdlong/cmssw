@@ -30,8 +30,7 @@ namespace gen {
     if (xmlError != 0 && failIfInvalidXML_) {
       xmlDoc.PrintError();
       throw std::runtime_error("XML is unreadable because of above error.");
-    }
-    elif (xmlError != 0 && !failIfInvalidXML_) {
+    } else if (xmlError != 0 && !failIfInvalidXML_) {
       boost::replace_all(fullHeader, "&lt;", "<");
       boost::replace_all(fullHeader, "&gt;", ">");
       xmlError = xmlDoc.Parse(fullHeader.c_str());

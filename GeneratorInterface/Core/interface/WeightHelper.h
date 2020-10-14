@@ -57,9 +57,9 @@ namespace gen {
     bool isPdfWeightGroup(const ParsedWeight& weight);
     bool isPartonShowerWeightGroup(const ParsedWeight& weight);
     bool isOrphanPdfWeightGroup(ParsedWeight& weight);
-    void updateScaleInfo(const ParsedWeight& weight, int index);
+    void updateScaleInfo(gen::ScaleWeightGroupInfo& scaleGroup, const ParsedWeight& weight);
     void updateMEParamInfo(const ParsedWeight& weight, int index);
-    void updatePdfInfo(const ParsedWeight& weight, int index);
+    void updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight);
     void cleanupOrphanCentralWeight();
 
     int lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup);
