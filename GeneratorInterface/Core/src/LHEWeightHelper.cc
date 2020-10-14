@@ -7,18 +7,16 @@
 using namespace tinyxml2;
 
 namespace gen {
-  void LHEWeightHelper::setHeaderLines(std::vector<std::string> headerLines) { 
-    headerLines_ = headerLines;
-  }
+  void LHEWeightHelper::setHeaderLines(std::vector<std::string> headerLines) { headerLines_ = headerLines; }
 
   bool LHEWeightHelper::parseLHE(tinyxml2::XMLDocument& xmlDoc) {
     parsedWeights_.clear();
 
     if (!isConsistent() && failIfInvalidXML_) {
       throw std::runtime_error(
-        "XML in LHE is not consistent: Most likely, tags were swapped.\n"
-        "To turn on fault fixing, use 'setFailIfInvalidXML(false)'\n"
-        "WARNING: the tag swapping may lead to weights associated with the incorrect group");
+          "XML in LHE is not consistent: Most likely, tags were swapped.\n"
+          "To turn on fault fixing, use 'setFailIfInvalidXML(false)'\n"
+          "WARNING: the tag swapping may lead to weights associated with the incorrect group");
     } else if (!isConsistent()) {
       swapHeaders();
     }
@@ -48,24 +46,23 @@ namespace gen {
   }
 
   void LHEWeightHelper::addGroup(tinyxml2::XMLElement* inner, std::string groupName, int groupIndex, int& weightIndex) {
-    for (; inner != nullptr; inner = inner->NextSiblingElement("weight")) {
-      if (debug_)
-        std::cout << "Found a weight inside the group. Content is " << inner->GetText() <<  " group index is " << groupIndex << std::endl;
-      std::string text = "";
-      if (inner->GetText())
-        text = inner->GetText();
-      std::unordered_map<std::string, std::string> attributes;
-      for (auto* att = inner->FirstAttribute(); att != nullptr; att = att->Next())
-        attributes[att->Name()] = att->Value();
-      parsedWeights_.push_back({inner->Attribute("id"), weightIndex++, groupName, text, attributes, groupIndex});
-    }
-    
-  }
+    if (debug_)
+      std::cout << "  >> Found a weight inside the group. " << std::endl;
+    std::string text = "";
+    if (inner->GetText())
+      text = inner->GetText();
 
+    std::unordered_map<std::string, std::string> attributes;
+    for (auto* att = inner->FirstAttribute(); att != nullptr; att = att->Next())
+      attributes[att->Name()] = att->Value();
+    if (debug_)
+      std::cout << "     " << weightIndex << ": \"" << text << "\"" << std::endl;
+    parsedWeights_.push_back({inner->Attribute("id"), weightIndex++, groupName, text, attributes, groupIndex});
+  }
 
   void LHEWeightHelper::parseWeights() {
     tinyxml2::XMLDocument xmlDoc;
-    if(!parseLHE(xmlDoc)) {
+    if (!parseLHE(xmlDoc)) {
       return;
     }
 
@@ -81,16 +78,20 @@ namespace gen {
         // need to fix
         addGroup(e, groupName, groupIndex, weightIndex);
       } else if (strcmp(e->Name(), "weightgroup") == 0) {
-        if (debug_)
-          std::cout << "Found a weight group.\n";
         groupName = parseGroupName(e);
-        addGroup(e->FirstChildElement("weight"), groupName, groupIndex, weightIndex);
+        if (debug_)
+          std::cout << ">>>> Found a weight group: " << groupName << std::endl;
+
+        for (auto inner = e->FirstChildElement("weight"); inner != nullptr; inner = inner->NextSiblingElement("weight"))
+          addGroup(inner, groupName, groupIndex, weightIndex);
 
       } else
         std::cout << "Found an invalid entry\n";
       groupIndex++;
     }
     buildGroups();
+    if (debug_)
+      printWeights();
   }
 
   std::string LHEWeightHelper::parseGroupName(tinyxml2::XMLElement* el) {

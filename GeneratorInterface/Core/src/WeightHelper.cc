@@ -26,7 +26,7 @@ namespace gen {
     std::pair<std::string, int> pairLHA;
     try {
       pairLHA = LHAPDF::lookupPDF(stoi(searchAttributes("pdf", weight)));
-    } catch(...) {
+    } catch (...) {
       return false;
     }
 
@@ -36,7 +36,6 @@ namespace gen {
     } else {
       return false;
     }
-
   }
 
   bool WeightHelper::isMEParamWeightGroup(const ParsedWeight& weight) {
@@ -86,6 +85,8 @@ namespace gen {
       muR = std::stof(muRText);
       muF = std::stof(muFText);
     } catch (...) {
+      if (debug_)
+        std::cout << "Tried to convert (" << muR << ", " << muF << ") to a int" << std::endl;
       scaleGroup.setIsWellFormed(false);
       return;
       /// do something
@@ -99,6 +100,7 @@ namespace gen {
         int dynNum = std::stoi(dynNumText);
         scaleGroup.setDyn(weight.index, weight.id, muR, muF, dynNum, dynType);
       } catch (...) {
+        std::cout << "Tried to convert (" << dynNumText << ")  a int" << std::endl;
         scaleGroup.setIsWellFormed(false);
         /// do something here
       }

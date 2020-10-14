@@ -26,6 +26,11 @@ namespace gen {
     }
     WeightGroupInfo::addContainedId(globalIndex, id, label);
     setMuRMuFIndex(globalIndex, id, muR, muF);
+    std::cout << hasAllWeights << " " << isWellFormed_ << std::endl;
+    for (int muidx : muIndices_) {
+      std::cout << muidx << " ";
+    }
+    std::cout << std::endl;
   }
 
   void ScaleWeightGroupInfo::setMuRMuFIndex(int globalIndex, std::string id, float muR, float muF) {
