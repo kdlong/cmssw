@@ -153,22 +153,6 @@ namespace gen {
     pdfGroup.addLhaid(lhaid);
   }
 
-  // TODO: Could probably recycle this code better
-  std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<double> weights, float w0) {
-    auto weightProduct = std::make_unique<GenWeightProduct>(w0);
-    weightProduct->setNumWeightSets(weightGroups_.size());
-    int weightGroupIndex = 0;
-    // This happens if there are no PS weights, so the weights vector contains only the central GEN weight.
-    // Just add an empty product
-    if (weights.size() > 1) {
-      for (unsigned int i = 0; i < weights.size(); i++) {
-        std::string id = std::to_string(i);
-        addWeightToProduct(weightProduct, weights.at(i), id, i, weightGroupIndex);
-      }
-    }
-    return std::move(weightProduct);
-  }
-
   void WeightHelper::cleanupOrphanCentralWeight() {
     std::vector<int> removeList;
     for (auto it = weightGroups_.begin(); it < weightGroups_.end(); it++) {
@@ -192,17 +176,6 @@ namespace gen {
     for (auto idx : removeList) {
       weightGroups_.erase(weightGroups_.begin() + idx);
     }
-  }
-
-  std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<gen::WeightsInfo> weights, float w0) {
-    auto weightProduct = std::make_unique<GenWeightProduct>(w0);
-    weightProduct->setNumWeightSets(weightGroups_.size());
-    int weightGroupIndex = 0;
-    int i = 0;
-    for (const auto& weight : weights) {
-      weightGroupIndex = addWeightToProduct(weightProduct, weight.wgt, weight.id, i++, weightGroupIndex);
-    }
-    return std::move(weightProduct);
   }
 
   int WeightHelper::addWeightToProduct(
