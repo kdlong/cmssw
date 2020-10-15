@@ -63,6 +63,7 @@ namespace gen {
     void updateMEParamInfo(const ParsedWeight& weight, int index);
     void updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight);
     void cleanupOrphanCentralWeight();
+    bool splitPdfWeight(ParsedWeight& weight);
 
     int lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup);
     std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;

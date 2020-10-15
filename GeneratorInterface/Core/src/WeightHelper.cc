@@ -17,9 +17,13 @@ namespace gen {
   }
 
   bool WeightHelper::isPartonShowerWeightGroup(const ParsedWeight& weight) {
-    const std::string& name = boost::to_lower_copy(weight.groupname);
-    return name.find("isr") != std::string::npos || name.find("fsr") != std::string::npos ||
-           name.find("nominal") != std::string::npos || name.find("baseline") != std::string::npos;
+    const std::string& groupname = boost::to_lower_copy(weight.groupname);
+    std::vector<std::string> psNames = {"isr", "fsr", "nominal", "baseline", "emission"};
+    for (auto name : psNames) {
+      if (groupname.find(name) != std::string::npos)
+        return true;
+    }
+    return false;
   }
 
   bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
@@ -151,6 +155,19 @@ namespace gen {
     }
     // after setup parent info, add lhaid
     pdfGroup.addLhaid(lhaid);
+  }
+
+  bool WeightHelper::splitPdfWeight(ParsedWeight& weight) {
+    if (weightGroups_[weight.wgtGroup_idx].weightType() == gen::WeightType::kPdfWeights) {
+      auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[weight.wgtGroup_idx]);
+      int lhaid = lhapdfId(weight, pdfGroup);
+      if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.parentLhapdfId() > 0) {
+        weightGroups_.push_back(*buildGroup(weight));
+        weight.wgtGroup_idx++;
+        return true;
+      }
+    }
+    return false;
   }
 
   void WeightHelper::cleanupOrphanCentralWeight() {
@@ -317,15 +334,9 @@ namespace gen {
         throw std::range_error("Invalid group index " + weight.wgtGroup_idx);
 
       // split PDF groups
-      if (weightGroups_[weight.wgtGroup_idx].weightType() == gen::WeightType::kPdfWeights) {
-        auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[weight.wgtGroup_idx]);
-        int lhaid = lhapdfId(weight, pdfGroup);
-        if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.parentLhapdfId() > 0) {
-          weightGroups_.push_back(*buildGroup(weight));
-          groupOffset++;
-          weight.wgtGroup_idx++;
-        }
-      }
+      if (splitPdfWeight(weight))
+        groupOffset++;
+
       WeightGroupInfo& group = weightGroups_[weight.wgtGroup_idx];
       group.addContainedId(weight.index, weight.id, weight.content);
       if (group.weightType() == gen::WeightType::kScaleWeights)
