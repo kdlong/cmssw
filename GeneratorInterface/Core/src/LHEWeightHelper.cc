@@ -102,6 +102,7 @@ namespace gen {
       groupIndex++;
     }
     buildGroups();
+    printWeights();
   }
 
   bool LHEWeightHelper::isConsistent() {

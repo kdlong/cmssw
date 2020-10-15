@@ -33,6 +33,10 @@ namespace gen {
     std::unique_ptr<GenWeightProduct> weightProduct(std::vector<gen::WeightsInfo>, float w0);
     std::unique_ptr<GenWeightProduct> weightProduct(std::vector<double>, float w0);
     void setModel(std::string model) { model_ = model; }
+    void addUnassociatedGroup() { 
+      weightGroups_.push_back(std::make_unique<UnknownWeightGroupInfo>("unassociated")); 
+      weightGroups_.back().setDescription("Weights missing or with invalid header meta data");
+    }
     int addWeightToProduct(
         std::unique_ptr<GenWeightProduct>& product, double weight, std::string name, int weightNum, int groupIndex);
     int findContainingWeightGroup(std::string wgtId, int weightIndex, int previousGroupIndex);
@@ -41,6 +45,8 @@ namespace gen {
     // TODO: Make this only print from one thread a la 
     // https://github.com/kdlong/cmssw/blob/master/PhysicsTools/NanoAOD/plugins/GenWeightsTableProducer.cc#L1069
     bool debug_ = false;
+    const unsigned int FIRST_PSWEIGHT_ENTRY= 2;
+    const unsigned int DEFAULT_PSWEIGHT_LENGTH = 46;
     std::string model_;
     std::vector<ParsedWeight> parsedWeights_;
     std::map<std::string, std::string> currWeightAttributeMap_;

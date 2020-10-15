@@ -14,7 +14,7 @@ genWeights = cms.EDProducer("GenWeightProductProducer",
 
 lheWeights = cms.EDProducer("LHEWeightProductProducer",
     lheSourceLabels = cms.vstring(["externalLHEProducer", "source"]),
-    failIfInvalidXML = cms.untracked.bool(False)
+    failIfInvalidXML = cms.untracked.bool(True)
 )
 
 lheWeightsTable = cms.EDProducer(
@@ -62,7 +62,7 @@ nanogenSequence = cms.Sequence(
     rivetProducerHTXS+
     particleLevelTables+
     metMCTable+
-    genWeightsTable+
+    #genWeightsTable+
     lheWeightsTable+
     lheInfoTable
 )

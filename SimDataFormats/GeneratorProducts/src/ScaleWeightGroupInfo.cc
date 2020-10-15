@@ -7,6 +7,8 @@ namespace gen {
     muIndices_ = other.muIndices_;
     dynVec_ = other.dynVec_;
     dynNames_ = other.dynNames_;
+    lhaid_ = other.lhaid_;
+    isFunctionalFormVar_ = other.isFunctionalFormVar_;
     WeightGroupInfo::copy(other);
   }
 
@@ -43,8 +45,6 @@ namespace gen {
       isWellFormed_ = false;
       return;
     }
-    if (index == 4)
-      containsCentral_ = true;
     muIndices_[index] = info.localIndex;
   }
 

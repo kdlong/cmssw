@@ -213,9 +213,31 @@ namespace gen {
 
   int WeightHelper::addWeightToProduct(
       std::unique_ptr<GenWeightProduct>& product, double weight, std::string name, int weightNum, int groupIndex) {
-    groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
-    auto group = weightGroups_[groupIndex];
-    int entry = group.weightVectorEntry(name, weightNum);
+    bool isUnassociated = false;
+    try {
+      groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
+    }
+    catch (const std::range_error& e) {
+      std::cerr << "WARNING: " << e.what() << std::endl;
+      isUnassociated = true;
+
+      bool foundUnassocGroup = false;
+      while (!foundUnassocGroup && groupIndex < static_cast<int>(weightGroups_.size())) {
+        auto& g = weightGroups_[groupIndex];
+        if (g.weightType() == gen::WeightType::kUnknownWeights && g.name() == "unassociated")
+          foundUnassocGroup = true;
+        else
+          groupIndex++;
+      }
+      if (!foundUnassocGroup) {
+        addUnassociatedGroup();
+      }
+    }
+    auto& group = weightGroups_[groupIndex];
+    if (isUnassociated) {
+      group.addContainedId(weightNum, name, name);
+    }
+    int entry = !isUnassociated ? group.weightVectorEntry(name, weightNum) : group.nIdsContained();
     if (debug_)
         std::cout << "Adding weight " << entry << " to group " << groupIndex << std::endl;
     product->addWeight(weight, groupIndex, entry);
@@ -247,8 +269,6 @@ namespace gen {
   void WeightHelper::printWeights() {
     // checks
     for (auto& wgt : weightGroups_) {
-      if (!wgt.isWellFormed())
-        std::cout << "\033[1;31m";
       std::cout << std::boolalpha << wgt.name() << " (" << wgt.firstId() << "-" << wgt.lastId()
                 << "): " << wgt.isWellFormed() << std::endl;
       if (wgt.weightType() == gen::WeightType::kScaleWeights) {
@@ -277,15 +297,9 @@ namespace gen {
 
       } else if (wgt.weightType() == gen::WeightType::kPdfWeights) {
         std::cout << wgt.description() << "\n";
-      } else if (wgt.weightType() == gen::WeightType::kPartonShowerWeights) {
-        auto& wgtPS = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(wgt);
-        for (auto group : wgtPS.getWeightNames()) {
-          std::cout << group << ": up " << wgtPS.upIndex(group);
-          std::cout << " - down " << wgtPS.downIndex(group) << std::endl;
-        }
-      }
+      } 
       if (!wgt.isWellFormed())
-        std::cout << "\033[0m";
+        std::cout << "WARNING: Weight group " << wgt.name() << " was not successfully parsed.\n";
     }
   }
 
@@ -341,8 +355,47 @@ namespace gen {
       else if (group.weightType() == gen::WeightType::kPdfWeights) {
         updatePdfInfo(weight, currentGroupIdx);
       }
+      else if (group.weightType() == WeightType::kPdfWeights) {
+        updatePdfInfo(weight, currentGroupIdx);
+      } 
     }
     cleanupOrphanCentralWeight();
+    for (auto& group : weightGroups_) {
+      if (group.weightType() == WeightType::kScaleWeights) {
+        auto& scaleGroup = static_cast<ScaleWeightGroupInfo&>(group);
+        if (scaleGroup.centralIndex() >= 0 && scaleGroup.muR05muF05Index() >= 0 && 
+            scaleGroup.muR1muF05Index() >= 0 && scaleGroup.muR2muF05Index() >= 0 && 
+            scaleGroup.muR05muF1Index() >= 0 && scaleGroup.muR05muF2Index() >= 0 &&
+            scaleGroup.muR1muF2Index() >= 0 && scaleGroup.muR2muF2Index() >= 0 &&
+            scaleGroup.muR2muF2Index() >= 0) {
+          scaleGroup.setIsWellFormed(true);
+        } else {
+          scaleGroup.setIsWellFormed(false);
+        }
+      }
+      else if (group.weightType() == WeightType::kPartonShowerWeights) {
+        auto& psGroup = static_cast<PartonShowerWeightGroupInfo&>(group);
+        if (psGroup.nIdsContained() == DEFAULT_PSWEIGHT_LENGTH && 
+                psGroup.weightIndexFromLabel("Baseline") >= 0 &&
+                psGroup.variationIndex(true, true, gen::PSVarType::def) >= 0 &&
+                psGroup.variationIndex(false, true, gen::PSVarType::def) >= 0 &&
+                psGroup.variationIndex(true, false, gen::PSVarType::def) >= 0 &&
+                psGroup.variationIndex(false, false, gen::PSVarType::def) >= 0) {
+            std:: cout << "THE GROUP IS WELL FORMED!";
+            psGroup.setIsWellFormed(true);
+        } else {
+            psGroup.setIsWellFormed(false);
+            std::cout << "PS weight length is " << psGroup.nIdsContained() << std::endl;
+        }
+
+        psGroup.cacheWeightIndicesByLabel();
+        std::vector<std::string> labels = psGroup.weightLabels();
+        if (labels.size() > FIRST_PSWEIGHT_ENTRY && labels.at(FIRST_PSWEIGHT_ENTRY).find(":") != std::string::npos &&
+                labels.at(FIRST_PSWEIGHT_ENTRY).find("=") != std::string::npos) {
+          psGroup.setNameIsPythiaSyntax(true);
+        }
+      }
+    }
   }
 
 }  // namespace gen
