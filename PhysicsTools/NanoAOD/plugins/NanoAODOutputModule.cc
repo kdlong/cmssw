@@ -11,7 +11,6 @@
 //
 
 // system include files
-#include <algorithm>
 #include <string>
 #include "TFile.h"
 #include "TTree.h"
@@ -47,7 +46,6 @@
 class NanoAODOutputModule : public edm::one::OutputModule<> {
 public:
   NanoAODOutputModule(edm::ParameterSet const& pset);
-  ~NanoAODOutputModule() override;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -116,8 +114,9 @@ private:
 
 
   std::vector<TableOutputBranches> m_tables;
+  std::vector<edm::EDGetToken> m_tableTokens;
+  std::vector<edm::EDGetToken> m_tableVectorTokens;
   std::vector<TriggerOutputBranches> m_triggers;
-  bool m_triggers_areSorted = false;
   std::vector<EventStringOutputBranches> m_evstrings;
 
   std::vector<SummaryTableOutputBranches> m_runTables;
@@ -149,10 +148,6 @@ NanoAODOutputModule::NanoAODOutputModule(edm::ParameterSet const& pset):
   m_fakeName(pset.getUntrackedParameter<bool>("fakeNameForCrab", false)),
   m_autoFlush(pset.getUntrackedParameter<int>("autoFlush", -10000000)),
   m_processHistoryRegistry()
-{
-}
-
-NanoAODOutputModule::~NanoAODOutputModule()
 {
 }
 
@@ -197,18 +192,29 @@ NanoAODOutputModule::write(edm::EventForOutput const& iEvent) {
 
   m_commonBranches.fill(iEvent.id());
   // fill all tables, starting from main tables and then doing extension tables
-  for (unsigned int extensions = 0; extensions <= 1; ++extensions) {
-      for (auto & t : m_tables) t.fill(iEvent,*m_tree,extensions);
+  std::vector<nanoaod::FlatTable const*> tables;
+  for (auto& tableToken : m_tableTokens) {
+    edm::Handle<nanoaod::FlatTable> handle;
+    iEvent.getByToken(tableToken, handle);
+    tables.push_back(&(*handle));
   }
-  if (!m_triggers_areSorted) {  // sort triggers/flags in inverse processHistory order, to save without any special label the most recent ones
-    std::vector<std::string> pnames;
-    for (auto& p : iEvent.processHistory())
-      pnames.push_back(p.processName());
-    std::sort(m_triggers.begin(), m_triggers.end(), [pnames](TriggerOutputBranches& a, TriggerOutputBranches& b) {
-      return ((std::find(pnames.begin(), pnames.end(), a.processName()) - pnames.begin()) >
-              (std::find(pnames.begin(), pnames.end(), b.processName()) - pnames.begin()));
-    });
-    m_triggers_areSorted = true;
+  for (auto& tableToken : m_tableVectorTokens) {
+    edm::Handle<std::vector<nanoaod::FlatTable>> handle;
+    iEvent.getByToken(tableToken, handle);
+    for (auto const& table : *handle) {
+      tables.push_back(&table);
+    }
+  }
+
+  if (m_tables.empty()) {
+    m_tables.resize(tables.size());
+  }
+  for (unsigned int extensions = 0; extensions <= 1; ++extensions) {
+    size_t iTable = 0;
+    for (auto& table : tables) {
+      m_tables[iTable].fill(*table, *m_tree, extensions);
+      ++iTable;
+    }
   }
   // fill triggers
   for (auto & t : m_triggers) t.fill(iEvent,*m_tree);
@@ -287,22 +293,23 @@ NanoAODOutputModule::openFile(edm::FileBlock const&) {
     }
   /* Setup file structure here */
   m_tables.clear();
+  m_tableTokens.clear();
   m_triggers.clear();
-  m_triggers_areSorted = false;
   m_evstrings.clear();
   m_runTables.clear();
-  const auto & keeps = keptProducts();
-  for (const auto & keep : keeps[edm::InEvent]) {
-      if(keep.first->className() == "nanoaod::FlatTable" )
-	      m_tables.emplace_back(keep.first, keep.second);
-      else if(keep.first->className() == "edm::TriggerResults" )
-	  {
-	      m_triggers.emplace_back(keep.first, keep.second);
-	  }
-      else if(keep.first->className() == "std::basic_string<char,std::char_traits<char> >" && keep.first->productInstanceName()=="genModel") { // friendlyClassName == "String"
-	m_evstrings.emplace_back(keep.first, keep.second, true); // update only at lumiBlock transitions
-      }
-      else throw cms::Exception("Configuration", "NanoAODOutputModule cannot handle class " + keep.first->className());     
+  const auto& keeps = keptProducts();
+  for (const auto& keep : keeps[edm::InEvent]) {
+    if (keep.first->className() == "nanoaod::FlatTable") {
+      m_tableTokens.emplace_back(keep.second);
+    } else if (keep.first->className() == "std::vector<nanoaod::FlatTable>") {
+      m_tableVectorTokens.emplace_back(keep.second);
+    } else if (keep.first->className() == "edm::TriggerResults") {
+      m_triggers.emplace_back(keep.first, keep.second);
+    } else if (keep.first->className() == "std::basic_string<char,std::char_traits<char> >" &&
+               keep.first->productInstanceName() == "genModel") {  // friendlyClassName == "String"
+      m_evstrings.emplace_back(keep.first, keep.second, true);     // update only at lumiBlock transitions
+    } else
+      throw cms::Exception("Configuration", "NanoAODOutputModule cannot handle class " + keep.first->className());
   }
 
   for (const auto & keep : keeps[edm::InRun]) {

@@ -3,6 +3,7 @@
 <use   name="DataFormats/Common"/>
 <use   name="hepmc"/>
 <use   name="xz"/>
+<use   name="lhapdf"/>
 <use   name="roothistmatrix"/>
 <export>
   <lib   name="1"/>

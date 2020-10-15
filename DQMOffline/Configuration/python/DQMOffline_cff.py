@@ -197,3 +197,5 @@ DQMOfflineL1TMonitoring = cms.Sequence( l1TriggerDqmOffline ) # L1 emulator is r
 DQMOfflineL1TEgamma = cms.Sequence( l1TriggerEgDqmOffline )
 
 DQMOfflineL1TMuon = cms.Sequence( l1TriggerMuonDqmOffline )
+from PhysicsTools.NanoAOD.nanogenDQM_cff import nanogenDQM
+DQMOfflineNanoGen = cms.Sequence(nanogenDQM)
