@@ -405,42 +405,7 @@ public:
 
     std::vector<double> wPS;
     std::string psWeightDocStr;
-    if (!genWeightChoice->empty()) {
-      psWeightDocStr = genWeightChoice->psWeightsDoc;
-      if (!genWeightChoice->psWeightIDs.empty()) {
-        double psNom = genProd.weights().at(genWeightChoice->psBaselineID);
-        for (auto wgtidx: genWeightChoice->psWeightIDs) {
-          wPS.push_back(genProd.weights().at(wgtidx) / psNom);
-        }
-      } else
-        wPS.push_back(1.0);
-    } else {
-      std::size_t vectorSize = (genProd.weights().size() > 2)
-        ? (keepAllPSWeights_ ? (genProd.weights().size() - 2)
-           : ((genProd.weights().size() == 14 || genProd.weights().size() == 46) ? 4 : 1))
-        : 1;
-      if (vectorSize > 1) {
-        double nominal = genProd.weights()[1];  // Called 'Baseline' in GenLumiInfoHeader
-        if (keepAllPSWeights_) {
-          for (std::size_t i = 0; i < vectorSize; i++) {
-            wPS.push_back(genProd.weights()[i + 2] / nominal);
-          }
-          psWeightDocStr = "All PS weights (w_var / w_nominal)";
-        } else {
-          edm::LogWarning("LHETablesProducer")
-            << "GenLumiInfoHeader not found: Central PartonShower weights will fill with the 6-10th entries \n" \
-            << "    This may incorrect for some mcs (madgraph 2.6.1 with its `isr:murfact=0.5` have a differnt order )";
-          for (std::size_t i = 6; i < 10; i++) {
-            wPS.push_back(genProd.weights()[i] / nominal);
-          }
-          psWeightDocStr = "PS weights (w_var / w_nominal);   [0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2"
-            "[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;";
-        }
-      } else {
-        wPS.push_back(1.0);
-        psWeightDocStr = "dummy PS weight (1.0) ";
-      }
-    }
+    setPSWeightInfo(genProd.weights(), genWeightChoice, wPS, psWeightDocStr);
 
     outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
     outPS->addColumn<float>("", wPS, psWeightDocStr, lheWeightPrecision_);
@@ -488,13 +453,8 @@ public:
       wPDF.push_back(weights.at(id) / w0);
     }
 
-    if (!weightChoice->psWeightIDs.empty()) {
-      // normalise PS weights by "Baseline", which should be the first entry
-      double psNom = weights.at(weightChoice->psBaselineID);
-      for (auto wgtidx: weightChoice->psWeightIDs)
-        wPS.push_back(weights.at(wgtidx) / psNom);
-    } else
-      wPS.push_back(1.0);
+    std::string psWeightsDocStr;
+    setPSWeightInfo(genProd.weights(), weightChoice, wPS, psWeightsDocStr);
 
     outScale = std::make_unique<nanoaod::FlatTable>(wScale.size(), "LHEScaleWeight", false);
     outScale->addColumn<float>("", wScale, weightChoice->scaleWeightsDoc, lheWeightPrecision_);
@@ -503,7 +463,7 @@ public:
     outPdf->addColumn<float>("", wPDF, weightChoice->pdfWeightsDoc, lheWeightPrecision_);
 
     outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
-    outPS->addColumn<float>("", wPS, weightChoice->psWeightsDoc, lheWeightPrecision_);
+    outPS->addColumn<float>("", wPS, psWeightsDocStr, lheWeightPrecision_);
 
     outNamed = std::make_unique<nanoaod::FlatTable>(1, "LHEWeight", true);
     outNamed->addColumnValue<float>("originalXWGTUP", originalXWGTUP, "Nominal event weight in the LHE file");
@@ -521,25 +481,41 @@ public:
                              std::unique_ptr<nanoaod::FlatTable>& outPS) const {
     std::vector<double> wPS;
     std::string psWeightDocStr;
-    if (!genWeightChoice->empty()) {
+    setPSWeightInfo(genProd.weights(), genWeightChoice, wPS, psWeightDocStr);
+    outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
+    outPS->addColumn<float>("", wPS, psWeightDocStr, lheWeightPrecision_);
+
+    counter->incGenOnly(genWeight);
+    counter->incPSOnly(genWeight, wPS);
+  }
+
+  void setPSWeightInfo(const std::vector<double>& genWeights,
+                       const DynamicWeightChoiceGenInfo* genWeightChoice,
+                       std::vector<double>& wPS,
+                       std::string& psWeightDocStr) const {
+    bool isRegularPSSet = (genWeights.size() == 14 || genWeights.size() == 46);
+    bool choiceSameSizeAsWeights = !keepAllPSWeights_ || (genWeights.size() - 2 == genWeightChoice->psWeightIDs.size());
+    if (!genWeightChoice->empty() && (!isRegularPSSet || choiceSameSizeAsWeights)) {
       psWeightDocStr = genWeightChoice->psWeightsDoc;
       if (!genWeightChoice->psWeightIDs.empty()) {
-        double psNom = genProd.weights().at(genWeightChoice->psBaselineID);
+        double psNom = genWeights.at(genWeightChoice->psBaselineID);
         for (auto wgtidx: genWeightChoice->psWeightIDs) {
-          wPS.push_back(genProd.weights().at(wgtidx) / psNom);
+          wPS.push_back(genWeights.at(wgtidx) / psNom);
+          std::cout << "weight " << wgtidx << " with value: " << genWeights.at(wgtidx) << std::endl;
         }
       } else
         wPS.push_back(1.0);
     } else {
-      std::size_t vectorSize = (genProd.weights().size() > 2)
-        ? (keepAllPSWeights_ ? (genProd.weights().size() - 2)
-           : ((genProd.weights().size() == 14 || genProd.weights().size() == 46) ? 4 : 1))
+      std::size_t vectorSize = (genWeights.size() > 2)
+        ? (keepAllPSWeights_ ? (genWeights.size() - 2)
+           : ((genWeights.size() == 14 || genWeights.size() == 46) ? 4 : 1))
         : 1;
       if (vectorSize > 1) {
-        double nominal = genProd.weights()[1];  // Called 'Baseline' in GenLumiInfoHeader
+        double nominal = genWeights.at(1);  // Called 'Baseline' in GenLumiInfoHeader
         if (keepAllPSWeights_) {
           for (std::size_t i = 0; i < vectorSize; i++) {
-            wPS.push_back(genProd.weights()[i + 2] / nominal);
+            std::cout << "weight " <<i+2 << " with value: " << genWeights.at(i+2) << std::endl;
+            wPS.push_back(genWeights.at(i+2) / nominal);
           }
           psWeightDocStr = "All PS weights (w_var / w_nominal)";
         } else {
@@ -547,7 +523,8 @@ public:
             << "GenLumiInfoHeader not found: Central PartonShower weights will fill with the 6-10th entries \n" \
             << "    This may incorrect for some mcs (madgraph 2.6.1 with its `isr:murfact=0.5` have a differnt order )";
           for (std::size_t i = 6; i < 10; i++) {
-            wPS.push_back(genProd.weights()[i] / nominal);
+            std::cout << "weight " <<i << " with value: " << genWeights.at(i) << std::endl;
+            wPS.push_back(genWeights.at(i) / nominal);
           }
           psWeightDocStr = "PS weights (w_var / w_nominal);   [0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2"
             "[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;";
@@ -557,16 +534,11 @@ public:
         psWeightDocStr = "dummy PS weight (1.0) ";
       }
     }
-    outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
-    outPS->addColumn<float>("", wPS, psWeightDocStr, lheWeightPrecision_);
-
-    counter->incGenOnly(genWeight);
-    counter->incPSOnly(genWeight, wPS);
   }
 
-  // create an empty counter
-  std::shared_ptr<DynamicWeightChoice> globalBeginRun(edm::Run const& iRun, edm::EventSetup const&) const override {
-    edm::Handle<LHERunInfoProduct> lheInfo;
+    // create an empty counter
+    std::shared_ptr<DynamicWeightChoice> globalBeginRun(edm::Run const& iRun, edm::EventSetup const&) const override {
+edm::Handle<LHERunInfoProduct> lheInfo;
 
     bool lheDebug = debugRun_.exchange(
         false);  // make sure only the first thread dumps out this (even if may still be mixed up with other output, but nevermind)
