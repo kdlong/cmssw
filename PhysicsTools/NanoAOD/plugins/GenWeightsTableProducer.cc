@@ -182,9 +182,16 @@ namespace {
     std::vector<unsigned int> pdfWeightIDs;
     std::string pdfWeightsDoc;
     // ---- ps ----
+    std::vector<unsigned int> defPSWeightIDs = {6,7,8,9};
+    std::vector<unsigned int> defPSWeightIDs_alt = {27, 5, 26, 4};
+    bool matchPS_alt = false;
     std::vector<unsigned int> psWeightIDs;
     unsigned int psBaselineID = 1;
     std::string psWeightsDoc;
+
+    void setMissingWeight(int idx) {
+      psWeightIDs[idx] = (matchPS_alt) ? defPSWeightIDs_alt[idx] :defPSWeightIDs[idx];
+    }
     
     bool empty() const {
       return scaleWeightIDs.empty() && pdfWeightIDs.empty() && psWeightIDs.empty();
@@ -396,16 +403,13 @@ public:
         wNamed[mNamed - namedWeightIDs_.begin()] = weight.wgt / w0;
     }
 
-    std::cout << "PLEASE WORK: " <<  genWeightChoice << std::endl;
     std::vector<double> wPS;
     std::string psWeightDocStr;
-    std::cout <<"num weights: " << genProd.weights().size()  << std::endl;
     if (!genWeightChoice->empty()) {
       psWeightDocStr = genWeightChoice->psWeightsDoc;
       if (!genWeightChoice->psWeightIDs.empty()) {
         double psNom = genProd.weights().at(genWeightChoice->psBaselineID);
         for (auto wgtidx: genWeightChoice->psWeightIDs) {
-          std::cout << wgtidx << ": with weight " << genProd.weights().at(wgtidx)/psNom << std::endl;
           wPS.push_back(genProd.weights().at(wgtidx) / psNom);
         }
       } else
@@ -437,10 +441,7 @@ public:
         psWeightDocStr = "dummy PS weight (1.0) ";
       }
     }
-    for (auto i: wPS) {
-      std::cout << i << " " ;
-    }
-    std::cout << std::endl;
+
     outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
     outPS->addColumn<float>("", wPS, psWeightDocStr, lheWeightPrecision_);
 
@@ -525,7 +526,6 @@ public:
       if (!genWeightChoice->psWeightIDs.empty()) {
         double psNom = genProd.weights().at(genWeightChoice->psBaselineID);
         for (auto wgtidx: genWeightChoice->psWeightIDs) {
-          std::cout << wgtidx << ": with weight " << genProd.weights().at(wgtidx);
           wPS.push_back(genProd.weights().at(wgtidx) / psNom);
         }
       } else
@@ -984,7 +984,6 @@ public:
       std::unordered_map<std::string, uint32_t> knownPDFSetsFromGenInfo_;
       unsigned int weightIter = 0;
       for (const auto& line : weightNames) {
-        std::cout << line << std::endl;
         if (std::regex_search(line, groups, scalew)) {  // scale variation
           auto id = groups.str(1);
           auto group = groups.str(2);
@@ -1011,11 +1010,11 @@ public:
             weightChoice->psWeightIDs.push_back(weightIter);  // PS variations
           } else if (std::regex_search(line, groups, mainPSw)) {
             if (weightChoice->psWeightIDs.size() == 0)
-              weightChoice->psWeightIDs.resize(4);
+              weightChoice->psWeightIDs = std::vector<unsigned int>(4, -1);
             int psIdx = (line.find("fsr") != std::string::npos) ? 1 : 0;
             psIdx += (groups.str(2) == "Hi" || groups.str(2) == "_up" || groups.str(2) == "2.0") ? 0 : 2;
-            std::cout << "id " << id <<  ": " << weightIter << "(" << psIdx << "): " << line <<  std::endl;
             weightChoice->psWeightIDs[psIdx] = weightIter;
+            weightChoice->matchPS_alt = (weightChoice->defPSWeightIDs_alt[psIdx] == weightIter);
           }
         }
         weightIter++;
@@ -1025,6 +1024,10 @@ public:
       } else if (weightChoice->psWeightIDs.size() == 4) {
         weightChoice->psWeightsDoc = "PS weights (w_var / w_nominal);   [0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2"
           "[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;";
+        for (int i = 0; i < 4; i++ ) {
+          if(static_cast<int>(weightChoice->psWeightIDs[i]) == -1)
+            weightChoice->setMissingWeight(i);
+        }
       } else {
         weightChoice->psWeightsDoc = "dummy PS weight (1.0) ";
       }
