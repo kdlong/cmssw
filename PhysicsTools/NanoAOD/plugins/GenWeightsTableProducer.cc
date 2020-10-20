@@ -183,6 +183,12 @@ namespace {
     std::string pdfWeightsDoc;
     // ---- ps ----
     std::vector<unsigned int> psWeightIDs;
+    unsigned int psBaselineID = 1;
+    std::string psWeightsDoc;
+    
+    bool empty() const {
+      return scaleWeightIDs.empty() && pdfWeightIDs.empty() && psWeightIDs.empty();
+    }
   };
 
   struct LumiCacheInfoHolder {
@@ -310,25 +316,26 @@ public:
         break;
       }
     }
+
+    const auto genWeightChoice = &(streamCache(id)->weightChoice);
     if (lheInfo.isValid()) {
       if (getLHEweightsFromGenInfo)
         edm::LogWarning("LHETablesProducer")
-            << "Found both a LHEEventProduct and a GenLumiInfoHeader: will only save weights from LHEEventProduct.\n";
+          << "Found both a LHEEventProduct and a GenLumiInfoHeader: will only save weights from LHEEventProduct.\n";
       // get the dynamic choice of weights
       const DynamicWeightChoice* weightChoice = runCache(iEvent.getRun().index());
       // go fill tables
       fillLHEWeightTables(
-          counter, weightChoice, weight, *lheInfo, *genInfo, lheScaleTab, lhePdfTab, lheRwgtTab, lheNamedTab, genPSTab);
+        counter, weightChoice, genWeightChoice, weight, *lheInfo, *genInfo, lheScaleTab, lhePdfTab, lheRwgtTab, lheNamedTab, genPSTab);
     } else if (getLHEweightsFromGenInfo) {
-      const DynamicWeightChoiceGenInfo* weightChoice = &(streamCache(id)->weightChoice);
       fillLHEPdfWeightTablesFromGenInfo(
-          counter, weightChoice, weight, *genInfo, lheScaleTab, lhePdfTab, lheNamedTab, genPSTab);
+        counter, genWeightChoice, weight, *genInfo, lheScaleTab, lhePdfTab, lheNamedTab, genPSTab);
       lheRwgtTab = std::make_unique<nanoaod::FlatTable>(1, "LHEReweightingWeights", true);
       //lheNamedTab.reset(new nanoaod::FlatTable(1, "LHENamedWeights", true));
       //genPSTab.reset(new nanoaod::FlatTable(1, "PSWeight", true));
     } else {
       // Still try to add the PS weights
-      fillOnlyPSWeightTable(counter, weight, *genInfo, genPSTab);
+      fillOnlyPSWeightTable(counter, genWeightChoice, weight, *genInfo, genPSTab);
       // make dummy values
       lheScaleTab = std::make_unique<nanoaod::FlatTable>(1, "LHEScaleWeights", true);
       lhePdfTab = std::make_unique<nanoaod::FlatTable>(1, "LHEPdfWeights", true);
@@ -348,6 +355,7 @@ public:
 
   void fillLHEWeightTables(Counter* counter,
                            const DynamicWeightChoice* weightChoice,
+                           const DynamicWeightChoiceGenInfo* genWeightChoice,
                            double genWeight,
                            const LHEEventProduct& lheProd,
                            const GenEventInfoProduct& genProd,
@@ -388,31 +396,51 @@ public:
         wNamed[mNamed - namedWeightIDs_.begin()] = weight.wgt / w0;
     }
 
-    std::size_t vectorSize =
-        (genProd.weights().size() > 2)
-            ? (keepAllPSWeights_ ? (genProd.weights().size() - 2)
-                                 : ((genProd.weights().size() == 14 || genProd.weights().size() == 46) ? 4 : 1))
-            : 1;
-    std::vector<double> wPS(vectorSize, 1);
+    std::cout << "PLEASE WORK: " <<  genWeightChoice << std::endl;
+    std::vector<double> wPS;
     std::string psWeightDocStr;
-    if (vectorSize > 1) {
-      double nominal = genProd.weights()[1];  // Called 'Baseline' in GenLumiInfoHeader
-      if (keepAllPSWeights_) {
-        for (std::size_t i = 0; i < vectorSize; i++) {
-          wPS[i] = (genProd.weights()[i + 2]) / nominal;
+    std::cout <<"num weights: " << genProd.weights().size()  << std::endl;
+    if (!genWeightChoice->empty()) {
+      psWeightDocStr = genWeightChoice->psWeightsDoc;
+      if (!genWeightChoice->psWeightIDs.empty()) {
+        double psNom = genProd.weights().at(genWeightChoice->psBaselineID);
+        for (auto wgtidx: genWeightChoice->psWeightIDs) {
+          std::cout << wgtidx << ": with weight " << genProd.weights().at(wgtidx)/psNom << std::endl;
+          wPS.push_back(genProd.weights().at(wgtidx) / psNom);
         }
-        psWeightDocStr = "All PS weights (w_var / w_nominal)";
-      } else {
-        for (std::size_t i = 6; i < 10; i++) {
-          wPS[i - 6] = (genProd.weights()[i]) / nominal;
-        }
-        psWeightDocStr =
-            "PS weights (w_var / w_nominal); [0] is ISR=0.5 FSR=1; [1] is ISR=1 "
-            "FSR=0.5; [2] is ISR=2 FSR=1; [3] is ISR=1 FSR=2 ";
-      }
+      } else
+        wPS.push_back(1.0);
     } else {
-      psWeightDocStr = "dummy PS weight (1.0) ";
+      std::size_t vectorSize = (genProd.weights().size() > 2)
+        ? (keepAllPSWeights_ ? (genProd.weights().size() - 2)
+           : ((genProd.weights().size() == 14 || genProd.weights().size() == 46) ? 4 : 1))
+        : 1;
+      if (vectorSize > 1) {
+        double nominal = genProd.weights()[1];  // Called 'Baseline' in GenLumiInfoHeader
+        if (keepAllPSWeights_) {
+          for (std::size_t i = 0; i < vectorSize; i++) {
+            wPS.push_back(genProd.weights()[i + 2] / nominal);
+          }
+          psWeightDocStr = "All PS weights (w_var / w_nominal)";
+        } else {
+          edm::LogWarning("LHETablesProducer")
+            << "GenLumiInfoHeader not found: Central PartonShower weights will fill with the 6-10th entries \n" \
+            << "    This may incorrect for some mcs (madgraph 2.6.1 with its `isr:murfact=0.5` have a differnt order )";
+          for (std::size_t i = 6; i < 10; i++) {
+            wPS.push_back(genProd.weights()[i] / nominal);
+          }
+          psWeightDocStr = "PS weights (w_var / w_nominal);   [0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2"
+            "[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;";
+        }
+      } else {
+        wPS.push_back(1.0);
+        psWeightDocStr = "dummy PS weight (1.0) ";
+      }
     }
+    for (auto i: wPS) {
+      std::cout << i << " " ;
+    }
+    std::cout << std::endl;
     outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
     outPS->addColumn<float>("", wPS, psWeightDocStr, lheWeightPrecision_);
 
@@ -429,9 +457,9 @@ public:
     outNamed->addColumnValue<float>("originalXWGTUP", lheProd.originalXWGTUP(), "Nominal event weight in the LHE file");
     for (unsigned int i = 0, n = wNamed.size(); i < n; ++i) {
       outNamed->addColumnValue<float>(namedWeightLabels_[i],
-                                      wNamed[i],
-                                      "LHE weight for id " + namedWeightIDs_[i] + ", relative to nominal",
-                                      lheWeightPrecision_);
+                                  wNamed[i],
+                                  "LHE weight for id " + namedWeightIDs_[i] + ", relative to nominal",
+                                  lheWeightPrecision_);
     }
 
     counter->incLHE(genWeight, wScale, wPDF, wRwgt, wNamed, wPS);
@@ -447,7 +475,6 @@ public:
                                          std::unique_ptr<nanoaod::FlatTable>& outPS) const {
     const std::vector<unsigned int>& scaleWeightIDs = weightChoice->scaleWeightIDs;
     const std::vector<unsigned int>& pdfWeightIDs = weightChoice->pdfWeightIDs;
-    const std::vector<unsigned int>& psWeightIDs = weightChoice->psWeightIDs;
 
     auto weights = genProd.weights();
     double w0 = (weights.size() > 1) ? weights.at(1) : 1.;
@@ -459,21 +486,14 @@ public:
     for (auto id : pdfWeightIDs) {
       wPDF.push_back(weights.at(id) / w0);
     }
-    if (!psWeightIDs.empty()) {
-      double psNom =
-          weights.at(psWeightIDs.at(0));  // normalise PS weights by "Baseline", which should be the first entry
-      for (std::size_t i = 1; i < psWeightIDs.size(); i++)
-        wPS.push_back(weights.at(psWeightIDs.at(i)) / psNom);
+
+    if (!weightChoice->psWeightIDs.empty()) {
+      // normalise PS weights by "Baseline", which should be the first entry
+      double psNom = weights.at(weightChoice->psBaselineID);
+      for (auto wgtidx: weightChoice->psWeightIDs)
+        wPS.push_back(weights.at(wgtidx) / psNom);
     } else
       wPS.push_back(1.0);
-    std::string psWeightDocStr;
-    if (keepAllPSWeights_) {
-      psWeightDocStr = "All PS weights (w_var / w_nominal)";
-    } else {
-      psWeightDocStr =
-          "PS weights (w_var / w_nominal); [0] is ISR=0.5 FSR=1; [1] is ISR=1 "
-          "FSR=0.5; [2] is ISR=2 FSR=1; [3] is ISR=1 FSR=2 ";
-    }
 
     outScale = std::make_unique<nanoaod::FlatTable>(wScale.size(), "LHEScaleWeight", false);
     outScale->addColumn<float>("", wScale, weightChoice->scaleWeightsDoc, lheWeightPrecision_);
@@ -482,7 +502,7 @@ public:
     outPdf->addColumn<float>("", wPDF, weightChoice->pdfWeightsDoc, lheWeightPrecision_);
 
     outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
-    outPS->addColumn<float>("", wPS, wPS.size() > 1 ? psWeightDocStr : "dummy PS weight (1.0) ", lheWeightPrecision_);
+    outPS->addColumn<float>("", wPS, weightChoice->psWeightsDoc, lheWeightPrecision_);
 
     outNamed = std::make_unique<nanoaod::FlatTable>(1, "LHEWeight", true);
     outNamed->addColumnValue<float>("originalXWGTUP", originalXWGTUP, "Nominal event weight in the LHE file");
@@ -494,33 +514,48 @@ public:
   }
 
   void fillOnlyPSWeightTable(Counter* counter,
+                             const DynamicWeightChoiceGenInfo* genWeightChoice,
                              double genWeight,
                              const GenEventInfoProduct& genProd,
                              std::unique_ptr<nanoaod::FlatTable>& outPS) const {
-    std::size_t vectorSize =
-        (genProd.weights().size() > 2)
-            ? (keepAllPSWeights_ ? (genProd.weights().size() - 2)
-                                 : ((genProd.weights().size() == 14 || genProd.weights().size() == 46) ? 4 : 1))
-            : 1;
-    std::vector<double> wPS(vectorSize, 1);
+    std::vector<double> wPS;
     std::string psWeightDocStr;
-    if (vectorSize > 1) {
-      double nominal = genProd.weights()[1];  // Called 'Baseline' in GenLumiInfoHeader
-      if (keepAllPSWeights_) {
-        for (std::size_t i = 0; i < vectorSize; i++) {
-          wPS[i] = (genProd.weights()[i + 2]) / nominal;
+    if (!genWeightChoice->empty()) {
+      psWeightDocStr = genWeightChoice->psWeightsDoc;
+      if (!genWeightChoice->psWeightIDs.empty()) {
+        double psNom = genProd.weights().at(genWeightChoice->psBaselineID);
+        for (auto wgtidx: genWeightChoice->psWeightIDs) {
+          std::cout << wgtidx << ": with weight " << genProd.weights().at(wgtidx);
+          wPS.push_back(genProd.weights().at(wgtidx) / psNom);
         }
-        psWeightDocStr = "All PS weights (w_var / w_nominal)";
-      } else {
-        for (std::size_t i = 6; i < 10; i++) {
-          wPS[i - 6] = (genProd.weights()[i]) / nominal;
-        }
-        psWeightDocStr =
-            "PS weights (w_var / w_nominal); [0] is ISR=0.5 FSR=1; [1] is ISR=1 "
-            "FSR=0.5; [2] is ISR=2 FSR=1; [3] is ISR=1 FSR=2 ";
-      }
+      } else
+        wPS.push_back(1.0);
     } else {
-      psWeightDocStr = "dummy PS weight (1.0) ";
+      std::size_t vectorSize = (genProd.weights().size() > 2)
+        ? (keepAllPSWeights_ ? (genProd.weights().size() - 2)
+           : ((genProd.weights().size() == 14 || genProd.weights().size() == 46) ? 4 : 1))
+        : 1;
+      if (vectorSize > 1) {
+        double nominal = genProd.weights()[1];  // Called 'Baseline' in GenLumiInfoHeader
+        if (keepAllPSWeights_) {
+          for (std::size_t i = 0; i < vectorSize; i++) {
+            wPS.push_back(genProd.weights()[i + 2] / nominal);
+          }
+          psWeightDocStr = "All PS weights (w_var / w_nominal)";
+        } else {
+          edm::LogWarning("LHETablesProducer")
+            << "GenLumiInfoHeader not found: Central PartonShower weights will fill with the 6-10th entries \n" \
+            << "    This may incorrect for some mcs (madgraph 2.6.1 with its `isr:murfact=0.5` have a differnt order )";
+          for (std::size_t i = 6; i < 10; i++) {
+            wPS.push_back(genProd.weights()[i] / nominal);
+          }
+          psWeightDocStr = "PS weights (w_var / w_nominal);   [0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2"
+            "[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;";
+        }
+      } else {
+        wPS.push_back(1.0);
+        psWeightDocStr = "dummy PS weight (1.0) ";
+      }
     }
     outPS = std::make_unique<nanoaod::FlatTable>(wPS.size(), "PSWeight", false);
     outPS->addColumn<float>("", wPS, psWeightDocStr, lheWeightPrecision_);
@@ -923,11 +958,14 @@ public:
     if (!genLumiInfoHead.isValid())
       edm::LogWarning("LHETablesProducer")
           << "No GenLumiInfoHeader product found, will not fill generator model string.\n";
+
     std::string label;
     if (genLumiInfoHead.isValid()) {
       label = genLumiInfoHead->configDescription();
       boost::replace_all(label, "-", "_");
       boost::replace_all(label, "/", "_");
+      if (label.empty())
+        label = "default_Gen_Label";
     }
     counterMap->setLabel(label);
 
@@ -940,11 +978,13 @@ public:
 
       std::regex scalew("LHE,\\s+id\\s+=\\s+(\\d+),\\s+(.+)\\,\\s+mur=(\\S+)\\smuf=(\\S+)");
       std::regex pdfw("LHE,\\s+id\\s+=\\s+(\\d+),\\s+(.+),\\s+Member\\s+(\\d+)\\s+of\\ssets\\s+(\\w+\\b)");
+      std::regex mainPSw("sr(Def|:murfac=)(Hi|Lo|_dn|_up|0.5|2.0)");
       std::smatch groups;
       auto weightNames = genLumiInfoHead->weightNames();
       std::unordered_map<std::string, uint32_t> knownPDFSetsFromGenInfo_;
       unsigned int weightIter = 0;
       for (const auto& line : weightNames) {
+        std::cout << line << std::endl;
         if (std::regex_search(line, groups, scalew)) {  // scale variation
           auto id = groups.str(1);
           auto group = groups.str(2);
@@ -964,15 +1004,31 @@ public:
             } else
               pdfSetWeightIDs.back().add(id, std::atoi(id.c_str()));
           }
-        } else if (line.find("Baseline") != std::string::npos || line.find("isr") != std::string::npos ||
-                   line.find("fsr") != std::string::npos) {
-          if (keepAllPSWeights_ || line.find("Baseline") != std::string::npos ||
-              line.find("Def") != std::string::npos) {
+        } else if(line == "Baseline") {
+          weightChoice->psBaselineID = weightIter;
+        } else if (line.find("isr") != std::string::npos || line.find("fsr") != std::string::npos) {
+          if (keepAllPSWeights_) {
             weightChoice->psWeightIDs.push_back(weightIter);  // PS variations
+          } else if (std::regex_search(line, groups, mainPSw)) {
+            if (weightChoice->psWeightIDs.size() == 0)
+              weightChoice->psWeightIDs.resize(4);
+            int psIdx = (line.find("fsr") != std::string::npos) ? 1 : 0;
+            psIdx += (groups.str(2) == "Hi" || groups.str(2) == "_up" || groups.str(2) == "2.0") ? 0 : 2;
+            std::cout << "id " << id <<  ": " << weightIter << "(" << psIdx << "): " << line <<  std::endl;
+            weightChoice->psWeightIDs[psIdx] = weightIter;
           }
         }
         weightIter++;
       }
+      if (keepAllPSWeights_) {
+      weightChoice->psWeightsDoc = "All PS weights (w_var / w_nominal)";
+      } else if (weightChoice->psWeightIDs.size() == 4) {
+        weightChoice->psWeightsDoc = "PS weights (w_var / w_nominal);   [0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2"
+          "[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;";
+      } else {
+        weightChoice->psWeightsDoc = "dummy PS weight (1.0) ";
+      }
+
 
       weightChoice->scaleWeightIDs.clear();
       weightChoice->pdfWeightIDs.clear();
