@@ -551,7 +551,6 @@ public:
       std::vector<std::string> lheReweighingIDs;
 
       std::regex weightgroupmg26x("<weightgroup\\s+(?:name|type)=\"(.*)\"\\s+combine=\"(.*)\"\\s*>");
-      std::regex weightgroupmg26xNew("<weightgroup\\s+combine=\"(.*)\"\\s+(?:name|type)=\"(.*)\"\\s*>");
       std::regex weightgroup("<weightgroup\\s+combine=\"(.*)\"\\s+(?:name|type)=\"(.*)\"\\s*>");
       std::regex weightgroupRwgt("<weightgroup\\s+(?:name|type)=\"(.*)\"\\s*>");
       std::regex endweightgroup("</weightgroup>");
@@ -602,7 +601,8 @@ public:
           boost::replace_all(lines[iLine], "&gt;", ">");
           if (std::regex_search(lines[iLine], groups, weightgroupmg26x)) {
             ismg26x = true;
-          } else if (std::regex_search(lines[iLine], groups, weightgroupmg26xNew)) {
+          } else if (std::regex_search(lines[iLine], groups, scalewmg26xNew) ||
+                     std::regex_search(lines[iLine], groups, pdfwmg26xNew)) {
             ismg26xNew = true;
           }
         }
@@ -611,12 +611,10 @@ public:
             std::cout << lines[iLine];
           if (std::regex_search(lines[iLine],
                                 groups,
-                                ismg26x ? weightgroupmg26x : (ismg26xNew ? weightgroupmg26xNew : weightgroup))) {
+                                ismg26x ? weightgroupmg26x : weightgroup)) {
             std::string groupname = groups.str(2);
             if (ismg26x)
               groupname = groups.str(1);
-            else if (ismg26xNew)
-              groupname = groups.str(2);
             if (lheDebug)
               std::cout << ">>> Looks like the beginning of a weight group for '" << groupname << "'" << std::endl;
             if (groupname.find("scale_variation") == 0 || groupname == "Central scale variation") {
@@ -626,8 +624,7 @@ public:
                 if (lheDebug) {
                   std::cout << "    " << lines[iLine];
                 }
-                if (std::regex_search(
-                        lines[iLine], groups, ismg26x ? scalewmg26x : (ismg26xNew ? scalewmg26xNew : scalew))) {
+                if (std::regex_search(lines[iLine], groups, ismg26x ? scalewmg26x : (ismg26xNew ? scalewmg26xNew : scalew))) {
                   if (lheDebug)
                     std::cout << "    >>> Scale weight " << groups[1].str() << " for " << groups[3].str() << " , "
                               << groups[4].str() << " , " << groups[5].str() << std::endl;
@@ -645,7 +642,7 @@ public:
                     missed_weightgroup = false;
                 } else if (std::regex_search(
                                lines[iLine],
-                               ismg26x ? weightgroupmg26x : (ismg26xNew ? weightgroupmg26xNew : weightgroup))) {
+                               ismg26x ? weightgroupmg26x : weightgroup)) {
                   if (lheDebug)
                     std::cout << ">>> Looks like the beginning of a new weight group, I will assume I missed the end "
                                  "of the group."
@@ -679,7 +676,7 @@ public:
                     missed_weightgroup = false;
                 } else if (std::regex_search(
                                lines[iLine],
-                               ismg26x ? weightgroupmg26x : (ismg26xNew ? weightgroupmg26xNew : weightgroup))) {
+                               ismg26x ? weightgroupmg26x : weightgroup)) {
                   if (lheDebug)
                     std::cout << ">>> Looks like the beginning of a new weight group, I will assume I missed the end "
                                  "of the group."
