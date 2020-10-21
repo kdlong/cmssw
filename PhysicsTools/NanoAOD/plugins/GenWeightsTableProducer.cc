@@ -609,9 +609,7 @@ public:
         for (unsigned int iLine = 0, nLines = lines.size(); iLine < nLines; ++iLine) {
           if (lheDebug)
             std::cout << lines[iLine];
-          if (std::regex_search(lines[iLine],
-                                groups,
-                                ismg26x ? weightgroupmg26x : weightgroup)) {
+          if (std::regex_search(lines[iLine], groups, ismg26x ? weightgroupmg26x : weightgroup)) {
             std::string groupname = groups.str(2);
             if (ismg26x)
               groupname = groups.str(1);
@@ -624,7 +622,8 @@ public:
                 if (lheDebug) {
                   std::cout << "    " << lines[iLine];
                 }
-                if (std::regex_search(lines[iLine], groups, ismg26x ? scalewmg26x : (ismg26xNew ? scalewmg26xNew : scalew))) {
+                if (std::regex_search(
+                        lines[iLine], groups, ismg26x ? scalewmg26x : (ismg26xNew ? scalewmg26xNew : scalew))) {
                   if (lheDebug)
                     std::cout << "    >>> Scale weight " << groups[1].str() << " for " << groups[3].str() << " , "
                               << groups[4].str() << " , " << groups[5].str() << std::endl;
@@ -640,9 +639,7 @@ public:
                     break;
                   } else
                     missed_weightgroup = false;
-                } else if (std::regex_search(
-                               lines[iLine],
-                               ismg26x ? weightgroupmg26x : weightgroup)) {
+                } else if (std::regex_search(lines[iLine], ismg26x ? weightgroupmg26x : weightgroup)) {
                   if (lheDebug)
                     std::cout << ">>> Looks like the beginning of a new weight group, I will assume I missed the end "
                                  "of the group."
@@ -674,9 +671,7 @@ public:
                     break;
                   } else
                     missed_weightgroup = false;
-                } else if (std::regex_search(
-                               lines[iLine],
-                               ismg26x ? weightgroupmg26x : weightgroup)) {
+                } else if (std::regex_search(lines[iLine], ismg26x ? weightgroupmg26x : weightgroup)) {
                   if (lheDebug)
                     std::cout << ">>> Looks like the beginning of a new weight group, I will assume I missed the end "
                                  "of the group."
