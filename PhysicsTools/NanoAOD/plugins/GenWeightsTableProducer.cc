@@ -983,6 +983,7 @@ public:
         } else if (line == "Baseline") {
           weightChoice->psBaselineID = weightIter;
         } else if (line.find("isr") != std::string::npos || line.find("fsr") != std::string::npos) {
+          weightChoice->matchPS_alt = line.find("sr:") != std::string::npos;  // (f/i)sr: for new weights
           if (keepAllPSWeights_) {
             weightChoice->psWeightIDs.push_back(weightIter);  // PS variations
           } else if (std::regex_search(line, groups, mainPSw)) {
@@ -991,7 +992,6 @@ public:
             int psIdx = (line.find("fsr") != std::string::npos) ? 1 : 0;
             psIdx += (groups.str(2) == "Hi" || groups.str(2) == "_up" || groups.str(2) == "2.0") ? 0 : 2;
             weightChoice->psWeightIDs[psIdx] = weightIter;
-            weightChoice->matchPS_alt = (weightChoice->defPSWeightIDs_alt[psIdx] == weightIter);
           }
         }
         weightIter++;
