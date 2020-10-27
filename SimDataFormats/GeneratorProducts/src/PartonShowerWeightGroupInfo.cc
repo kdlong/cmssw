@@ -28,15 +28,12 @@ namespace gen {
     std::string varName = variationName(isISR, isUp, variationType, splittingType);
     int wgtIdx = weightIndexFromLabel(varName);
     if (wgtIdx == -1) {
-      int idx = isUp * 2 + !isUp;
+      int idx = !isUp * 2 + !isISR;
       auto pair = std::make_pair(variationType, splittingType);
       wgtIdx = (nameIsPythiaSyntax_) ? newPythia_order.at(pair)[idx] : oldPythia_order.at(pair)[idx];
+      if (wgtIdx > (int)containedIds().size())
+        wgtIdx = -1;
     }
-    std::cout << varName << std::endl;
-    int idx = (!isUp) * 2 + !isISR;
-    auto pair = std::make_pair(variationType, splittingType);
-    int blha = (nameIsPythiaSyntax_) ? newPythia_order.at(pair)[idx] : oldPythia_order.at(pair)[idx];
-    std::cout << wgtIdx << " " << idx << " " << blha << std::endl;
     return wgtIdx;
   }
 
