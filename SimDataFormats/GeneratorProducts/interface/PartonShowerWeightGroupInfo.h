@@ -6,8 +6,8 @@
 #include "SimDataFormats/GeneratorProducts/interface/WeightGroupInfo.h"
 
 namespace gen {
-  enum class PSVarType { muR, cNS, con, def, red, alphaS};
-  enum class PSSplittingType { combined, g2gg, x2xg, g2qq };
+  enum class PSVarType { muR, cNS, con, def, red, alphaS };
+  enum class PSSplittingType { combined, g2gg, x2xg, g2qq, q2qg };
 
   class PartonShowerWeightGroupInfo : public WeightGroupInfo {
   public:

@@ -63,6 +63,7 @@ namespace gen {
     void updateScaleInfo(gen::ScaleWeightGroupInfo& scaleGroup, const ParsedWeight& weight);
     void updateMEParamInfo(const ParsedWeight& weight, int index);
     void updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight);
+    void updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight);
     void cleanupOrphanCentralWeight();
     bool splitPdfWeight(ParsedWeight& weight);
 

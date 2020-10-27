@@ -22,57 +22,58 @@ namespace gen {
                                                   PSSplittingType splittingType) const {
     std::string label = isISR ? "isr" : "fsr";
 
-    if ((variationType == PSVarType::con || variationType == PSVarType::def || variationType == PSVarType::red) &&
-        splittingType != PSSplittingType::combined)
-      throw std::invalid_argument("VariationType must be muR or CNS if subprocess is specified");
-
-    std::string variation;
-    switch (variationType) {
-      case PSVarType::con:
-        variation = !nameIsPythiaSyntax_ ? "Con" : (isUp ? "murfac=4.0" : "murfac=0.25");
-        break;
-      case PSVarType::def:
-        variation = !nameIsPythiaSyntax_ ? "Def" : (isUp ? "murfac=2.0" : "murfac=0.5");
-        break;
-      case PSVarType::red:
-        variation = !nameIsPythiaSyntax_ ? "Red" : (isUp ? "murfac=1.414" : "murfac=0.707");
-      case PSVarType::muR:
-        variation = !nameIsPythiaSyntax_ ? "muR" : (isUp ? "murfac=2.0" : "murfac=0.5");
-        break;
-      case PSVarType::cNS:
-        variation = !nameIsPythiaSyntax_ ? "cNS" : (isUp ? "cns=2.0" : "murfac=-2.0");
-        break;
-      case PSVarType::alphaS:
-        variation = (isUp ? "alpsfact=2.0" : "alpsfact=0.5");
-        return weightIndexFromLabel(variation);
-    }
-
-    std::string splitting;
-    switch (splittingType) {
-      case PSSplittingType::g2gg:
-        splitting = !nameIsPythiaSyntax_ ? "G2GG" : "g2gg";
-        break;
-      case PSSplittingType::g2qq:
-        splitting = !nameIsPythiaSyntax_ ? "G2QQ" : "g2qq";
-        break;
-      case PSSplittingType::x2xg:
-        splitting = !nameIsPythiaSyntax_ ? "X2XG" : "x2xg";
-        break;
-      default:
-        break;
-    }
+    // if ((variationType == PSVarType::con || variationType == PSVarType::def || variationType == PSVarType::red) &&
+    //     splittingType != PSSplittingType::combined)
+    //   throw std::invalid_argument("VariationType must be muR or CNS if subprocess is specified");
 
     if (nameIsPythiaSyntax_) {
-      std::string app = splittingType != PSSplittingType::combined ? splitting + ":" + variation : variation;
-      label += ":" + app;
+      // Splitting
+      if (splittingType == PSSplittingType::g2gg)
+        label += ":g2gg";
+      else if (splittingType == PSSplittingType::g2qq)
+        label += ":g2qq";
+      else if (splittingType == PSSplittingType::x2xg)
+        label += ":x2xg";
+      else if (splittingType == PSSplittingType::q2qg)
+        label += ":q2qg";
+      // type
+      if (variationType == PSVarType::con)
+        label += isUp ? ":murfac=4.0" : ":murfac=0.25";
+      else if (variationType == PSVarType::def || variationType == PSVarType::muR)
+        label += isUp ? ":murfac=2.0" : ":murfac=0.5";
+      else if (variationType == PSVarType::red)
+        label += isUp ? ":murfac=1.414" : ":murfac=0.707";
+      else if (variationType == PSVarType::cNS)
+        label += isUp ? ":cns=2.0" : ":cns=-2.0";
     } else {
+      // Splitting
+      if (splittingType == PSSplittingType::g2gg)
+        label += "_G2GG_";
+      else if (splittingType == PSSplittingType::g2qq)
+        label += "_G2QQ_";
+      else if (splittingType == PSSplittingType::x2xg)
+        label += "_X2XG_";
+      else if (splittingType == PSSplittingType::q2qg)
+        label += "_Q2QG_";
+      // type
+      if (variationType == PSVarType::con)
+        label += "Con";
+      else if (variationType == PSVarType::def)
+        label += "Def";
+      else if (variationType == PSVarType::muR)
+        label += "muR";
+      else if (variationType == PSVarType::red)
+        label += "Red";
+      else if (variationType == PSVarType::cNS)
+        label += "cNS";
+      // Up/Down
       if (splittingType != PSSplittingType::combined) {
-        label += variation + "_" + splitting + "_" + variation + (isUp ? "_up" : "_dn");
+        label += isUp ? "_up" : "_dn";
       } else
-        label += variation + (isUp ? "Hi" : "Lo");
+        label += isUp ? "Hi" : "Lo";
     }
 
+    std::cout << label << std::endl;
     return weightIndexFromLabel(label);
   }
-
 }  // namespace gen
