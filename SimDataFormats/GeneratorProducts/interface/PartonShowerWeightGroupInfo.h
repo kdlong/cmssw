@@ -36,7 +36,7 @@ namespace gen {
     bool nameIsPythiaSyntax_ = false;
     typedef PSVarType varType;
     typedef PSSplittingType sptType;
-    // Order determined by isUp*2 + !isISR -> isrHi, fsrHi, isrLo, fsrLo
+    // Order determined by !isUp*2 + !isISR -> isrHi, fsrHi, isrLo, fsrLo
     const std::unordered_map<PSPair, std::vector<int>, PSPairHash> oldPythia_order = {
         {{varType::def, sptType::combined}, {6, 7, 8, 9}},
         {{varType::red, sptType::combined}, {2, 3, 4, 5}},
