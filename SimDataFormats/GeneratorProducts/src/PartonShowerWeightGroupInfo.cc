@@ -3,6 +3,11 @@
 #include <iostream>
 
 namespace gen {
+  PartonShowerWeightGroupInfo::PartonShowerWeightGroupInfo(std::string header, std::string name)
+      : WeightGroupInfo(header, name) {
+    weightType_ = WeightType::kPartonShowerWeights;
+  }
+
   void PartonShowerWeightGroupInfo::copy(const PartonShowerWeightGroupInfo& other) {
     WeightGroupInfo::copy(other);
     nameIsPythiaSyntax_ = other.nameIsPythiaSyntax_;
@@ -20,6 +25,25 @@ namespace gen {
                                                   bool isUp,
                                                   PSVarType variationType,
                                                   PSSplittingType splittingType) const {
+    std::string varName = variationName(isISR, isUp, variationType, splittingType);
+    int wgtIdx = weightIndexFromLabel(varName);
+    if (wgtIdx == -1) {
+      int idx = isUp * 2 + !isUp;
+      auto pair = std::make_pair(variationType, splittingType);
+      wgtIdx = (nameIsPythiaSyntax_) ? newPythia_order.at(pair)[idx] : oldPythia_order.at(pair)[idx];
+    }
+    std::cout << varName << std::endl;
+    int idx = (!isUp) * 2 + !isISR;
+    auto pair = std::make_pair(variationType, splittingType);
+    int blha = (nameIsPythiaSyntax_) ? newPythia_order.at(pair)[idx] : oldPythia_order.at(pair)[idx];
+    std::cout << wgtIdx << " " << idx << " " << blha << std::endl;
+    return wgtIdx;
+  }
+
+  std::string PartonShowerWeightGroupInfo::variationName(bool isISR,
+                                                         bool isUp,
+                                                         PSVarType variationType,
+                                                         PSSplittingType splittingType) const {
     std::string label = isISR ? "isr" : "fsr";
 
     // if ((variationType == PSVarType::con || variationType == PSVarType::def || variationType == PSVarType::red) &&
@@ -72,8 +96,7 @@ namespace gen {
       } else
         label += isUp ? "Hi" : "Lo";
     }
-
-    std::cout << label << std::endl;
-    return weightIndexFromLabel(label);
+    return label;
   }
+
 }  // namespace gen
