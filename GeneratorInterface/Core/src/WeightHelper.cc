@@ -158,6 +158,14 @@ namespace gen {
     pdfGroup.addLhaid(lhaid);
   }
 
+  void WeightHelper::updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight) {
+    if (psGroup.containedIds().size() == DEFAULT_PSWEIGHT_LENGTH)
+      psGroup.setIsWellFormed(true);
+    std::cout << weight.content << std::endl;
+    if (weight.content.find(":") != std::string::npos && weight.content.find("=") != std::string::npos)
+      psGroup.setNameIsPythiaSyntax(true);
+  }
+
   bool WeightHelper::splitPdfWeight(ParsedWeight& weight) {
     if (weightGroups_[weight.wgtGroup_idx].weightType() == gen::WeightType::kPdfWeights) {
       auto& pdfGroup = dynamic_cast<gen::PdfWeightGroupInfo&>(weightGroups_[weight.wgtGroup_idx]);
@@ -285,20 +293,53 @@ namespace gen {
         std::cout << wgt.description() << "\n";
       } else if (wgt.weightType() == gen::WeightType::kPartonShowerWeights) {
         auto& wgtPS = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(wgt);
-        if (wgtPS.containedIds().size() == DEFAULT_PSWEIGHT_LENGTH)
-          wgtPS.setIsWellFormed(true);
-
-        wgtPS.cacheWeightIndicesByLabel();
         std::vector<std::string> labels = wgtPS.weightLabels();
-        if (labels.size() > FIRST_PSWEIGHT_ENTRY && labels.at(FIRST_PSWEIGHT_ENTRY).find(':') != std::string::npos &&
-            labels.at(FIRST_PSWEIGHT_ENTRY).find('=') != std::string::npos) {
-          wgtPS.setNameIsPythiaSyntax(true);
+        wgtPS.cacheWeightIndicesByLabel();
+
+        auto vars = {std::make_pair<bool, bool>(true, true),
+                     std::make_pair<bool, bool>(true, false),
+                     std::make_pair<bool, bool>(false, true),
+                     std::make_pair<bool, bool>(false, false)};
+        typedef gen::PSVarType varType;
+        typedef gen::PSSplittingType sptType;
+        std::vector<std::pair<varType, sptType>> ps_pairs = {
+            {varType::def, sptType::combined},
+            {varType::red, sptType::combined},
+            {varType::con, sptType::combined},
+            {varType::muR, sptType::g2gg},
+            {varType::muR, sptType::g2qq},
+            {varType::muR, sptType::q2qg},
+            {varType::muR, sptType::x2xg},
+            {varType::cNS, sptType::g2gg},
+            {varType::cNS, sptType::g2qq},
+            {varType::cNS, sptType::q2qg},
+            {varType::cNS, sptType::x2xg},
+        };
+        std::map<varType, std::string> varTypeMap = {
+            {varType::muR, "muR"},
+            {varType::cNS, "cNS"},
+            {varType::con, "con"},
+            {varType::def, "def"},
+            {varType::red, "red"},
+        };
+        std::map<sptType, std::string> splTypeMap = {
+            {sptType::combined, "combined"}, {sptType::g2gg, "g2gg"}, {sptType::x2xg, "x2xg"}, {sptType::g2qq, "g2qq"}};
+
+        for (auto [vartype, spttype] : ps_pairs) {
+          for (auto var : vars) {
+            int idx = wgtPS.variationIndex(var.first, var.second, vartype, spttype);
+            if (idx == -1)
+              continue;
+            std::cout << varTypeMap[vartype] << " " << splTypeMap[spttype] << "(" << var.first << ", " << var.second
+                      << "): " << idx << " - " << labels.at(idx) << std::endl;
+          }
         }
         std::cout << "Name is pythiaSynax? " << wgtPS.nameIsPythiaSyntax() << std::endl;
       }
       if (!wgt.isWellFormed())
         std::cout << "\033[0m";
     }
+    exit(0);
   }
 
   std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) {
@@ -324,9 +365,9 @@ namespace gen {
     int groupOffset = 0;
     for (auto& weight : parsedWeights_) {
       weight.wgtGroup_idx += groupOffset;
-      if (debug_)
-        std::cout << "Building group for weight " << weight.content << " group " << weight.groupname << " group index "
-                  << weight.wgtGroup_idx << std::endl;
+      // if (debug_)
+      //   std::cout << "Building group for weight " << weight.content << " group " << weight.groupname << " group index "
+      //             << weight.wgtGroup_idx << std::endl;
 
       int numGroups = static_cast<int>(weightGroups_.size());
       if (weight.wgtGroup_idx == numGroups) {
@@ -342,9 +383,10 @@ namespace gen {
       group.addContainedId(weight.index, weight.id, weight.content);
       if (group.weightType() == gen::WeightType::kScaleWeights)
         updateScaleInfo(dynamic_cast<gen::ScaleWeightGroupInfo&>(group), weight);
-      else if (group.weightType() == gen::WeightType::kPdfWeights) {
+      else if (group.weightType() == gen::WeightType::kPdfWeights)
         updatePdfInfo(dynamic_cast<gen::PdfWeightGroupInfo&>(group), weight);
-      }
+      else if (group.weightType() == gen::WeightType::kPartonShowerWeights)
+        updatePartonShowerInfo(dynamic_cast<gen::PartonShowerWeightGroupInfo&>(group), weight);
     }
     cleanupOrphanCentralWeight();
   }

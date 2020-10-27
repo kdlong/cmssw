@@ -17,6 +17,7 @@ namespace gen {
       return;
 
     for (std::string weightName : weightNames) {
+      std::cout << weightName << std::endl;
       if (weightName.find("LHE") != std::string::npos) {
         // Parse as usual, this is the SUSY workflow
         std::vector<std::string> info;
@@ -31,6 +32,7 @@ namespace gen {
             attributes[boost::algorithm::trim_copy(subInfo[0])] = boost::algorithm::trim_copy(subInfo[1]);
           }
         }
+        std::cout << "group: " << attributes["group"] << std::endl;
         if (attributes["group"] != curGroup) {
           curGroup = attributes["group"];
           groupIndex++;
