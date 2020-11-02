@@ -6,6 +6,7 @@ from PhysicsTools.NanoAOD.genparticles_cff import *
 from PhysicsTools.NanoAOD.particlelevel_cff import *
 from PhysicsTools.NanoAOD.lheInfoTable_cfi import *
 from PhysicsTools.NanoAOD.genWeightsTable_cfi import *
+from PhysicsTools.NanoAOD.genVertex_cff import *
 from PhysicsTools.NanoAOD.common_cff import CandVars
 
 nanoMetadata = cms.EDProducer("UniqueStringProducer",
@@ -16,6 +17,7 @@ nanoMetadata = cms.EDProducer("UniqueStringProducer",
 
 nanogenSequence = cms.Sequence(
     nanoMetadata+
+    genVertexTable+
     particleLevel+
     genJetTable+
     patJetPartons+
@@ -30,6 +32,7 @@ nanogenSequence = cms.Sequence(
     genVisTauTable+
     genTable+
     genParticleTables+
+    genVertexTable+
     tautagger+
     rivetProducerHTXS+
     particleLevelTables+
