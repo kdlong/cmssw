@@ -52,6 +52,7 @@ GenWeightProductProducer::GenWeightProductProducer(const edm::ParameterSet& iCon
   weightHelper_.setDebug(iConfig.getUntrackedParameter<bool>("debug", false));
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
+  weightHelper_.setGuessPSWeightIdx(iConfig.getUntrackedParameter<bool>("guessPSWeightIdx", false));
 }
 
 GenWeightProductProducer::~GenWeightProductProducer() {}

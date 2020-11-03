@@ -9,11 +9,13 @@ from PhysicsTools.NanoAOD.lheWeightsTable_cfi import *
 
 genWeights = cms.EDProducer("GenWeightProductProducer",
     genInfo = cms.InputTag("generator"),
-    genLumiInfoHeader = cms.InputTag("generator"))
+    genLumiInfoHeader = cms.InputTag("generator"),
+    guessPSWeightIdx = cms.untracked.bool(True))
 
 lheWeights = cms.EDProducer("LHEWeightProductProducer",
     lheSourceLabels = cms.vstring(["externalLHEProducer", "source"]),
-    failIfInvalidXML = cms.untracked.bool(True)
+    failIfInvalidXML = cms.untracked.bool(True),
+
     #lheWeightSourceLabels = cms.vstring(["externalLHEProducer", "source"])
 )
 '''

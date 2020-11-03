@@ -87,7 +87,7 @@ namespace gen {
     try {
       muR = std::stof(muRText);
       muF = std::stof(muFText);
-    } catch (...) {
+    } catch (std::invalid_argument& e) {
       if (debug_)
         std::cout << "Tried to convert (" << muR << ", " << muF << ") to a int" << std::endl;
       scaleGroup.setIsWellFormed(false);
@@ -102,7 +102,7 @@ namespace gen {
       try {
         int dynNum = std::stoi(dynNumText);
         scaleGroup.setDyn(weight.index, weight.id, muR, muF, dynNum, dynType);
-      } catch (...) {
+      } catch (std::invalid_argument& e) {
         std::cout << "Tried to convert (" << dynNumText << ")  a int" << std::endl;
         scaleGroup.setIsWellFormed(false);
         /// do something here
@@ -113,8 +113,8 @@ namespace gen {
       std::string lhaidText = searchAttributes("pdf", weight);
       try {
         scaleGroup.setLhaid(std::stoi(lhaidText));
-      } catch (...) {
-        scaleGroup.setLhaid(-2);
+      } catch (std::invalid_argument& e) {
+        scaleGroup.setLhaid(-1);
         // do something here
       }
     }
@@ -161,7 +161,6 @@ namespace gen {
   void WeightHelper::updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight) {
     if (psGroup.containedIds().size() == DEFAULT_PSWEIGHT_LENGTH)
       psGroup.setIsWellFormed(true);
-    std::cout << weight.content << std::endl;
     if (weight.content.find(":") != std::string::npos && weight.content.find("=") != std::string::npos)
       psGroup.setNameIsPythiaSyntax(true);
   }
@@ -261,8 +260,6 @@ namespace gen {
   void WeightHelper::printWeights() {
     // checks
     for (auto& wgt : weightGroups_) {
-      if (!wgt.isWellFormed())
-        std::cout << "\033[1;31m";
       std::cout << std::boolalpha << wgt.name() << " (" << wgt.firstId() << "-" << wgt.lastId()
                 << "): " << wgt.isWellFormed() << std::endl;
       if (wgt.weightType() == gen::WeightType::kScaleWeights) {
@@ -336,16 +333,14 @@ namespace gen {
         }
         std::cout << "Name is pythiaSynax? " << wgtPS.nameIsPythiaSyntax() << std::endl;
       }
-      if (!wgt.isWellFormed())
-        std::cout << "\033[0m";
     }
-    exit(0);
   }
 
   std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) {
-    if (debug_)
-      std::cout << "Building group for weight group " << weight.groupname << " weight content is " << weight.content;
-
+    if (debug_) {
+      std::cout << "Building group for weight group " << weight.groupname << " weight content is " << weight.content
+                << std::endl;
+    }
     if (isScaleWeightGroup(weight))
       return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
     else if (isPdfWeightGroup(weight))
@@ -365,9 +360,9 @@ namespace gen {
     int groupOffset = 0;
     for (auto& weight : parsedWeights_) {
       weight.wgtGroup_idx += groupOffset;
-      // if (debug_)
-      //   std::cout << "Building group for weight " << weight.content << " group " << weight.groupname << " group index "
-      //             << weight.wgtGroup_idx << std::endl;
+      if (debug_)
+        std::cout << "Building group for weight " << weight.content << " group " << weight.groupname << " group index "
+                  << weight.wgtGroup_idx << std::endl;
 
       int numGroups = static_cast<int>(weightGroups_.size());
       if (weight.wgtGroup_idx == numGroups) {
