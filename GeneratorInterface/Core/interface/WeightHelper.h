@@ -41,6 +41,8 @@ namespace gen {
     // TODO: Make this only print from one thread a la 
     // https://github.com/kdlong/cmssw/blob/master/PhysicsTools/NanoAOD/plugins/GenWeightsTableProducer.cc#L1069
     bool debug_ = true;
+    const unsigned int FIRST_PSWEIGHT_ENTRY= 2;
+    const unsigned int DEFAULT_PSWEIGHT_LENGTH = 46;
     std::string model_;
     std::vector<ParsedWeight> parsedWeights_;
     std::map<std::string, std::string> currWeightAttributeMap_;

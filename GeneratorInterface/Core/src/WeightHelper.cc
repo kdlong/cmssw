@@ -118,6 +118,12 @@ namespace gen {
         scaleGroup.setLhaid(-2);
       }
     }
+    if (!(scaleGroup.centralIndex() >= 0 && scaleGroup.muR05muF05Index() >= 0 && 
+        scaleGroup.muR1muF05Index() >= 0 && scaleGroup.muR2muF05Index() >= 0 && 
+        scaleGroup.muR05muF1Index() >= 0 && scaleGroup.muR05muF2Index() >= 0 &&
+        scaleGroup.muR1muF2Index() >= 0 && scaleGroup.muR2muF2Index() >= 0 &&
+        scaleGroup.muR2muF2Index() >= 0))
+      scaleGroup.setIsWellFormed(true);
   }
 
   int WeightHelper::lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) {
@@ -279,9 +285,14 @@ namespace gen {
         std::cout << wgt.description() << "\n";
       } else if (wgt.weightType() == gen::WeightType::kPartonShowerWeights) {
         auto& wgtPS = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(wgt);
-        for (auto group : wgtPS.getWeightNames()) {
-          std::cout << group << ": up " << wgtPS.upIndex(group);
-          std::cout << " - down " << wgtPS.downIndex(group) << std::endl;
+        if (wgtPS.containedIds().size() == DEFAULT_PSWEIGHT_LENGTH)
+            wgtPS.setIsWellFormed(true);
+
+        wgtPS.cacheWeightIndicesByLabel();
+        std::vector<std::string> labels = wgtPS.weightLabels();
+        if (labels.size() > FIRST_PSWEIGHT_ENTRY && labels.at(FIRST_PSWEIGHT_ENTRY).find(":") != std::string::npos &&
+                labels.at(FIRST_PSWEIGHT_ENTRY).find("=") != std::string::npos) {
+          wgtPS.setNameIsPythiaSyntax(true);
         }
       }
       if (!wgt.isWellFormed())
