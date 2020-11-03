@@ -90,7 +90,7 @@ namespace gen {
     } catch (std::invalid_argument& e) {
       if (debug_)
         std::cout << "Tried to convert (" << muR << ", " << muF << ") to a int" << std::endl;
-      scaleGroup.setIsWellFormed(false);
+      scaleGroup.setWeightIsCorrupt();
       return;
       /// do something
     }
@@ -104,7 +104,7 @@ namespace gen {
         scaleGroup.setDyn(weight.index, weight.id, muR, muF, dynNum, dynType);
       } catch (std::invalid_argument& e) {
         std::cout << "Tried to convert (" << dynNumText << ")  a int" << std::endl;
-        scaleGroup.setIsWellFormed(false);
+        scaleGroup.setWeightIsCorrupt();
         /// do something here
       }
     }
