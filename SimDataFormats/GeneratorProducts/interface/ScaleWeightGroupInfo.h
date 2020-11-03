@@ -12,7 +12,7 @@ namespace gen {
     std::vector<size_t> muIndices_;
     bool containsCentral_ = false;
     int lhaid_ = -1;
-    bool hasAllWeights = false;
+    bool weightIsCorrupt_ = false;
     // Dyn_scale
     std::vector<std::string> dynNames_;
     std::vector<std::vector<size_t>> dynVec_;
@@ -47,7 +47,10 @@ namespace gen {
     ScaleWeightGroupInfo* clone() const override;
     bool containsCentralWeight() const { return containsCentral_; }
     void addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF);
-    bool isWellFormed() { return isWellFormed_ && hasAllWeights; }
+    void setWeightIsCorrupt() {
+      isWellFormed_ = false;
+      weightIsCorrupt_ = true;
+    }
 
     void setMuRMuFIndex(int globalIndex, std::string id, float muR, float muF);
     void setDyn(int globalIndex, std::string id, float muR, float muF, size_t dynNum, std::string dynName);
