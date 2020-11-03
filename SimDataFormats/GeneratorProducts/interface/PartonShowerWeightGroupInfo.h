@@ -31,38 +31,36 @@ namespace gen {
     int variationIndex(bool isISR, bool isUp, PSVarType variationType, PSSplittingType splittingType) const;
     std::string variationName(bool isISR, bool isUp, PSVarType variationType, PSSplittingType splittingType) const;
     int variationIndex(bool isISR, bool isUp, PSVarType variationType) const;
+    static void setGuessPSWeightIdx(bool guessPSWeightIdx) { guessPSWeightIdx_ = guessPSWeightIdx_; }
+    int psWeightIdxGuess(const std::string &varName) const;
 
   private:
     bool nameIsPythiaSyntax_ = false;
-    typedef PSVarType varType;
-    typedef PSSplittingType sptType;
-    // Order determined by !isUp*2 + !isISR -> isrHi, fsrHi, isrLo, fsrLo
-    const std::unordered_map<PSPair, std::vector<int>, PSPairHash> oldPythia_order = {
-        {{varType::def, sptType::combined}, {6, 7, 8, 9}},
-        {{varType::red, sptType::combined}, {2, 3, 4, 5}},
-        {{varType::con, sptType::combined}, {10, 11, 12, 13}},
-        {{varType::muR, sptType::g2gg}, {31, 15, 30, 14}},
-        {{varType::muR, sptType::g2qq}, {33, 17, 32, 16}},
-        {{varType::muR, sptType::q2qg}, {35, 19, 34, 18}},
-        {{varType::muR, sptType::x2xg}, {37, 21, 36, 20}},
-        {{varType::cNS, sptType::g2gg}, {39, 23, 38, 22}},
-        {{varType::cNS, sptType::g2qq}, {41, 25, 40, 24}},
-        {{varType::cNS, sptType::q2qg}, {43, 27, 42, 26}},
-        {{varType::cNS, sptType::x2xg}, {45, 29, 44, 28}},
-    };
+    static inline bool guessPSWeightIdx_ = false;
 
-    const std::unordered_map<PSPair, std::vector<int>, PSPairHash> newPythia_order = {
-        {{varType::def, sptType::combined}, {27, 5, 26, 4}},
-        {{varType::red, sptType::combined}, {25, 3, 2, 24}},
-        {{varType::con, sptType::combined}, {29, 7, 28, 6}},
-        {{varType::muR, sptType::g2gg}, {31, 9, 30, 8}},
-        {{varType::muR, sptType::g2qq}, {33, 11, 32, 10}},
-        {{varType::muR, sptType::q2qg}, {35, 13, 34, 12}},
-        {{varType::muR, sptType::x2xg}, {37, 15, 36, 14}},
-        {{varType::cNS, sptType::g2gg}, {39, 17, 38, 16}},
-        {{varType::cNS, sptType::g2qq}, {41, 19, 40, 18}},
-        {{varType::cNS, sptType::q2qg}, {43, 21, 42, 20}},
-        {{varType::cNS, sptType::x2xg}, {45, 23, 44, 22}},
+    const std::vector<std::string> expectedPythiaSyntax = {
+        "fsr:murfac=0.707",    "fsr:murfac=1.414",    "fsr:murfac=0.5",      "fsr:murfac=2.0",
+        "fsr:murfac=0.25",     "fsr:murfac=4.0",      "fsr:g2gg:murfac=0.5", "fsr:g2gg:murfac=2.0",
+        "fsr:g2qq:murfac=0.5", "fsr:g2qq:murfac=2.0", "fsr:q2qg:murfac=0.5", "fsr:q2qg:murfac=2.0",
+        "fsr:x2xg:murfac=0.5", "fsr:x2xg:murfac=2.0", "fsr:g2gg:cns=-2.0",   "fsr:g2gg:cns=2.0",
+        "fsr:g2qq:cns=-2.0",   "fsr:g2qq:cns=2.0",    "fsr:q2qg:cns=-2.0",   "fsr:q2qg:cns=2.0",
+        "fsr:x2xg:cns=-2.0",   "fsr:x2xg:cns=2.0",    "isr:murfac=0.707",    "isr:murfac=1.414",
+        "isr:murfac=0.5",      "isr:murfac=2.0",      "isr:murfac=0.25",     "isr:murfac=4.0",
+        "isr:g2gg:murfac=0.5", "isr:g2gg:murfac=2.0", "isr:g2qq:murfac=0.5", "isr:g2qq:murfac=2.0",
+        "isr:q2qg:murfac=0.5", "isr:q2qg:murfac=2.0", "isr:x2xg:murfac=0.5", "isr:x2xg:murfac=2.0",
+        "isr:g2gg:cns=-2.0",   "isr:g2gg:cns=2.0",    "isr:g2qq:cns=-2.0",   "isr:g2qq:cns=2.0",
+        "isr:q2qg:cns=-2.0",   "isr:q2qg:cns=2.0",    "isr:x2xg:cns=-2.0",   "isr:x2xg:cns=2.0",
+    };
+    const std::vector<std::string> expectedOrder = {
+        "isrRedHi",        "fsrRedHi",        "isrRedLo",        "fsrRedLo",        "isrDefHi",
+        "fsrDefHi",        "isrDefLo",        "fsrDefLo",        "isrConHi",        "fsrConHi",
+        "isrConLo",        "fsrConLo",        "fsr_G2GG_muR_dn", "fsr_G2GG_muR_up", "fsr_G2QQ_muR_dn",
+        "fsr_G2QQ_muR_up", "fsr_Q2QG_muR_dn", "fsr_Q2QG_muR_up", "fsr_X2XG_muR_dn", "fsr_X2XG_muR_up",
+        "fsr_G2GG_cNS_dn", "fsr_G2GG_cNS_up", "fsr_G2QQ_cNS_dn", "fsr_G2QQ_cNS_up", "fsr_Q2QG_cNS_dn",
+        "fsr_Q2QG_cNS_up", "fsr_X2XG_cNS_dn", "fsr_X2XG_cNS_up", "isr_G2GG_muR_dn", "isr_G2GG_muR_up",
+        "isr_G2QQ_muR_dn", "isr_G2QQ_muR_up", "isr_Q2QG_muR_dn", "isr_Q2QG_muR_up", "isr_X2XG_muR_dn",
+        "isr_X2XG_muR_up", "isr_G2GG_cNS_dn", "isr_G2GG_cNS_up", "isr_G2QQ_cNS_dn", "isr_G2QQ_cNS_up",
+        "isr_Q2QG_cNS_dn", "isr_Q2QG_cNS_up", "isr_X2XG_cNS_dn", "isr_X2XG_cNS_up",
     };
   };
 }  // namespace gen

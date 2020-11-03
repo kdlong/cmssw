@@ -27,13 +27,10 @@ namespace gen {
                                                   PSSplittingType splittingType) const {
     std::string varName = variationName(isISR, isUp, variationType, splittingType);
     int wgtIdx = weightIndexFromLabel(varName);
-    if (wgtIdx == -1) {
-      int idx = !isUp * 2 + !isISR;
-      auto pair = std::make_pair(variationType, splittingType);
-      wgtIdx = (nameIsPythiaSyntax_) ? newPythia_order.at(pair)[idx] : oldPythia_order.at(pair)[idx];
-      if (wgtIdx > (int)containedIds().size())
-        wgtIdx = -1;
-    }
+    // Guess PS idx if not in label list
+    if (wgtIdx == -1 && guessPSWeightIdx_)
+      wgtIdx = psWeightIdxGuess(varName);
+
     return wgtIdx;
   }
 
@@ -94,6 +91,20 @@ namespace gen {
         label += isUp ? "Hi" : "Lo";
     }
     return label;
+  }
+
+  int PartonShowerWeightGroupInfo::psWeightIdxGuess(const std::string& varName) const {
+    int wgtIdx;
+    if (nameIsPythiaSyntax_) {
+      auto wgtIter = std::find(expectedPythiaSyntax.begin(), expectedPythiaSyntax.end(), varName);
+      wgtIdx = wgtIter - expectedPythiaSyntax.begin() + 2;
+    } else {
+      auto wgtIter = std::find(expectedOrder.begin(), expectedOrder.end(), varName);
+      wgtIdx = wgtIter - expectedOrder.begin() + 2;
+    }
+    if (wgtIdx >= (int)containedIds().size())
+      wgtIdx = -1;
+    return wgtIdx;
   }
 
 }  // namespace gen
