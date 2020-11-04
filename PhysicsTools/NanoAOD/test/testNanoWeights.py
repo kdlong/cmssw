@@ -19,16 +19,7 @@ args = parser.parse_args()
 rtfile = ROOT.TFile(args.inputFile)
 tree = rtfile.Get("Events")
 tree.GetEntry(0)
-types = ["ScaleWeight", "PdfWeight", "MEParamWeight", "UnknownWeight", ]
-variables = ["LHE"+t for t in types]
-variables.append("GenPartonShowerWeight")
-variables.extend(["Gen"+t for t in types])
+variables = ["LHEScaleWeight", "LHEPdfWeight", "MEParamWeight", "UnknownWeight", "PSWeight", ]
 
 for varName in variables:
     variableAndNumber(varName, tree)
-    i = 1
-    altName = varName + "AltSet%i" % i
-    while hasattr(tree, altName):
-        variableAndNumber(altName, tree)
-        i = i+1
-        altName = varName + "AltSet%i" % i

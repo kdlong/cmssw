@@ -294,6 +294,7 @@ namespace gen {
             labels.at(FIRST_PSWEIGHT_ENTRY).find("=") != std::string::npos) {
           wgtPS.setNameIsPythiaSyntax(true);
         }
+        std::cout << "Name is pythiaSynax? " << wgtPS.nameIsPythiaSyntax() << std::endl;
       }
       if (!wgt.isWellFormed())
         std::cout << "\033[0m";

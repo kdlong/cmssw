@@ -281,21 +281,34 @@ void LHEWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
     if (weightType == gen::WeightType::kScaleWeights) {
       if (groupInfo.group->isWellFormed() && false) {
         const auto scaleGroup = *static_cast<const gen::ScaleWeightGroupInfo*>(groupInfo.group.get());
+        std::cout << "They're well formed, will be ordered as expected\n";
         weights = orderedScaleWeights(weights, scaleGroup);
         label.append(
             "[1] is mur=0.5 muf=1; [2] is mur=0.5 muf=2; [3] is mur=1 muf=0.5 ;"
             " [4] is mur=1 muf=1; [5] is mur=1 muf=2; [6] is mur=2 muf=0.5;"
             " [7] is mur=2 muf=1 ; [8] is mur=2 muf=2)");
       } else {
+        std::cout << "NOT WELL FORMED!\n";
         size_t nstore = std::min<size_t>(gen::ScaleWeightGroupInfo::MIN_SCALE_VARIATIONS, weights.size());
         weights = std::vector(weights.begin(), weights.begin()+nstore);
         label.append("WARNING: Unexpected format found. Contains first " + std::to_string(nstore) + " elements of weights vector, unordered");
       }
     } else if (!storeAllPSweights_ && weightType == gen::WeightType::kPartonShowerWeights && groupInfo.group->isWellFormed()) {
+      std::cout << "This is a PS weight\n";
       const auto psGroup = *static_cast<const gen::PartonShowerWeightGroupInfo*>(groupInfo.group.get());
+      std::cout << "an index is " << psGroup.variationIndex(true, true, gen::PSVarType::def) << std::endl;
+      std::cout << "baseline index is " << psGroup.weightIndexFromLabel("Baseline") << std::endl;
+      std::cout << "nameIsPythiaSyntax? " << psGroup.nameIsPythiaSyntax() << std::endl;
       weights = preferredPSweights(weights, psGroup);
+      std::cout << "THE NUMBER OF WEIGHTS IS " << weights.size() << std::endl;
       label.append("PS weights (w_var / w_nominal); [0] is ISR=0.5 FSR=1; [1] is ISR=1 FSR=0.5; [2] is ISR=2 FSR=1; [3] is ISR=1 FSR=2");
     } 
+    if (weightType == gen::WeightType::kPartonShowerWeights) {
+      std::cout << "This is a PS weight\n";
+      const auto psGroup = *static_cast<const gen::PartonShowerWeightGroupInfo*>(groupInfo.group.get());
+      std::cout << "an index is " << psGroup.variationIndex(true, true, gen::PSVarType::def) << std::endl;
+    }
+    std::cout << "The type is " << static_cast<char>(weightType) << " and the size is " << weights.size() << " and iswellformed? " << groupInfo.group->isWellFormed() << std::endl;
     //else
     //  label.append(groupInfo.group->description());
     lheWeightTables[weightType].insert(lheWeightTables[weightType].end(), weights.begin(), weights.end());
