@@ -1,21 +1,11 @@
 #ifndef SimDataFormats_GeneratorProducts_PartonShowerWeightGroupInfo_h
 #define SimDataFormats_GeneratorProducts_PartonShowerWeightGroupInfo_h
 
-#include <map>
-
 #include "SimDataFormats/GeneratorProducts/interface/WeightGroupInfo.h"
 
 namespace gen {
   enum class PSVarType { muR, cNS, con, def, red, alphaS, LAST };
   enum class PSSplittingType { combined, g2gg, x2xg, g2qq, q2qg };
-  typedef std::pair<PSVarType, PSSplittingType> PSPair;
-
-  struct PSPairHash {
-    std::size_t operator()(const PSPair &pair) const {
-      return static_cast<std::size_t>(pair.first) * static_cast<std::size_t>(PSVarType::LAST) +
-             static_cast<std::size_t>(pair.second);
-    }
-  };
 
   class PartonShowerWeightGroupInfo : public WeightGroupInfo {
   public:
