@@ -25,7 +25,7 @@ const edm::OwnVector<gen::WeightGroupInfo>& GenWeightInfoProduct::allWeightGroup
 std::unique_ptr<const gen::WeightGroupInfo> GenWeightInfoProduct::containingWeightGroupInfo(int index) const {
   for (const auto& weightGroup : weightGroupsInfo_) {
     if (weightGroup.indexInRange(index))
-      return std::unique_ptr<const gen::WeightGroupInfo>(&weightGroup);
+      return std::unique_ptr<const gen::WeightGroupInfo>(weightGroup.clone());
   }
   throw std::domain_error("Failed to find containing weight group");
 }
@@ -33,7 +33,7 @@ std::unique_ptr<const gen::WeightGroupInfo> GenWeightInfoProduct::containingWeig
 std::unique_ptr<const gen::WeightGroupInfo> GenWeightInfoProduct::orderedWeightGroupInfo(int weightGroupIndex) const {
   if (weightGroupIndex >= static_cast<int>(weightGroupsInfo_.size()))
     throw std::range_error("Weight index out of range!");
-  return std::unique_ptr<const gen::WeightGroupInfo>(&weightGroupsInfo_[weightGroupIndex]);
+  return std::unique_ptr<const gen::WeightGroupInfo>(weightGroupsInfo_[weightGroupIndex].clone());
 }
 
 std::vector<gen::WeightGroupData> GenWeightInfoProduct::weightGroupsAndIndicesByType(gen::WeightType type) const {
@@ -41,7 +41,7 @@ std::vector<gen::WeightGroupData> GenWeightInfoProduct::weightGroupsAndIndicesBy
   for (size_t i = 0; i < weightGroupsInfo_.size(); i++) {
     const gen::WeightGroupInfo& group = weightGroupsInfo_[i];
     if (weightGroupsInfo_[i].weightType() == type)
-      matchingGroups.push_back({i, std::unique_ptr<const gen::WeightGroupInfo>(&group)});
+      matchingGroups.push_back({i, std::unique_ptr<const gen::WeightGroupInfo>(group.clone())});
   }
   return matchingGroups;
 }
@@ -51,7 +51,7 @@ std::vector<gen::WeightGroupData> GenWeightInfoProduct::weightGroupsByType(gen::
   for (size_t i = 0; i < weightGroupsInfo_.size(); i++) {
     const gen::WeightGroupInfo& group = weightGroupsInfo_[i];
     if (weightGroupsInfo_[i].weightType() == type)
-      matchingGroups.push_back({i, std::unique_ptr<const gen::WeightGroupInfo>(&group)});
+      matchingGroups.push_back({i, std::unique_ptr<const gen::WeightGroupInfo>(group.clone())});
   }
   return matchingGroups;
 }
