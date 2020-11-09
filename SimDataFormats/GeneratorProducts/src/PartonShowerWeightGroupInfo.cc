@@ -30,7 +30,6 @@ namespace gen {
     // Guess PS idx if not in label list
     if (wgtIdx == -1 && guessPSWeightIdx_)
       wgtIdx = psWeightIdxGuess(varName);
-
     return wgtIdx;
   }
 
@@ -96,15 +95,27 @@ namespace gen {
   int PartonShowerWeightGroupInfo::psWeightIdxGuess(const std::string& varName) const {
     int wgtIdx;
     if (nameIsPythiaSyntax_) {
-      auto wgtIter = std::find(expectedPythiaSyntax.begin(), expectedPythiaSyntax.end(), varName);
-      wgtIdx = wgtIter - expectedPythiaSyntax.begin() + 2;
+      auto wgtIter = std::find(expectedOrderPythiaSyntax_.begin(), expectedOrderPythiaSyntax_.end(), varName);
+      wgtIdx = wgtIter - expectedOrderPythiaSyntax_.begin() + 2;
     } else {
-      auto wgtIter = std::find(expectedOrder.begin(), expectedOrder.end(), varName);
-      wgtIdx = wgtIter - expectedOrder.begin() + 2;
+      auto wgtIter = std::find(expectedOrder_.begin(), expectedOrder_.end(), varName);
+      wgtIdx = wgtIter - expectedOrder_.begin() + 2;
     }
     if (wgtIdx >= (int)containedIds().size())
       wgtIdx = -1;
     return wgtIdx;
+  }
+
+  void PartonShowerWeightGroupInfo::printVariables() const {
+    const auto& variations = (nameIsPythiaSyntax_) ? expectedOrderPythiaSyntax_ : expectedOrder_;
+    for (auto varName: variations) {
+      int wgtIdx = weightIndexFromLabel(varName);
+      // Guess PS idx if not in label list
+      if (wgtIdx == -1 && guessPSWeightIdx_)
+        wgtIdx = psWeightIdxGuess(varName);
+      if (wgtIdx != -1)
+        std::cout << varName << " : " << wgtIdx << std::endl;
+    }
   }
 
 }  // namespace gen

@@ -292,46 +292,7 @@ namespace gen {
         auto& wgtPS = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(wgt);
         std::vector<std::string> labels = wgtPS.weightLabels();
         wgtPS.cacheWeightIndicesByLabel();
-
-        auto vars = {std::make_pair<bool, bool>(true, true),
-                     std::make_pair<bool, bool>(true, false),
-                     std::make_pair<bool, bool>(false, true),
-                     std::make_pair<bool, bool>(false, false)};
-        typedef gen::PSVarType varType;
-        typedef gen::PSSplittingType sptType;
-        std::vector<std::pair<varType, sptType>> ps_pairs = {
-            {varType::def, sptType::combined},
-            {varType::red, sptType::combined},
-            {varType::con, sptType::combined},
-            {varType::muR, sptType::g2gg},
-            {varType::muR, sptType::g2qq},
-            {varType::muR, sptType::q2qg},
-            {varType::muR, sptType::x2xg},
-            {varType::cNS, sptType::g2gg},
-            {varType::cNS, sptType::g2qq},
-            {varType::cNS, sptType::q2qg},
-            {varType::cNS, sptType::x2xg},
-        };
-        std::map<varType, std::string> varTypeMap = {
-            {varType::muR, "muR"},
-            {varType::cNS, "cNS"},
-            {varType::con, "con"},
-            {varType::def, "def"},
-            {varType::red, "red"},
-        };
-        std::map<sptType, std::string> splTypeMap = {
-            {sptType::combined, "combined"}, {sptType::g2gg, "g2gg"}, {sptType::x2xg, "x2xg"}, {sptType::g2qq, "g2qq"}};
-
-        for (auto [vartype, spttype] : ps_pairs) {
-          for (auto var : vars) {
-            int idx = wgtPS.variationIndex(var.first, var.second, vartype, spttype);
-            if (idx == -1)
-              continue;
-            std::cout << varTypeMap[vartype] << " " << splTypeMap[spttype] << "(" << var.first << ", " << var.second
-                      << "): " << idx << " - " << labels.at(idx) << std::endl;
-          }
-        }
-        std::cout << "Name is pythiaSynax? " << wgtPS.nameIsPythiaSyntax() << std::endl;
+        wgtPS.printVariables();
       }
     }
   }

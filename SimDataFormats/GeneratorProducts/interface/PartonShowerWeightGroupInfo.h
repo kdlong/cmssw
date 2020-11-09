@@ -1,48 +1,35 @@
 #ifndef SimDataFormats_GeneratorProducts_PartonShowerWeightGroupInfo_h
 #define SimDataFormats_GeneratorProducts_PartonShowerWeightGroupInfo_h
 
-#include <map>
-
 #include "SimDataFormats/GeneratorProducts/interface/WeightGroupInfo.h"
 
 namespace gen {
   enum class PSVarType { muR, cNS, con, def, red, alphaS, LAST };
   enum class PSSplittingType { combined, g2gg, x2xg, g2qq, q2qg };
-  typedef std::pair<PSVarType, PSSplittingType> PSPair;
-
-  struct PSPairHash {
-    std::size_t operator()(const PSPair &pair) const {
-      return static_cast<std::size_t>(pair.first) * static_cast<std::size_t>(PSVarType::LAST) +
-             static_cast<std::size_t>(pair.second);
-    }
-  };
 
   class PartonShowerWeightGroupInfo : public WeightGroupInfo {
   public:
     PartonShowerWeightGroupInfo() : PartonShowerWeightGroupInfo("") {}
-    PartonShowerWeightGroupInfo(std::string header, std::string name) : WeightGroupInfo(header, name) {
-      weightType_ = WeightType::kPartonShowerWeights;
-      nameIsPythiaSyntax_ = false;
-    }
+    PartonShowerWeightGroupInfo(std::string header, std::string name);
     PartonShowerWeightGroupInfo(std::string header) : PartonShowerWeightGroupInfo(header, header) {}
-    PartonShowerWeightGroupInfo() : PartonShowerWeightGroupInfo("") {}
     PartonShowerWeightGroupInfo(const PartonShowerWeightGroupInfo &other) { copy(other); }
-    ~PartonShowerWeightGroupInfo() override {}
+    virtual ~PartonShowerWeightGroupInfo() override {}
     void copy(const PartonShowerWeightGroupInfo &other);
-    PartonShowerWeightGroupInfo *clone() const override;
+    virtual PartonShowerWeightGroupInfo *clone() const override;
     void setNameIsPythiaSyntax(bool isPythiaSyntax) { nameIsPythiaSyntax_ = isPythiaSyntax; }
     bool nameIsPythiaSyntax() const { return nameIsPythiaSyntax_; }
     int variationIndex(bool isISR, bool isUp, PSVarType variationType, PSSplittingType splittingType) const;
     std::string variationName(bool isISR, bool isUp, PSVarType variationType, PSSplittingType splittingType) const;
     int variationIndex(bool isISR, bool isUp, PSVarType variationType) const;
-    static void setGuessPSWeightIdx(bool guessPSWeightIdx) { guessPSWeightIdx_ = guessPSWeightIdx_; }
+    static void setGuessPSWeightIdx(bool guessPSWeightIdx) { guessPSWeightIdx_ = guessPSWeightIdx; }
     int psWeightIdxGuess(const std::string &varName) const;
+    void printVariables() const;
 
   private:
     bool nameIsPythiaSyntax_ = false;
     static inline bool guessPSWeightIdx_ = false;
 
-    const std::vector<std::string> expectedPythiaSyntax = {
+    const std::vector<std::string> expectedOrderPythiaSyntax_ = {
         "fsr:murfac=0.707",    "fsr:murfac=1.414",    "fsr:murfac=0.5",      "fsr:murfac=2.0",
         "fsr:murfac=0.25",     "fsr:murfac=4.0",      "fsr:g2gg:murfac=0.5", "fsr:g2gg:murfac=2.0",
         "fsr:g2qq:murfac=0.5", "fsr:g2qq:murfac=2.0", "fsr:q2qg:murfac=0.5", "fsr:q2qg:murfac=2.0",
@@ -55,7 +42,7 @@ namespace gen {
         "isr:g2gg:cns=-2.0",   "isr:g2gg:cns=2.0",    "isr:g2qq:cns=-2.0",   "isr:g2qq:cns=2.0",
         "isr:q2qg:cns=-2.0",   "isr:q2qg:cns=2.0",    "isr:x2xg:cns=-2.0",   "isr:x2xg:cns=2.0",
     };
-    const std::vector<std::string> expectedOrder = {
+    const std::vector<std::string> expectedOrder_ = {
         "isrRedHi",        "fsrRedHi",        "isrRedLo",        "fsrRedLo",        "isrDefHi",
         "fsrDefHi",        "isrDefLo",        "fsrDefLo",        "isrConHi",        "fsrConHi",
         "isrConLo",        "fsrConLo",        "fsr_G2GG_muR_dn", "fsr_G2GG_muR_up", "fsr_G2QQ_muR_dn",
