@@ -1,4 +1,5 @@
 <use   name="clhep"/>
+<use   name="root"/>
 <use   name="CalibFormats/SiStripObjects"/>
 <use   name="CalibTracker/Records"/>
 <use   name="CalibTracker/SiPixelESProducers"/>
@@ -13,28 +14,11 @@
 <use   name="SimDataFormats/GeneratorProducts"/>
 <use   name="SimDataFormats/Track"/>
 <use   name="SimDataFormats/TrackingAnalysis"/>
-<use   name="SimDataFormats/CaloAnalysis"/>
 <use   name="SimDataFormats/Vertex"/>
 <use   name="SimDataFormats/TrackingHit"/>
 <use   name="SimTracker/Common"/>
-<use   name="DataFormats/HepMCCandidate"/>
-<use   name="SimGeneral/MixingModule"/>
-<use   name="SimGeneral/PreMixingModule"/>
-<use   name="SimDataFormats/CaloTest"/>
-<use   name="DataFormats/ForwardDetId"/>
-<use   name="DataFormats/HcalDetId"/>
-<use   name="Geometry/Records"/>
-<use   name="Geometry/HGCalGeometry"/>
 <use   name="Geometry/HcalTowerAlgo"/>
-<use   name="Geometry/HcalCommonData"/>
-<use   name="RecoLocalCalo/HGCalRecAlgos"/>
 
-<use name="DataFormats/TrackReco" />
-<use   name="TrackingTools/Records"/>
-<use name="RecoHGCal/GraphReco"/>
-<use name="HGCSimTruth/HGCSimTruth" />
-
-
-<library   file="*.cc" name="SimGeneralCaloAnalysisPlugins">
-  <flags   EDM_PLUGIN="1"/>
-</library>
+<export>
+  <lib   name="1"/>
+</export>
