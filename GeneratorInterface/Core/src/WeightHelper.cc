@@ -227,32 +227,25 @@ namespace gen {
   int WeightHelper::addWeightToProduct(
       std::unique_ptr<GenWeightProduct>& product, double weight, std::string name, int weightNum, int groupIndex) {
     bool isUnassociated = false;
-    try {
-      groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
-    } catch (const cms::Exception& e) {
-      std::cerr << "WARNING: " << e.what() << std::endl;
-      if(failIfWeightMissing_) {
-        throw cms::Exception("WeightHelper::addWeightToProduct") << "Weight in file found but is not in the header.";
-      }
+    groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
+    if (groupIndex == -1 && failIfWeightMissing_)
+      throw cms::Exception("WeightHelper::addWeightToProduct") << "Weight in file found but is not in the header.";
+    else if (groupIndex == -1) {
       isUnassociated = true;
-
-      bool foundUnassocGroup = false;
-      while (!foundUnassocGroup && groupIndex < static_cast<int>(weightGroups_.size())) {
+      for (groupIndex = 0; groupIndex < static_cast<int>(weightGroups_.size()); groupIndex++) {
         auto& g = weightGroups_[groupIndex];
         if (g.weightType() == gen::WeightType::kUnknownWeights && g.name() == "unassociated")
-          foundUnassocGroup = true;
-        else
-          groupIndex++;
+          break;
       }
-      if (!foundUnassocGroup) {
+      // No unassociated group found yet, create on (at end)
+      if (groupIndex == static_cast<int>(weightGroups_.size())) {
         addUnassociatedGroup();
         product->setNumWeightSets(weightGroups_.size());
       }
     }
     auto& group = weightGroups_[groupIndex];
-    if (isUnassociated) {
+    if (isUnassociated)
       group.addContainedId(weightNum, name, name);
-    }
     int entry = !isUnassociated ? group.weightVectorEntry(name, weightNum) : group.nIdsContained();
     if (debug_)
       std::cout << "Adding weight " << entry << " to group " << groupIndex << std::endl;
@@ -277,17 +270,19 @@ namespace gen {
         return counter;
       counter++;
     }
-    // Needs to be properly handled
-    throw cms::Exception("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex) +
-                         "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
+
+    edm::LogWarning("WeightHelper") << "Unmatched Generator weight! ID was " + wgtId + " index was " +
+                                           std::to_string(weightIndex)
+                                    << "\nNot found in any of " + std::to_string(weightGroups_.size()) +
+                                           " weightGroups.";
     return -1;
   }
 
   void WeightHelper::printWeights() {
     // checks
     for (auto& wgt : weightGroups_) {
-      std::cout << std::boolalpha << wgt.name() << " (" << wgt.firstId() << "-" << wgt.lastId()
-                << "): wellformed? " << wgt.isWellFormed() << " - NNLOPS? " << wgt.isNNLOPS << std::endl;
+      std::cout << std::boolalpha << wgt.name() << " (" << wgt.firstId() << "-" << wgt.lastId() << "): wellformed? "
+                << wgt.isWellFormed() << " - NNLOPS? " << wgt.isNNLOPS << std::endl;
       if (wgt.weightType() == gen::WeightType::kScaleWeights) {
         auto& wgtScale = dynamic_cast<gen::ScaleWeightGroupInfo&>(wgt);
         std::cout << wgtScale.centralIndex() << " ";
