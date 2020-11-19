@@ -23,4 +23,4 @@ hgcHEBackSimHitsTable = hgcEESimHitsTable.clone()
 hgcHEBackSimHitsTable.src = "g4SimHits:HGCHitsHEback"
 hgcHEBackSimHitsTable.name = "SimHitHGCHEBack"
 
-hgcSimHitsSequence = cms.Sequence(hgcEESimHitsTable+hgcHEBackSimHitsTable+hgcHEFrontSimHitsTable+simTrackTable)
+hgcSimHitsSequence = cms.Sequence(hgcEESimHitsTable+hgcHEBackSimHitsTable+hgcHEFrontSimHitsTable)
