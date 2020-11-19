@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from PhysicsTools.NanoAOD.common_cff import CandVars
+from PhysicsTools.NanoAOD.common_cff import CandVars,Var
 
 simClusterTable = cms.EDProducer("SimpleSimClusterFlatTableProducer",
     src = cms.InputTag("mix:MergedCaloTruth"),
