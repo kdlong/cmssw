@@ -181,9 +181,15 @@ namespace gen {
 
   bool WeightHelper::splitNNLOPSWeight(ParsedWeight& weight) {
     bool prevNNLOPSStatus = weightGroups_[weight.wgtGroup_idx].isNNLOPS;
-    bool curNNLOPSStatus =
-        weight.content.find("NNLOPS") != std::string::npos || weight.id.find("NNLOPS") != std::string::npos;
-    if (prevNNLOPSStatus != curNNLOPSStatus) {
+    const std::string& content = boost::to_lower_copy(weight.content);
+    const std::string& id = boost::to_lower_copy(weight.id);
+    bool curNNLOPSStatus = content.find("nnlops") != std::string::npos || id.find("nnlops") != std::string::npos;
+    if (weightGroups_[weight.wgtGroup_idx].nIdsContained() == 0 && curNNLOPSStatus) {
+      // is NNLOPS, but in distinct group
+      weightGroups_[weight.wgtGroup_idx].isNNLOPS = curNNLOPSStatus;
+      return false;
+    } else if (prevNNLOPSStatus != curNNLOPSStatus) {
+      // isNNLOPS changes midgroup -> split group
       weight.groupname += "_NNLOPS";
       weightGroups_.push_back(*buildGroup(weight));
       weight.wgtGroup_idx++;
@@ -281,7 +287,7 @@ namespace gen {
     // checks
     for (auto& wgt : weightGroups_) {
       std::cout << std::boolalpha << wgt.name() << " (" << wgt.firstId() << "-" << wgt.lastId()
-                << "): " << wgt.isWellFormed() << std::endl;
+                << "): wellformed? " << wgt.isWellFormed() << " - NNLOPS? " << wgt.isNNLOPS << std::endl;
       if (wgt.weightType() == gen::WeightType::kScaleWeights) {
         auto& wgtScale = dynamic_cast<gen::ScaleWeightGroupInfo&>(wgt);
         std::cout << wgtScale.centralIndex() << " ";
