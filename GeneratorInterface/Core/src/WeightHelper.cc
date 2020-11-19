@@ -179,6 +179,20 @@ namespace gen {
     return false;
   }
 
+  bool WeightHelper::splitNNLOPSWeight(ParsedWeight& weight) {
+    bool prevNNLOPSStatus = weightGroups_[weight.wgtGroup_idx].isNNLOPS;
+    bool curNNLOPSStatus =
+        weight.content.find("NNLOPS") != std::string::npos || weight.id.find("NNLOPS") != std::string::npos;
+    if (prevNNLOPSStatus != curNNLOPSStatus) {
+      weight.groupname += "_NNLOPS";
+      weightGroups_.push_back(*buildGroup(weight));
+      weight.wgtGroup_idx++;
+      weightGroups_[weight.wgtGroup_idx].isNNLOPS = curNNLOPSStatus;
+      return true;
+    }
+    return false;
+  }
+
   void WeightHelper::cleanupOrphanCentralWeight() {
     std::vector<int> removeList;
     for (auto it = weightGroups_.begin(); it < weightGroups_.end(); it++) {
@@ -211,6 +225,9 @@ namespace gen {
       groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
     } catch (const std::range_error& e) {
       std::cerr << "WARNING: " << e.what() << std::endl;
+      if(failIfWeightMissing_) {
+        throw cms::Exception("WeightHelper::addWeightToProduct") << "Weight in file found but is not in the header.";
+      }
       isUnassociated = true;
 
       bool foundUnassocGroup = false;
@@ -223,6 +240,7 @@ namespace gen {
       }
       if (!foundUnassocGroup) {
         addUnassociatedGroup();
+        product->setNumWeightSets(weightGroups_.size());
       }
     }
     auto& group = weightGroups_[groupIndex];
@@ -231,7 +249,7 @@ namespace gen {
     }
     int entry = !isUnassociated ? group.weightVectorEntry(name, weightNum) : group.nIdsContained();
     if (debug_)
-      std::cout << "Adding weight " << entry << " to group " << groupIndex;
+      std::cout << "Adding weight " << entry << " to group " << groupIndex << std::endl;
     product->addWeight(weight, groupIndex, entry);
     return groupIndex;
   }
@@ -334,7 +352,7 @@ namespace gen {
         cms::Exception("Invalid group index " + std::to_string(weight.wgtGroup_idx));
 
       // split PDF groups
-      if (splitPdfWeight(weight))
+      if (splitNNLOPSWeight(weight) || splitPdfWeight(weight))
         groupOffset++;
 
       WeightGroupInfo& group = weightGroups_[weight.wgtGroup_idx];

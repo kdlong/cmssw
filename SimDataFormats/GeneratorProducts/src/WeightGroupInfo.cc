@@ -52,12 +52,11 @@ namespace gen {
       }
     }
     // Fall back to search on ID
-    else if (!wgtId.empty()) {
-      auto it = std::find_if(
-          idsContained_.begin(), idsContained_.end(), [wgtId](const WeightMetaInfo& w) { return w.id == wgtId; });
-      if (it != idsContained_.end())
-        return std::distance(idsContained_.begin(), it);
-    }
+    auto it = std::find_if(
+        idsContained_.begin(), idsContained_.end(), [wgtId](const WeightMetaInfo& w) { return w.id == wgtId; });
+    if (it != idsContained_.end())
+      return std::distance(idsContained_.begin(), it);
+
     return -1;
   }
 
