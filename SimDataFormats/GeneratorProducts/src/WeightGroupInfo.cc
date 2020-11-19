@@ -47,7 +47,7 @@ namespace gen {
     // First try ordered search
     size_t orderedEntry = weightEntry - firstId_;
     if (indexInRange(weightEntry) && orderedEntry < idsContained_.size()) {
-      if (wgtId.empty() || idsContained_.at(orderedEntry).id == wgtId) {
+      if (idsContained_.at(orderedEntry).id == wgtId) {
         return orderedEntry;
       }
     }

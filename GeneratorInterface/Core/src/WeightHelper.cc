@@ -223,7 +223,7 @@ namespace gen {
     bool isUnassociated = false;
     try {
       groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
-    } catch (const std::range_error& e) {
+    } catch (const cms::Exception& e) {
       std::cerr << "WARNING: " << e.what() << std::endl;
       if(failIfWeightMissing_) {
         throw cms::Exception("WeightHelper::addWeightToProduct") << "Weight in file found but is not in the header.";
@@ -272,8 +272,8 @@ namespace gen {
       counter++;
     }
     // Needs to be properly handled
-    cms::Exception("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex) +
-                   "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
+    throw cms::Exception("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex) +
+                         "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
     return -1;
   }
 
