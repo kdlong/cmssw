@@ -12,11 +12,12 @@ namespace gen {
   bool LHEWeightHelper::parseLHE(tinyxml2::XMLDocument& xmlDoc) {
     parsedWeights_.clear();
 
-    if (!isConsistent() && failIfInvalidXML_) {
-      throw cms::Exception("LHEWeightHelper")
-          << "XML in LHE is not consistent: Most likely, XML tags are out of order.";
-    } else if (!isConsistent()) {
-      swapHeaders();
+    // line-by-line checks
+    if (!isConsistent()) {
+      if (failIfInvalidXML_) {
+        throw cms::Exception("LHEWeightHelper")
+            << "XML in LHE is not consistent: Most likely, XML tags are out of order.";
+      } else swapHeaders();
     }
 
     std::string fullHeader = boost::algorithm::join(headerLines_, "");
@@ -24,30 +25,21 @@ namespace gen {
       std::cout << "Full header is \n" << fullHeader << std::endl;
     int xmlError = xmlDoc.Parse(fullHeader.c_str());
 
-    // in case of &gt; instead of <
-    if (xmlError != 0 && failIfInvalidXML_) {
-      xmlDoc.PrintError();
-      throw cms::Exception("LHEWeightHelper")
-          << "The LHE header is not valid XML! Weight information was not properly parsed.";
-    } else if (xmlError != 0 && !failIfInvalidXML_) {
-      boost::replace_all(fullHeader, "&lt;", "<");
-      boost::replace_all(fullHeader, "&gt;", ">");
-      xmlError = xmlDoc.Parse(fullHeader.c_str());
-    }
-
-    // delete extra strings after the last </weightgroup> (occasionally contain '<' or '>')
-    if (xmlError !=0 && !failIfInvalidXML_) {
-      std::string theKet = "</weightgroup>";
-      std::size_t theLastKet = fullHeader.rfind(theKet) + theKet.length();
-      fullHeader = fullHeader.substr(0, theLastKet);
-      xmlError = xmlDoc.Parse(fullHeader.c_str());
-    }
-
-    // error persists (how to handle error?)
+    // letter-by-letter checks
     if (xmlError != 0) {
-      std::string error = "Fatal error when parsing the LHE header. The header is not valid XML! Parsing error was ";
-      error += xmlDoc.ErrorStr();
-      throw cms::Exception("LHEWeightHelper") << error;
+      if (failIfInvalidXML_) {
+        xmlDoc.PrintError();
+        throw cms::Exception("LHEWeightHelper")
+            << "The LHE header is not valid XML! Weight information was not properly parsed.";
+      }
+
+      xmlError = tryReplaceHtmlStyle(xmlDoc, fullHeader);
+      if (xmlError != 0) xmlError = tryRemoveTrailings(xmlDoc, fullHeader);
+      else if (xmlError != 0) {
+        std::string error = "Fatal error when parsing the LHE header. The header is not valid XML! Parsing error was ";
+        error += xmlDoc.ErrorStr();
+        throw cms::Exception("LHEWeightHelper") << error;
+      }
     }
 
     return true;
@@ -158,5 +150,22 @@ namespace gen {
         close = -1;
       }
     }
+  }
+
+  tinyxml2::XMLError LHEWeightHelper::tryReplaceHtmlStyle(tinyxml2::XMLDocument& xmlDoc, std::string& fullHeader) {
+    // in case of &gt; instead of <
+    boost::replace_all(fullHeader, "&lt;", "<");
+    boost::replace_all(fullHeader, "&gt;", ">");
+
+    return xmlDoc.Parse(fullHeader.c_str());
+  }
+
+  tinyxml2::XMLError LHEWeightHelper::tryRemoveTrailings(tinyxml2::XMLDocument& xmlDoc, std::string& fullHeader) {
+    // delete extra strings after the last </weightgroup> (occasionally contain '<' or '>')
+    std::string theKet = "</weightgroup>";
+    std::size_t theLastKet = fullHeader.rfind(theKet) + theKet.length();
+    fullHeader = fullHeader.substr(0, theLastKet);
+    
+    return xmlDoc.Parse(fullHeader.c_str());
   }
 }  // namespace gen

@@ -32,6 +32,8 @@ namespace gen {
     std::string parseGroupName(tinyxml2::XMLElement* el);
     void addGroup(tinyxml2::XMLElement* inner, std::string groupName, int groupIndex, int& weightIndex);
     bool parseLHE(tinyxml2::XMLDocument& xmlDoc);
+    tinyxml2::XMLError tryReplaceHtmlStyle(tinyxml2::XMLDocument& xmlDoc, std::string& fullHeader);
+    tinyxml2::XMLError tryRemoveTrailings(tinyxml2::XMLDocument& xmlDoc, std::string& fullHeader);
   };
 }  // namespace gen
 
