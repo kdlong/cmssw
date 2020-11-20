@@ -35,6 +35,14 @@ namespace gen {
       xmlError = xmlDoc.Parse(fullHeader.c_str());
     }
 
+    // delete extra strings after the last </weightgroup> (occasionally contain '<' or '>')
+    if (xmlError !=0 && !failIfInvalidXML_) {
+      std::string theKet = "</weightgroup>";
+      std::size_t theLastKet = fullHeader.rfind(theKet) + theKet.length();
+      fullHeader = fullHeader.substr(0, theLastKet);
+      xmlError = xmlDoc.Parse(fullHeader.c_str());
+    }
+
     // error persists (how to handle error?)
     if (xmlError != 0) {
       std::string error = "Fatal error when parsing the LHE header. The header is not valid XML! Parsing error was ";
