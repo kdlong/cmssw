@@ -12,33 +12,34 @@ namespace gen {
   bool LHEWeightHelper::parseLHE(tinyxml2::XMLDocument& xmlDoc) {
     parsedWeights_.clear();
 
-    // line-by-line checks
-    if (!isConsistent()) {
-      if (failIfInvalidXML_) {
-        throw cms::Exception("LHEWeightHelper")
-            << "XML in LHE is not consistent: Most likely, XML tags are out of order.";
-      } else swapHeaders();
-    }
-
     std::string fullHeader = boost::algorithm::join(headerLines_, "");
     if (debug_)
       std::cout << "Full header is \n" << fullHeader << std::endl;
     int xmlError = xmlDoc.Parse(fullHeader.c_str());
 
-    // letter-by-letter checks
-    if (xmlError != 0) {
+    while ( !isConsistent() || xmlError != 0 ) {
       if (failIfInvalidXML_) {
         xmlDoc.PrintError();
         throw cms::Exception("LHEWeightHelper")
             << "The LHE header is not valid XML! Weight information was not properly parsed.";
       }
-
-      xmlError = tryReplaceHtmlStyle(xmlDoc, fullHeader);
-      if (xmlError != 0) xmlError = tryRemoveTrailings(xmlDoc, fullHeader);
-      else if (xmlError != 0) {
-        std::string error = "Fatal error when parsing the LHE header. The header is not valid XML! Parsing error was ";
-        error += xmlDoc.ErrorStr();
-        throw cms::Exception("LHEWeightHelper") << error;
+      
+      switch (findErrorType(fullHeader)) {
+        case ErrorType::SWAPHEADER:
+          swapHeaders();
+          fullHeader = boost::algorithm::join(headerLines_, "");
+          xmlError = xmlDoc.Parse(fullHeader.c_str());
+          break;
+        case ErrorType::HTMLSTYLE:
+          xmlError = tryReplaceHtmlStyle(xmlDoc, fullHeader);
+          break;
+        case ErrorType::TRAILINGSTR:
+          xmlError = tryRemoveTrailings(xmlDoc, fullHeader);
+          break;
+        case ErrorType::UNKNOWN:
+          std::string error = "Fatal error when parsing the LHE header. The header is not valid XML! Parsing error was ";
+          error += xmlDoc.ErrorStr();
+          throw cms::Exception("LHEWeightHelper") << error;
       }
     }
 
@@ -162,10 +163,19 @@ namespace gen {
 
   tinyxml2::XMLError LHEWeightHelper::tryRemoveTrailings(tinyxml2::XMLDocument& xmlDoc, std::string& fullHeader) {
     // delete extra strings after the last </weightgroup> (occasionally contain '<' or '>')
-    std::string theKet = "</weightgroup>";
-    std::size_t theLastKet = fullHeader.rfind(theKet) + theKet.length();
+    std::size_t theLastKet = fullHeader.rfind(weightgroupKet_) + weightgroupKet_.length();
     fullHeader = fullHeader.substr(0, theLastKet);
     
     return xmlDoc.Parse(fullHeader.c_str());
+  }
+
+  LHEWeightHelper::ErrorType LHEWeightHelper::findErrorType(std::string& fullHeader) {
+    if ( !isConsistent() ) return LHEWeightHelper::ErrorType::SWAPHEADER;
+    if ( fullHeader.find("&lt;")!=std::string::npos || fullHeader.find("&gt;")!=std::string::npos ) return LHEWeightHelper::ErrorType::HTMLSTYLE;
+
+    std::string trailingCand = fullHeader.substr( fullHeader.rfind(weightgroupKet_) + std::string(weightgroupKet_).length() );
+    if ( trailingCand.find("<")!=std::string::npos || trailingCand.find(">")!=std::string::npos ) return LHEWeightHelper::ErrorType::TRAILINGSTR;
+
+    return LHEWeightHelper::ErrorType::UNKNOWN;
   }
 }  // namespace gen
