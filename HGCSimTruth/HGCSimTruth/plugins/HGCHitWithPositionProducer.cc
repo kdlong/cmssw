@@ -17,6 +17,7 @@
 #include "SimDataFormats/CaloHit/interface/PCaloHit.h"
 #include "SimDataFormats/CaloAnalysis/interface/PCaloHitWithPosition.h"
 #include "DataFormats/DetId/interface/DetId.h"
+#include "FWCore/Utilities/interface/transform.h"
 
 /*
 Producer that consumes PCaloHit collections from HGCAL, and produces a 
@@ -33,15 +34,14 @@ class HGCHitWithPositionProducer : public edm::stream::EDProducer<> {
         virtual void produce(edm::Event&, const edm::EventSetup&) override;
         void beginRun(const edm::Run&, const edm::EventSetup&) override;
         hgcal::RecHitTools hgcalRecHitToolInstance_ ;
-        edm::EDGetTokenT<edm::View<PCaloHit>> hgcalEEHitsToken_;
-        edm::EDGetTokenT<edm::View<PCaloHit>> hgcalHEfrontHitsToken_;
-        edm::EDGetTokenT<edm::View<PCaloHit>> hgcalHEbackHitsToken_;
+        std::vector<edm::EDGetTokenT<edm::View<PCaloHit>>> hgcalHitsTokens_;
+        bool filter_;
     };
 
 HGCHitWithPositionProducer::HGCHitWithPositionProducer(const edm::ParameterSet& iConfig) :
-    hgcalEEHitsToken_(consumes<edm::View<PCaloHit>>(edm::InputTag("g4SimHits", "HGCHitsEE"))),
-    hgcalHEfrontHitsToken_(consumes<edm::View<PCaloHit>>(edm::InputTag("g4SimHits", "HGCHitsHEfront"))),
-    hgcalHEbackHitsToken_(consumes<edm::View<PCaloHit>>(edm::InputTag("g4SimHits", "HGCHitsHEback")))
+    hgcalHitsTokens_(edm::vector_transform(iConfig.getParameter<std::vector<edm::InputTag>>("src"),
+                [this](const edm::InputTag& tag) { return mayConsume<edm::View<PCaloHit>>(tag); })),
+    filter_(iConfig.getUntrackedParameter<bool>("filter", false))
     {
     produces<std::vector<PCaloHitWithPosition>>();
     }
@@ -54,12 +54,7 @@ void HGCHitWithPositionProducer::beginRun(const edm::Run&, const edm::EventSetup
 
 void HGCHitWithPositionProducer::produce(edm::Event& iEvent, const edm::EventSetup&) {  
     std::unique_ptr< std::vector< PCaloHitWithPosition >> hitsWithPositions( new std::vector<PCaloHitWithPosition> );
-    std::vector<edm::EDGetTokenT<edm::View<PCaloHit>>> tokens = {
-        hgcalEEHitsToken_,
-        hgcalHEfrontHitsToken_,
-        hgcalHEbackHitsToken_
-        };
-    for (edm::EDGetTokenT<edm::View<PCaloHit>> token : tokens ) {
+    for (edm::EDGetTokenT<edm::View<PCaloHit>> token : hgcalHitsTokens_ ) {
         edm::Handle< edm::View<PCaloHit> > handle;
         iEvent.getByToken(token, handle);
         for (auto const & hit : handle->ptrs() ) {
@@ -71,13 +66,15 @@ void HGCHitWithPositionProducer::produce(edm::Event& iEvent, const edm::EventSet
                     ;
                 }
             DetId id = hit->id();
-            if (id.det() == DetId::HGCalEE || id.det() == DetId::HGCalHSi || id.det() == DetId::HGCalHSc){
+            if (!filter_ || (id.det() == DetId::HGCalEE || id.det() == DetId::HGCalHSi || id.det() == DetId::HGCalHSc)) {
                 PCaloHitWithPosition hitWithPosition = PCaloHitWithPosition();
                 hitWithPosition.setVars(&(*hit), &hgcalRecHitToolInstance_);
                 hitsWithPositions->push_back(std::move(hitWithPosition));
                 }
             }
+        std::cout << "Length of input collection " << handle->size();
         }
+    std::cout << "Length of output collection " << hitsWithPositions->size();
     iEvent.put(std::move(hitsWithPositions));
     }
 
