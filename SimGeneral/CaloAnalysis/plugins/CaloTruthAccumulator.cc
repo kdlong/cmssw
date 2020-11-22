@@ -172,9 +172,11 @@ private:
    * for bad modules if required */
   template <class T>
   void fillSimHits(std::vector<std::pair<DetId, const PCaloHit *>> &returnValue,
-                   std::unordered_map<int, std::map<int, float>> &simTrackDetIdEnergyMap,
+                   std::unordered_map<uint32_t, std::map<int, float>> &simTrackDetIdEnergyMap,
                    const T &event,
                    const edm::EventSetup &setup);
+  std::unique_ptr<edm::Association<SimClusterCollection>> fillSimHitAssociation(
+        edm::Handle<std::vector<PCaloHit>>& inColl, edm::OrphanHandle<SimClusterCollection>& matchColl);
 
   /** @brief Assigns the coordinates of the associated SimTrack/Vertex.*/
   void assignSimClusterCoordinates(std::unique_ptr<SimClusterCollection> &,
@@ -224,7 +226,9 @@ public:
     std::unique_ptr<SimClusterCollection> pSimClusters;
     std::unique_ptr<CaloParticleCollection> pCaloParticles;
     std::unique_ptr<edm::Association<SimClusterCollection>> pTrackSCAssoc;
-    std::unique_ptr<edm::Association<SimClusterCollection>> pHitSCAssoc;
+    std::unique_ptr<edm::Association<SimClusterCollection>> pHGCEEHitSCAssoc;
+    std::unique_ptr<edm::Association<SimClusterCollection>> pHGCHEfrontHitSCAssoc;
+    std::unique_ptr<edm::Association<SimClusterCollection>> pHGCHEbackHitSCAssoc;
   };
 
   struct calo_particles {
@@ -253,6 +257,7 @@ private:
 
   bool doHGCAL;
   std::vector<int> trackToSimClusterIndices_;
+  std::unordered_map<uint32_t, int> caloHitToSimClusterIdx_;
 
   bool saveSimClusterHistory_;
   hgcal::RecHitTools recHitTools_;
@@ -338,13 +343,15 @@ namespace {
     CaloParticle_dfs_visitor(CaloTruthAccumulator::OutputCollections &output,
                              CaloTruthAccumulator::calo_particles &caloParticles,
                              std::unordered_multimap<Barcode_t, Index_t> &simHitBarcodeToIndex,
-                             std::unordered_map<int, std::map<int, float>> &simTrackDetIdEnergyMap,
+                             std::unordered_map<uint32_t, std::map<int, float>> &simTrackDetIdEnergyMap,
+                             std::unordered_map<uint32_t, int> &caloHitToSimClusterIdxMap,
                              std::vector<SimClusterHistory> &simClusterHistory,
                              Selector selector)
         : output_(output),
           caloParticles_(caloParticles),
           simHitBarcodeToIndex_(simHitBarcodeToIndex),
           simTrackDetIdEnergyMap_(simTrackDetIdEnergyMap),
+          caloHitIdToSimClusterIdxMap_(caloHitToSimClusterIdxMap),
           simClusterHistory_(simClusterHistory),
           selector_(selector) {}
     template <typename Vertex, typename Graph>
@@ -364,6 +371,8 @@ namespace {
         auto &simcluster = output_.pSimClusters->back();
         std::unordered_map<uint32_t, float> acc_energy;
         for (auto const &hit_and_energy : simTrackDetIdEnergyMap_[trackIdx]) {
+          std::cout << "Filling id " << hit_and_energy.first << " match to " << output_.pSimClusters->size()-1 << std::endl;
+          caloHitIdToSimClusterIdxMap_[hit_and_energy.first] = output_.pSimClusters->size()-1;
           acc_energy[hit_and_energy.first] += hit_and_energy.second;
         }
         for (auto const &hit_and_energy : acc_energy) {
@@ -424,7 +433,8 @@ namespace {
     CaloTruthAccumulator::OutputCollections &output_;
     CaloTruthAccumulator::calo_particles &caloParticles_;
     std::unordered_multimap<Barcode_t, Index_t> &simHitBarcodeToIndex_;
-    std::unordered_map<int, std::map<int, float>> &simTrackDetIdEnergyMap_;
+    std::unordered_map<uint32_t, std::map<int, float>> &simTrackDetIdEnergyMap_;
+    std::unordered_map<uint32_t, int> &caloHitIdToSimClusterIdxMap_;
     std::vector<SimClusterHistory> &simClusterHistory_;
     Selector selector_;
   };
@@ -458,7 +468,9 @@ CaloTruthAccumulator::CaloTruthAccumulator(const edm::ParameterSet &config,
 
   if (true) {
     producesCollector.produces<edm::Association<SimClusterCollection>>("simTrackToSimCluster");
-    producesCollector.produces<edm::Association<SimClusterCollection>>("simHitToSimCluster");
+    producesCollector.produces<edm::Association<SimClusterCollection>>("simHitHGCEEToSimCluster");
+    producesCollector.produces<edm::Association<SimClusterCollection>>("simHitHGCHEfrontToSimCluster");
+    producesCollector.produces<edm::Association<SimClusterCollection>>("simHitHGCHEbackToSimCluster");
   }
 
   iC.consumes<std::vector<SimTrack>>(simTrackLabel_);
@@ -527,6 +539,8 @@ void CaloTruthAccumulator::initializeEvent(edm::Event const &event, edm::EventSe
   output_.pSimClusters = std::make_unique<SimClusterCollection>();
   output_.pCaloParticles = std::make_unique<CaloParticleCollection>();
   simClusterHistory_.clear();
+  caloHitToSimClusterIdx_.clear();
+  trackToSimClusterIndices_.clear();
 
   m_detIdToTotalSimEnergy.clear();
   prop_.setEventSetup(setup);
@@ -610,10 +624,31 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
   auto scHandle = event.put(std::move(output_.pSimClusters), "MergedCaloTruth");
   output_.pTrackSCAssoc = std::make_unique<edm::Association<SimClusterCollection>>(scHandle);
   edm::Association<SimClusterCollection>::Filler filler(*output_.pTrackSCAssoc);
-  std::cout << "Size of sim tracks is " << hSimTracks->size() << std::endl;
   filler.insert(hSimTracks, trackToSimClusterIndices_.begin(), trackToSimClusterIndices_.end());
   filler.fill();
   event.put(std::move(output_.pTrackSCAssoc), "simTrackToSimCluster");
+
+  for (auto const &collectionTag : collectionTags_) {
+    edm::Handle<std::vector<PCaloHit>> hSimHits;
+    const bool isHGCal = (collectionTag.instance().find("HGCHits") != std::string::npos);
+    if (!isHGCal)
+        continue;
+    event.getByLabel(collectionTag, hSimHits);
+
+    if (collectionTag.instance().find("HEfront") != std::string::npos) {
+        output_.pHGCHEfrontHitSCAssoc = fillSimHitAssociation(hSimHits, scHandle);
+    }
+    else if (collectionTag.instance().find("HEback") != std::string::npos) {
+        output_.pHGCHEbackHitSCAssoc = fillSimHitAssociation(hSimHits, scHandle);
+    }
+    else
+        output_.pHGCEEHitSCAssoc = fillSimHitAssociation(hSimHits, scHandle);
+
+  }
+  event.put(std::move(output_.pHGCEEHitSCAssoc), "simHitHGCEEToSimCluster");
+  event.put(std::move(output_.pHGCHEfrontHitSCAssoc), "simHitHGCHEfrontToSimCluster");
+  event.put(std::move(output_.pHGCHEbackHitSCAssoc), "simHitHGCHEbackToSimCluster");
+
 
   // now fill the calo particles
   for (unsigned i = 0; i < output_.pCaloParticles->size(); ++i) {
@@ -646,7 +681,7 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
   event.getByLabel(genParticleLabel_, hGenParticleIndices);
 
   std::vector<std::pair<DetId, const PCaloHit *>> simHitPointers;
-  std::unordered_map<int, std::map<int, float>> simTrackDetIdEnergyMap;
+  std::unordered_map<uint32_t, std::map<int, float>> simTrackDetIdEnergyMap;
   fillSimHits(simHitPointers, simTrackDetIdEnergyMap, event, setup);
 
   // Clear maps from previous event fill them for this one
@@ -756,6 +791,7 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
       m_caloParticles,
       m_simHitBarcodeToIndex,
       simTrackDetIdEnergyMap,
+      caloHitToSimClusterIdx_,
       simClusterHistory_,
       [&](EdgeProperty &edge_property) -> bool {
         // Apply selection on SimTracks in order to promote them to be
@@ -769,6 +805,7 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
   depth_first_search(decay, visitor(caloParticleCreator));
 
   assignSimClusterCoordinates(output_.pSimClusters, vertices, previous_simclusters);
+
   std::unordered_map<int, int> trackIdxToSimClusterIdx;
   for (size_t i = 0; i < output_.pSimClusters->size(); i ++) {
     auto& sc = output_.pSimClusters->at(i);
@@ -777,7 +814,6 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
     }
   }
 
-  std::cout << "Here simtracks size is " << hSimTracks->size() << std::endl;
   for (size_t i = 0; i < hSimTracks->size(); i++) {
     int idx = trackIdxToSimClusterIdx.find(i) != trackIdxToSimClusterIdx.end() ? trackIdxToSimClusterIdx[i] : -1;
     trackToSimClusterIndices_.emplace_back(idx);
@@ -791,9 +827,27 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
 #endif
 }
 
+std::unique_ptr<edm::Association<SimClusterCollection>> CaloTruthAccumulator::fillSimHitAssociation(
+        edm::Handle<std::vector<PCaloHit>>& inColl, edm::OrphanHandle<SimClusterCollection>& matchColl) {
+    std::cout << "Number of associations is " << inColl->size() << std::endl;
+    std::vector<int> matchIndices(inColl->size(), -1);
+
+    for (size_t i = 0; i < inColl->size(); i++) {
+        auto& hit = inColl->at(i);
+        if (caloHitToSimClusterIdx_.find(hit.id()) != caloHitToSimClusterIdx_.end())
+            matchIndices[i] = caloHitToSimClusterIdx_[hit.id()];
+    }
+
+    auto assocMap = std::make_unique<edm::Association<SimClusterCollection>>(matchColl);
+    edm::Association<SimClusterCollection>::Filler filler(*assocMap);
+    filler.insert(inColl, matchIndices.begin(), matchIndices.end());
+    filler.fill();
+    return assocMap;
+}
+
 template <class T>
 void CaloTruthAccumulator::fillSimHits(std::vector<std::pair<DetId, const PCaloHit *>> &returnValue,
-                                       std::unordered_map<int, std::map<int, float>> &simTrackDetIdEnergyMap,
+                                       std::unordered_map<uint32_t, std::map<int, float>> &simTrackDetIdEnergyMap,
                                        const T &event,
                                        const edm::EventSetup &setup) {
   for (auto const &collectionTag : collectionTags_) {

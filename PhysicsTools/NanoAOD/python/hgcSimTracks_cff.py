@@ -3,9 +3,9 @@ from PhysicsTools.NanoAOD.common_cff import Var
 
 simTrackTable = cms.EDProducer("SimpleSimTrackFlatTableProducer",
     src = cms.InputTag("g4SimHits"),
-    cut = cms.string(""), #abs(momentum().eta) > 1.52 || abs(getMomentumAtBoundary().eta()) > 1.52"), 
+    cut = cms.string("abs(momentum().eta) > 1.52 || abs(getMomentumAtBoundary().eta()) > 1.52"), 
     name = cms.string("SimTrack"),
-    doc  = cms.string("Geant4 SimHits in HGCAL Electromagnetic endcap"),
+    doc  = cms.string("Geant4 sim tracks in HGCAL Electromagnetic endcap"),
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(
@@ -25,7 +25,7 @@ simTrackTable = cms.EDProducer("SimpleSimTrackFlatTableProducer",
     )
 )
 
-simTrackToSimClusterTable = cms.EDProducer("SimClusterIndexFromAssociationTableProducer",
+simTrackToSimClusterTable = cms.EDProducer("SimTrackToSimClusterIndexTableProducer",
     cut = simTrackTable.cut,
     src = simTrackTable.src,
     objName = simTrackTable.name,
