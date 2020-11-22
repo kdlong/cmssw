@@ -64,6 +64,8 @@
 #include "RecoHGCal/GraphReco/interface/HGCalParticlePropagator.h"
 #include "HGCSimTruth/HGCSimTruth/interface/SimClusterTools.h"
 
+#include "DataFormats/Common/interface/Association.h"
+
 #include "TMath.h"
 #include "TCanvas.h"
 #include "TH1F.h"
@@ -221,6 +223,8 @@ public:
   struct OutputCollections {
     std::unique_ptr<SimClusterCollection> pSimClusters;
     std::unique_ptr<CaloParticleCollection> pCaloParticles;
+    std::unique_ptr<edm::Association<SimClusterCollection>> pTrackSCAssoc;
+    std::unique_ptr<edm::Association<SimClusterCollection>> pHitSCAssoc;
   };
 
   struct calo_particles {
@@ -248,6 +252,7 @@ private:
   int geometryType_;
 
   bool doHGCAL;
+  std::vector<int> trackToSimClusterIndices_;
 
   bool saveSimClusterHistory_;
   hgcal::RecHitTools recHitTools_;
@@ -451,6 +456,11 @@ CaloTruthAccumulator::CaloTruthAccumulator(const edm::ParameterSet &config,
     producesCollector.produces<std::vector<SimClusterHistory>>("MergedCaloTruth");
   }
 
+  if (true) {
+    producesCollector.produces<edm::Association<SimClusterCollection>>("simTrackToSimCluster");
+    producesCollector.produces<edm::Association<SimClusterCollection>>("simHitToSimCluster");
+  }
+
   iC.consumes<std::vector<SimTrack>>(simTrackLabel_);
   iC.consumes<std::vector<SimVertex>>(simVertexLabel_);
   iC.consumes<std::vector<reco::GenParticle>>(genParticleLabel_);
@@ -598,6 +608,12 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
 
   // save the SimCluster orphan handle so we can fill the calo particles
   auto scHandle = event.put(std::move(output_.pSimClusters), "MergedCaloTruth");
+  output_.pTrackSCAssoc = std::make_unique<edm::Association<SimClusterCollection>>(scHandle);
+  edm::Association<SimClusterCollection>::Filler filler(*output_.pTrackSCAssoc);
+  std::cout << "Size of sim tracks is " << hSimTracks->size() << std::endl;
+  filler.insert(hSimTracks, trackToSimClusterIndices_.begin(), trackToSimClusterIndices_.end());
+  filler.fill();
+  event.put(std::move(output_.pTrackSCAssoc), "simTrackToSimCluster");
 
   // now fill the calo particles
   for (unsigned i = 0; i < output_.pCaloParticles->size(); ++i) {
@@ -753,6 +769,19 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
   depth_first_search(decay, visitor(caloParticleCreator));
 
   assignSimClusterCoordinates(output_.pSimClusters, vertices, previous_simclusters);
+  std::unordered_map<int, int> trackIdxToSimClusterIdx;
+  for (size_t i = 0; i < output_.pSimClusters->size(); i ++) {
+    auto& sc = output_.pSimClusters->at(i);
+    for (auto tk : sc.g4Tracks()) {
+      trackIdxToSimClusterIdx[trackid_to_track_index.at(tk.trackId())] = i;
+    }
+  }
+
+  std::cout << "Here simtracks size is " << hSimTracks->size() << std::endl;
+  for (size_t i = 0; i < hSimTracks->size(); i++) {
+    int idx = trackIdxToSimClusterIdx.find(i) != trackIdxToSimClusterIdx.end() ? trackIdxToSimClusterIdx[i] : -1;
+    trackToSimClusterIndices_.emplace_back(idx);
+  }
 
 #if DEBUG
   boost::write_graphviz(std::cout,

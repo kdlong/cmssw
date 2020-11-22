@@ -3,7 +3,7 @@ from PhysicsTools.NanoAOD.common_cff import Var
 
 simTrackTable = cms.EDProducer("SimpleSimTrackFlatTableProducer",
     src = cms.InputTag("g4SimHits"),
-    cut = cms.string("abs(momentum().eta) > 1.52 || abs(getMomentumAtBoundary().eta()) > 1.52"), 
+    cut = cms.string(""), #abs(momentum().eta) > 1.52 || abs(getMomentumAtBoundary().eta()) > 1.52"), 
     name = cms.string("SimTrack"),
     doc  = cms.string("Geant4 SimHits in HGCAL Electromagnetic endcap"),
     singleton = cms.bool(False), # the number of entries is variable
@@ -25,4 +25,13 @@ simTrackTable = cms.EDProducer("SimpleSimTrackFlatTableProducer",
     )
 )
 
+simTrackToSimClusterTable = cms.EDProducer("SimClusterIndexFromAssociationTableProducer",
+    cut = simTrackTable.cut,
+    src = simTrackTable.src,
+    objName = simTrackTable.name,
+    branchName = cms.string("SimCluster"),
+    objMap = cms.InputTag("mix:simTrackToSimCluster"),
+    docString = cms.string("SimCluster containing track")
+)
 
+simTrackTables = cms.Sequence(simTrackTable+simTrackToSimClusterTable)

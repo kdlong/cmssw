@@ -11,4 +11,4 @@ nanoMetadata = cms.EDProducer("UniqueStringProducer",
     )
 )
 
-nanoHGCMLSequence = cms.Sequence(nanoMetadata+simClusterTable+simTrackTable+hgcSimHitsSequence)
+nanoHGCMLSequence = cms.Sequence(nanoMetadata+simClusterTable+simTrackTables+hgcSimHitsSequence)

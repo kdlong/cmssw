@@ -11,6 +11,8 @@
 <use name="RecoVertex/VertexTools"/>
 <use name="RecoVertex/VertexPrimitives"/>
 <use name="DataFormats/L1TGlobal"/>
+<use name="SimDataFormats/CaloAnalysis"/>
+<use name="SimDataFormats/Track"/>
 <use name="IOPool/Provenance"/>
 <use name="DQMServices/Core"/>
 <use name="CondFormats/BTauObjects"/>
