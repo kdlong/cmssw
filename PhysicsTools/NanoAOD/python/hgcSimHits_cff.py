@@ -9,7 +9,7 @@ hgcEESimHitsTable = cms.EDProducer("SimplePCaloHitFlatTableProducer",
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(
-        detId = Var('id', 'float', precision=-1, doc='detId'),
+        detId = Var('id', 'int', precision=-1, doc='detId'),
         energy = Var('energy', 'float', precision=14, doc='energy'),
         geantTrackId = Var('geantTrackId', 'int', precision=-1, doc='Geant4 track ID'),
         geantFineTrackId = Var('geantFineTrackId', 'int', precision=-1, doc='granular Geant4 track ID'),

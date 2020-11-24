@@ -48,7 +48,6 @@ public:
       }
     }
 
-    std::cout << "Length of keys is " << keys.size() << std::endl;
     auto tab = std::make_unique<nanoaod::FlatTable>(keys.size(), objName_, false, true);
     tab->addColumn<int>(branchName_ + "Idx", keys, doc_);
 

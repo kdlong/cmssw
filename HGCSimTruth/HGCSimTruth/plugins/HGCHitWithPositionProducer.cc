@@ -72,9 +72,7 @@ void HGCHitWithPositionProducer::produce(edm::Event& iEvent, const edm::EventSet
                 hitsWithPositions->push_back(std::move(hitWithPosition));
                 }
             }
-        std::cout << "Length of input collection " << handle->size();
         }
-    std::cout << "Length of output collection " << hitsWithPositions->size();
     iEvent.put(std::move(hitsWithPositions));
     }
 

@@ -371,7 +371,6 @@ namespace {
         auto &simcluster = output_.pSimClusters->back();
         std::unordered_map<uint32_t, float> acc_energy;
         for (auto const &hit_and_energy : simTrackDetIdEnergyMap_[trackIdx]) {
-          std::cout << "Filling id " << hit_and_energy.first << " match to " << output_.pSimClusters->size()-1 << std::endl;
           caloHitIdToSimClusterIdxMap_[hit_and_energy.first] = output_.pSimClusters->size()-1;
           acc_energy[hit_and_energy.first] += hit_and_energy.second;
         }
@@ -829,7 +828,6 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
 
 std::unique_ptr<edm::Association<SimClusterCollection>> CaloTruthAccumulator::fillSimHitAssociation(
         edm::Handle<std::vector<PCaloHit>>& inColl, edm::OrphanHandle<SimClusterCollection>& matchColl) {
-    std::cout << "Number of associations is " << inColl->size() << std::endl;
     std::vector<int> matchIndices(inColl->size(), -1);
 
     for (size_t i = 0; i < inColl->size(); i++) {
