@@ -3,7 +3,7 @@
 #include <string>
 
 // user include files
-#include "FWCore/Framework/interface/global/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -29,13 +29,13 @@
 typedef edm::AssociationMap<edm::OneToMany<
     TrackingParticleCollection, SimClusterCollection>> TrackingParticleToSimCluster;
 
-class TrackingParticleSimClusterAssociationProducer : public edm::global::EDProducer<> {
+class TrackingParticleSimClusterAssociationProducer : public edm::stream::EDProducer<> {
 public:
   explicit TrackingParticleSimClusterAssociationProducer(const edm::ParameterSet &);
   ~TrackingParticleSimClusterAssociationProducer() override;
 
 private:
-  void produce(edm::StreamID, edm::Event &, const edm::EventSetup &) const override;
+  virtual void produce(edm::Event&, const edm::EventSetup&) override;
   std::set<TrackingParticleRef> findTrackingParticleMatch(
         std::unordered_map<unsigned int, TrackingParticleRef>& trackIdToTPRef, SimClusterRef scRef) const;
 
@@ -68,7 +68,7 @@ std::set<TrackingParticleRef> TrackingParticleSimClusterAssociationProducer::fin
 }
 
 // ------------ method called to produce the data  ------------
-void TrackingParticleSimClusterAssociationProducer::produce(edm::StreamID, edm::Event &iEvent, const edm::EventSetup &iSetup) const {
+void TrackingParticleSimClusterAssociationProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup) {
 
   edm::Handle<TrackingParticleCollection> tpCollection;
   iEvent.getByToken(tpCollectionToken_, tpCollection);
