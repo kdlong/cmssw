@@ -213,6 +213,8 @@ namespace gen {
       std::cerr << "WARNING: " << e.what() << std::endl;
       isUnassociated = true;
 
+      // initialize index to 0, prevent underflow when accessing vector
+      groupIndex = 0;
       bool foundUnassocGroup = false;
       while (!foundUnassocGroup && groupIndex < static_cast<int>(weightGroups_.size())) {
         auto& g = weightGroups_[groupIndex];
