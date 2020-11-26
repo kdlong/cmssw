@@ -255,7 +255,7 @@ namespace gen {
     }
     // Needs to be properly handled
     throw cms::Exception("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex) +
-                   "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
+                         "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
     return -1;
   }
 
