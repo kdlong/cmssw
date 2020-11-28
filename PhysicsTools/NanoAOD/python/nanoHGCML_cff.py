@@ -16,6 +16,8 @@ nanoMetadata = cms.EDProducer("UniqueStringProducer",
 )
 
 genParticleTable.src = "genParticles"
+genParticleTable.variables = cms.PSet(genParticleTable.variables,
+    charge = CandVars.charge)
 
 nanoHGCMLSequence = cms.Sequence(nanoMetadata+genVertexTables+genParticleTable+ \
         trackingParticleTable+caloParticleTable+simClusterTable+ \

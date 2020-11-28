@@ -25,59 +25,44 @@ hgcEEHitsToSimClusterTable = cms.EDProducer("CaloHitToSimClusterIndexTableProduc
     docString = cms.string("SimCluster containing SimHit")
 )
 
-hgcHEFrontSimHitsTable = hgcEESimHitsTable.clone()
-hgcHEFrontSimHitsTable.src = "g4SimHits:HGCHitsHEfront"
-hgcHEFrontSimHitsTable.name = "SimHitHGCHEFront"
+hgcHEfrontSimHitsTable = hgcEESimHitsTable.clone()
+hgcHEfrontSimHitsTable.src = "g4SimHits:HGCHitsHEfront"
+hgcHEfrontSimHitsTable.name = "SimHitHGCHEfront"
 
-hgcHEFrontHitsToSimClusterTable = hgcEEHitsToSimClusterTable.clone()
-hgcHEFrontHitsToSimClusterTable.objMap = "mix:simHitHGCHEbackToSimCluster"
+hgcHEfrontHitsToSimClusterTable = hgcEEHitsToSimClusterTable.clone()
+hgcHEfrontHitsToSimClusterTable.src = hgcHEfrontSimHitsTable.src
+hgcHEfrontHitsToSimClusterTable.objName = hgcHEfrontSimHitsTable.name
+hgcHEfrontHitsToSimClusterTable.objMap = "mix:simHitHGCHEfrontToSimCluster"
 
-hgcHEBackSimHitsTable = hgcEESimHitsTable.clone()
-hgcHEBackSimHitsTable.src = "g4SimHits:HGCHitsHEback"
-hgcHEBackSimHitsTable.name = "SimHitHGCHEBack"
+hgcHEbackSimHitsTable = hgcEESimHitsTable.clone()
+hgcHEbackSimHitsTable.src = "g4SimHits:HGCHitsHEback"
+hgcHEbackSimHitsTable.name = "SimHitHGCHEback"
 
-hgcHEBackHitsToSimClusterTable = hgcEEHitsToSimClusterTable.clone()
-hgcHEBackHitsToSimClusterTable.objMap = "mix:simHitHGCHEbackToSimCluster"
+hgcHEbackHitsToSimClusterTable = hgcEEHitsToSimClusterTable.clone()
+hgcHEbackHitsToSimClusterTable.src = hgcHEbackSimHitsTable.src
+hgcHEbackHitsToSimClusterTable.objName = hgcHEbackSimHitsTable.name
+hgcHEbackHitsToSimClusterTable.objMap = "mix:simHitHGCHEbackToSimCluster"
 
-hgcEESimHitsWithPos = cms.EDProducer("HGCHitWithPositionProducer", 
-    src = cms.VInputTag(hgcEESimHitsTable.src) 
-)
-
-hgcHEFrontSimHitsWithPos = cms.EDProducer("HGCHitWithPositionProducer", 
-    src = cms.VInputTag(hgcHEFrontSimHitsTable.src)
-)
-
-hgcHEBackSimHitsWithPos = cms.EDProducer("HGCHitWithPositionProducer", 
-    src = cms.VInputTag(hgcHEBackSimHitsTable.src)
-)
-
-hgcEESimHitsPositionTable = cms.EDProducer("SimplePCaloHitWithPositionFlatTableProducer",
-    src = cms.InputTag("hgcEESimHitsWithPos"),
+hgcEESimHitsPositionTable = cms.EDProducer("PCaloHitPositionFromDetIDTableProducer",
+    src = hgcEESimHitsTable.src,
     cut = hgcEESimHitsTable.cut, 
     name = hgcEESimHitsTable.name,
     doc  = hgcEESimHitsTable.doc,
-    singleton = cms.bool(False), 
-    extension = cms.bool(True), 
-    variables = cms.PSet(
-        pt = Var('pt_', 'float', precision=-1, doc='pt'),
-        eta = Var('eta_', 'float', precision=14, doc='eta'),
-        phi = Var('phi_', 'float', precision=14, doc='phi'),
-        x = Var('position_.x', 'float', precision=14, doc='x position'),
-        y = Var('position_.y', 'float', precision=14, doc='x position'),
-        z = Var('position_.z', 'float', precision=14, doc='z position'),
-    )
 )
 
-hgcHEFrontSimHitsPositionTable = hgcEESimHitsPositionTable.clone()
-hgcHEFrontSimHitsPositionTable.name = hgcHEFrontSimHitsTable.name
-hgcHEFrontSimHitsPositionTable.src = "hgcHEFrontSimHitsWithPos"
+hgcHEfrontSimHitsPositionTable = hgcEESimHitsPositionTable.clone()
+hgcHEfrontSimHitsPositionTable.name = hgcHEfrontSimHitsTable.name
+hgcHEfrontSimHitsPositionTable.src = hgcHEfrontSimHitsTable.src
 
-hgcHEBackSimHitsPositionTable = hgcEESimHitsPositionTable.clone()
-hgcHEBackSimHitsPositionTable.name = hgcHEBackSimHitsTable.name
-hgcHEBackSimHitsPositionTable.src = "hgcHEBackSimHitsWithPos"
+hgcHEbackSimHitsPositionTable = hgcEESimHitsPositionTable.clone()
+hgcHEbackSimHitsPositionTable.name = hgcHEbackSimHitsTable.name
+hgcHEbackSimHitsPositionTable.src = hgcHEbackSimHitsTable.src
 
-hgcSimHitsSequence = cms.Sequence(hgcEESimHitsTable+hgcHEBackSimHitsTable+hgcHEFrontSimHitsTable \
-                +hgcEESimHitsWithPos+hgcEESimHitsPositionTable \
-                +hgcHEFrontSimHitsWithPos+hgcHEFrontSimHitsPositionTable
-                +hgcHEBackSimHitsWithPos+hgcHEBackSimHitsPositionTable \
-                +hgcEEHitsToSimClusterTable+hgcHEFrontSimHitsTable+hgcHEBackSimHitsTable)
+hgcSimHitsSequence = cms.Sequence(hgcEESimHitsTable+hgcHEbackSimHitsTable+hgcHEfrontSimHitsTable
+                +hgcEESimHitsPositionTable
+                +hgcHEfrontSimHitsPositionTable
+                +hgcHEbackSimHitsPositionTable
+                +hgcEEHitsToSimClusterTable
+                +hgcHEfrontHitsToSimClusterTable
+                +hgcHEbackHitsToSimClusterTable
+                +hgcHEfrontSimHitsTable+hgcHEbackSimHitsTable)
