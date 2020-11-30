@@ -9,8 +9,8 @@ typedef SimpleFlatTableProducer<SimCluster> SimpleSimClusterFlatTableProducer;
 #include "SimDataFormats/CaloHit/interface/PCaloHit.h"
 typedef SimpleFlatTableProducer<PCaloHit> SimplePCaloHitFlatTableProducer;
 
-#include "SimDataFormats/CaloAnalysis/interface/PCaloHitWithPosition.h"
-typedef SimpleFlatTableProducer<PCaloHitWithPosition> SimplePCaloHitWithPositionFlatTableProducer;
+#include "SimDataFormats/TrackingHit/interface/PSimHit.h"
+typedef SimpleFlatTableProducer<PSimHit> SimplePSimHitFlatTableProducer;
 
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
 typedef SimpleFlatTableProducer<TrackingParticle> SimpleTrackingParticleFlatTableProducer;
@@ -33,7 +33,7 @@ typedef EventSingletonSimpleFlatTableProducer<math::XYZPointF> SimpleXYZPointFla
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(SimplePCaloHitFlatTableProducer);
-DEFINE_FWK_MODULE(SimplePCaloHitWithPositionFlatTableProducer);
+DEFINE_FWK_MODULE(SimplePSimHitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleSimTrackFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleSimClusterFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleTrackingParticleFlatTableProducer);

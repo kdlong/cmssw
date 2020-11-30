@@ -18,10 +18,10 @@ trackingParticleTable = cms.EDProducer("SimpleTrackingParticleFlatTableProducer"
         Vtx_z = Var('vz()', 'float', precision=14, doc='parent vertex z pos'),
         Vtx_t = Var('parentVertex().position().T()', 'float', precision=14, doc='parent vertex time'),
         nDecayVtx = Var('decayVertices().size()', 'int', precision=-1, doc='number of decay vertices'),
-        DecayVtx_y = Var('? decayVertices().size() > 0 ? decayVertices().at(0).position().x : -1', 'float', precision=14, doc='x position of first decay vertex'),
-        DecayVtx_x = Var('? decayVertices().size() > 0 ? decayVertices().at(0).position().y : -1', 'float', precision=14, doc='y position of first decay vertex'),
-        DecayVtx_z = Var('? decayVertices().size() > 0 ? decayVertices().at(0).position().z : -1', 'float', precision=14, doc='z position of first decay vertex'),
-        DecayVtx_t = Var('? decayVertices().size() > 0 ? decayVertices().at(0).position().t : -1', 'float', precision=14, doc='time of first decay vertex'),
+        DecayVtx_y = Var('? decayVertices().size() > 0 ? decayVertices().at(0).position().x : 10000', 'float', precision=14, doc='x position of first decay vertex'),
+        DecayVtx_x = Var('? decayVertices().size() > 0 ? decayVertices().at(0).position().y : 10000', 'float', precision=14, doc='y position of first decay vertex'),
+        DecayVtx_z = Var('? decayVertices().size() > 0 ? decayVertices().at(0).position().z : 10000', 'float', precision=14, doc='z position of first decay vertex'),
+        DecayVtx_t = Var('? decayVertices().size() > 0 ? decayVertices().at(0).position().t : 10000', 'float', precision=14, doc='time of first decay vertex'),
     )
 )
 

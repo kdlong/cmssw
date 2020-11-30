@@ -6,6 +6,7 @@
 #include "DataFormats/NanoAOD/interface/FlatTable.h"
 #include "DataFormats/Common/interface/View.h"
 #include "SimDataFormats/CaloHit/interface/PCaloHitContainer.h"
+#include "SimDataFormats/TrackingHit/interface/PSimHit.h"
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 
 #include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
@@ -16,6 +17,9 @@
 #include <Geometry/CaloGeometry/interface/CaloGeometry.h>
 #include <Geometry/HGCalGeometry/interface/HGCalGeometry.h>
 #include <Geometry/Records/interface/CaloGeometryRecord.h>
+#include "Geometry/CommonDetUnit/interface/GlobalTrackingGeometry.h"
+#include "Geometry/Records/interface/GlobalTrackingGeometryRecord.h"
+#include "SimDataFormats/TrackingHit/interface/PSimHit.h"
 
 #include <vector>
 #include <iostream>
@@ -34,11 +38,13 @@ public:
   ~PositionFromDetIDTableProducer() override {}
 
   void beginRun(const edm::Run&, const edm::EventSetup& iSetup) {
-      iSetup.get<CaloGeometryRecord>().get(caloGeom_);
       // TODO: check that the geometry exists
+      iSetup.get<CaloGeometryRecord>().get(caloGeom_);
+      iSetup.get<GlobalTrackingGeometryRecord>().get(trackGeom_);
   }
 
-  GlobalPoint positionFromDetID(DetId& id) {
+  GlobalPoint positionFromHit(const PCaloHit& hit) {
+    DetId id = hit.id();
     DetId::Detector det = id.det();
     int subid = (det == DetId::HGCalEE || det == DetId::HGCalHSi || det == DetId::HGCalHSc)
                    ? ForwardSubdetector::ForwardEmpty
@@ -52,7 +58,18 @@ public:
       auto hg = static_cast<const HGCalGeometry*>(geom);
       position = hg->getPosition(id);
     }
+    else {
+        throw cms::Exception("PositionFromDetIDTableProducer") << "Unsupported DetId type";
+    }
+
     return position;
+  }
+
+  GlobalPoint positionFromHit(const PSimHit& hit) {
+      auto surface = trackGeom_->idToDet(hit.detUnitId())->surface();
+      //LocalPoint localPos = surface.position();
+      GlobalPoint position = surface.toGlobal(hit.localPosition());
+      return position;
   }
 
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override {
@@ -62,17 +79,14 @@ public:
     std::vector<float> xvals;
     std::vector<float> yvals;
     std::vector<float> zvals;
-    for (auto& obj : *objs) {
+    for (const auto& obj : *objs) {
       if (cut_(obj)) {
-        DetId id = obj.id();
-        auto position = positionFromDetID(id);
+        auto position = positionFromHit(obj);
         xvals.emplace_back(position.x());
         yvals.emplace_back(position.y());
         zvals.emplace_back(position.z());
       }
     }
-    std::cout << "HERE WE ARE!\n";
-    std::cout << "Length of x is " << xvals.size() << std::endl;
 
     auto tab = std::make_unique<nanoaod::FlatTable>(xvals.size(), name_, false, true);
     tab->addColumn<float>("x", xvals, "x position");
@@ -87,8 +101,12 @@ protected:
   const edm::EDGetTokenT<T> src_;
   const StringCutObjectSelector<typename T::value_type> cut_;
   edm::ESHandle<CaloGeometry> caloGeom_;
+  edm::ESHandle<GlobalTrackingGeometry> trackGeom_;
+
 };
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 typedef PositionFromDetIDTableProducer<std::vector<PCaloHit>> PCaloHitPositionFromDetIDTableProducer;
+typedef PositionFromDetIDTableProducer<std::vector<PSimHit>> PSimHitPositionFromDetIDTableProducer;
 DEFINE_FWK_MODULE(PCaloHitPositionFromDetIDTableProducer);
+DEFINE_FWK_MODULE(PSimHitPositionFromDetIDTableProducer);
