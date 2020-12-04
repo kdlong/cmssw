@@ -9,6 +9,7 @@ from caloParticles_cff import *
 from trackingParticles_cff import *
 from genparticles_cff import genParticleTable
 from genVertex_cff import *
+from pfCands_cff import *
 
 nanoMetadata = cms.EDProducer("UniqueStringProducer",
     strings = cms.PSet(
@@ -22,4 +23,5 @@ genParticleTable.variables = cms.PSet(genParticleTable.variables,
 
 nanoHGCMLSequence = cms.Sequence(nanoMetadata+genVertexTables+genParticleTable+ \
         trackingParticleTable+caloParticleTable+simClusterTable+ \
-        simTrackTables+hgcSimHitsSequence+trackerSimHitTables)
+        simTrackTables+hgcSimHitsSequence+trackerSimHitTables+ \
+        pfCandTable+pfTICLCandTable)
