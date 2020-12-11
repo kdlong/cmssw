@@ -26,6 +26,8 @@
   <class name="std::vector<SimClusterHistory>"/>
   <class name="edm::Association<std::vector<SimCluster>>"/>
   <class name="edm::Wrapper<edm::Association<std::vector<SimCluster>>>"/>
+  <class name="edm::Association<std::vector<CaloParticle>>"/>
+  <class name="edm::Wrapper<edm::Association<std::vector<CaloParticle>>>"/>
   <class name="edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,float,unsigned int> >">
     <field name="transientMap_" transient="true"/>
   </class>

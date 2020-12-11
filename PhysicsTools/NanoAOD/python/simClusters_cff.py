@@ -21,3 +21,13 @@ simClusterTable = cms.EDProducer("SimpleSimClusterFlatTableProducer",
     )
 )
 
+simClusterToCaloPartTable = cms.EDProducer("SimClusterToCaloParticleIndexTableProducer",
+    cut = simClusterTable.cut,
+    src = simClusterTable.src,
+    objName = simClusterTable.name,
+    branchName = cms.string("CaloPart"),
+    objMap = cms.InputTag("mix:simClusterToCaloParticle"),
+    docString = cms.string("Index of CaloPart containing SimCluster")
+)
+
+simClusterTables = cms.Sequence(simClusterTable+simClusterToCaloPartTable)

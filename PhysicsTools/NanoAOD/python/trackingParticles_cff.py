@@ -4,8 +4,8 @@ from PhysicsTools.NanoAOD.common_cff import CandVars,Var
 trackingParticleTable = cms.EDProducer("SimpleTrackingParticleFlatTableProducer",
     src = cms.InputTag("mix:MergedTrackTruth"),
     cut = cms.string(""), 
-    name = cms.string("TrackingParticle"),
-    doc  = cms.string("TrackingParticles"),
+    name = cms.string("TrackingPart"),
+    doc  = cms.string("TrackingPart"),
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(CandVars,

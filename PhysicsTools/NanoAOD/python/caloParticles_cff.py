@@ -4,8 +4,8 @@ from PhysicsTools.NanoAOD.common_cff import CandVars,Var
 caloParticleTable = cms.EDProducer("SimpleCaloParticleFlatTableProducer",
     src = cms.InputTag("mix:MergedCaloTruth"),
     cut = cms.string(""), 
-    name = cms.string("CaloParticle"),
-    doc  = cms.string("CaloParticles"),
+    name = cms.string("CaloPart"),
+    doc  = cms.string("CaloPart"),
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(CandVars,

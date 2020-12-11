@@ -466,6 +466,7 @@ CaloTruthAccumulator::CaloTruthAccumulator(const edm::ParameterSet &config,
   }
 
   if (true) {
+    producesCollector.produces<edm::Association<CaloParticleCollection>>("simClusterToCaloParticle");
     producesCollector.produces<edm::Association<SimClusterCollection>>("simTrackToSimCluster");
     producesCollector.produces<edm::Association<SimClusterCollection>>("simHitHGCEEToSimCluster");
     producesCollector.produces<edm::Association<SimClusterCollection>>("simHitHGCHEfrontToSimCluster");
@@ -648,19 +649,33 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
   event.put(std::move(output_.pHGCHEfrontHitSCAssoc), "simHitHGCHEfrontToSimCluster");
   event.put(std::move(output_.pHGCHEbackHitSCAssoc), "simHitHGCHEbackToSimCluster");
 
-
+  std::unordered_map<int, int> simClusIdxToCaloParticleIdxMap_;
   // now fill the calo particles
   for (unsigned i = 0; i < output_.pCaloParticles->size(); ++i) {
     auto &cp = (*output_.pCaloParticles)[i];
     for (unsigned j = m_caloParticles.sc_start_[i]; j < m_caloParticles.sc_stop_[i]; ++j) {
       edm::Ref<SimClusterCollection> ref(scHandle, j);
+      simClusIdxToCaloParticleIdxMap_[j] = i;
       cp.addSimCluster(ref);
     }
   }
 
-  event.put(std::move(output_.pCaloParticles), "MergedCaloTruth");
+  auto cpHandle = event.put(std::move(output_.pCaloParticles), "MergedCaloTruth");
 
   calo_particles().swap(m_caloParticles);
+
+  std::vector<int> caloPartIdx;
+  for (size_t i = 0; i < scHandle->size(); i++) {
+      int matchIdx = -1;
+      if (simClusIdxToCaloParticleIdxMap_.find(i) != simClusIdxToCaloParticleIdxMap_.end())
+          matchIdx = simClusIdxToCaloParticleIdxMap_[i];
+      caloPartIdx.emplace_back(matchIdx);
+  }
+  auto assocMap = std::make_unique<edm::Association<CaloParticleCollection>>(cpHandle);
+  edm::Association<CaloParticleCollection>::Filler cpfiller(*assocMap);
+  cpfiller.insert(scHandle, caloPartIdx.begin(), caloPartIdx.end());
+  cpfiller.fill();
+  event.put(std::move(assocMap), "simClusterToCaloParticle");
 
   std::unordered_map<Index_t, float>().swap(m_detIdToTotalSimEnergy);
   std::unordered_multimap<Barcode_t, Index_t>().swap(m_simHitBarcodeToIndex);
@@ -835,7 +850,7 @@ std::unique_ptr<edm::Association<SimClusterCollection>> CaloTruthAccumulator::fi
         if (caloHitToSimClusterIdx_.find(hit.id()) != caloHitToSimClusterIdx_.end())
             matchIndices[i] = caloHitToSimClusterIdx_[hit.id()];
     }
-
+    
     auto assocMap = std::make_unique<edm::Association<SimClusterCollection>>(matchColl);
     edm::Association<SimClusterCollection>::Filler filler(*assocMap);
     filler.insert(inColl, matchIndices.begin(), matchIndices.end());
