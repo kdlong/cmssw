@@ -667,8 +667,8 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
   std::vector<int> caloPartIdx;
   for (size_t i = 0; i < scHandle->size(); i++) {
       int matchIdx = -1;
-      if (simClusIdxToCaloParticleIdxMap_.find(i) != simClusIdxToCaloParticleIdxMap_.end())
-          matchIdx = simClusIdxToCaloParticleIdxMap_[i];
+      if (simClusIdxToCaloParticleIdxMap.find(i) != simClusIdxToCaloParticleIdxMap.end())
+          matchIdx = simClusIdxToCaloParticleIdxMap[i];
       caloPartIdx.emplace_back(matchIdx);
   }
   auto assocMap = std::make_unique<edm::Association<CaloParticleCollection>>(cpHandle);
@@ -701,7 +701,9 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
   // Clear maps from previous event fill them for this one
   m_simHitBarcodeToIndex.clear();
   for (unsigned int i = 0; i < simHitPointers.size(); ++i) {
-    m_simHitBarcodeToIndex.emplace(simHitPointers[i].second->geantTrackId(), i);
+    auto* hit = simHitPointers[i].second;
+    auto trackId = hit->geantFineTrackId() != 0 ? hit->geantFineTrackId() : hit->geantTrackId();
+    m_simHitBarcodeToIndex.emplace(trackId, i);
   }
 
   auto const &tracks = *hSimTracks;
@@ -910,7 +912,8 @@ void CaloTruthAccumulator::fillSimHits(std::vector<std::pair<DetId, const PCaloH
       }
 
       returnValue.emplace_back(id, &simHit);
-      simTrackDetIdEnergyMap[simHit.geantTrackId()][id.rawId()] += simHit.energy();
+      auto hitid = simHit.geantFineTrackId() != 0 ? simHit.geantFineTrackId() : simHit.geantTrackId();
+      simTrackDetIdEnergyMap[hitid][id.rawId()] += simHit.energy();
       m_detIdToTotalSimEnergy[id.rawId()] += simHit.energy();
     }
   }  // end of loop over InputTags

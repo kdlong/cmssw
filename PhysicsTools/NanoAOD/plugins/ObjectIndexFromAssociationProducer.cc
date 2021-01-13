@@ -12,6 +12,7 @@
 #include "SimDataFormats/Track/interface/SimTrack.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "SimDataFormats/CaloHit/interface/PCaloHitContainer.h"
+#include "DataFormats/CaloRecHit/interface/CaloRecHit.h"
 #include "DataFormats/Common/interface/Association.h"
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 
@@ -66,7 +67,9 @@ protected:
 #include "FWCore/Framework/interface/MakerMacros.h"
 typedef ObjectIndexFromAssociationTableProducer<edm::SimTrackContainer, SimClusterCollection> SimTrackToSimClusterIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<edm::PCaloHitContainer, SimClusterCollection> CaloHitToSimClusterIndexTableProducer;
+typedef ObjectIndexFromAssociationTableProducer<edm::View<CaloRecHit>, SimClusterCollection> CaloRecHitToSimClusterIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<SimClusterCollection, CaloParticleCollection> SimClusterToCaloParticleIndexTableProducer;
 DEFINE_FWK_MODULE(SimTrackToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(CaloHitToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(SimClusterToCaloParticleIndexTableProducer);
+DEFINE_FWK_MODULE(CaloRecHitToSimClusterIndexTableProducer);

@@ -12,6 +12,9 @@ typedef SimpleFlatTableProducer<PCaloHit> SimplePCaloHitFlatTableProducer;
 #include "SimDataFormats/TrackingHit/interface/PSimHit.h"
 typedef SimpleFlatTableProducer<PSimHit> SimplePSimHitFlatTableProducer;
 
+#include "DataFormats/CaloRecHit/interface/CaloRecHit.h"
+typedef SimpleFlatTableProducer<CaloRecHit> SimpleCaloRecHitFlatTableProducer;
+
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
 typedef SimpleFlatTableProducer<TrackingParticle> SimpleTrackingParticleFlatTableProducer;
 #include "SimDataFormats/PFAnalysis/interface/PFParticle.h"
@@ -34,6 +37,7 @@ typedef EventSingletonSimpleFlatTableProducer<HTXS::HiggsClassification> SimpleH
 typedef EventSingletonSimpleFlatTableProducer<math::XYZPointF> SimpleXYZPointFlatTableProducer;
 
 #include "FWCore/Framework/interface/MakerMacros.h"
+DEFINE_FWK_MODULE(SimpleCaloRecHitFlatTableProducer);
 DEFINE_FWK_MODULE(SimplePCaloHitFlatTableProducer);
 DEFINE_FWK_MODULE(SimplePSimHitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleSimTrackFlatTableProducer);

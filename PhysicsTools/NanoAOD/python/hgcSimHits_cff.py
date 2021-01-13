@@ -27,7 +27,7 @@ hgcEEHitsToSimClusterTable = cms.EDProducer("CaloHitToSimClusterIndexTableProduc
 
 hgcHEfrontSimHitsTable = hgcEESimHitsTable.clone()
 hgcHEfrontSimHitsTable.src = "g4SimHits:HGCHitsHEfront"
-hgcHEfrontSimHitsTable.name = "SimHitHGCHEfront"
+hgcHEfrontSimHitsTable.name = "SimHitHGCHEF"
 
 hgcHEfrontHitsToSimClusterTable = hgcEEHitsToSimClusterTable.clone()
 hgcHEfrontHitsToSimClusterTable.src = hgcHEfrontSimHitsTable.src
@@ -36,7 +36,7 @@ hgcHEfrontHitsToSimClusterTable.objMap = "mix:simHitHGCHEfrontToSimCluster"
 
 hgcHEbackSimHitsTable = hgcEESimHitsTable.clone()
 hgcHEbackSimHitsTable.src = "g4SimHits:HGCHitsHEback"
-hgcHEbackSimHitsTable.name = "SimHitHGCHEback"
+hgcHEbackSimHitsTable.name = "SimHitHGCHEB"
 
 hgcHEbackHitsToSimClusterTable = hgcEEHitsToSimClusterTable.clone()
 hgcHEbackHitsToSimClusterTable.src = hgcHEbackSimHitsTable.src
@@ -66,3 +66,4 @@ hgcSimHitsSequence = cms.Sequence(hgcEESimHitsTable+hgcHEbackSimHitsTable+hgcHEf
                 +hgcHEfrontHitsToSimClusterTable
                 +hgcHEbackHitsToSimClusterTable
                 +hgcHEfrontSimHitsTable+hgcHEbackSimHitsTable)
+
