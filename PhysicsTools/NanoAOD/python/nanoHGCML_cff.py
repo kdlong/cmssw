@@ -8,6 +8,7 @@ from hgcRecHits_cff import *
 from simClusters_cff import *
 from caloParticles_cff import *
 from trackingParticles_cff import *
+from tracks_cff import *
 from genparticles_cff import genParticleTable
 from genVertex_cff import *
 from pfCands_cff import *
@@ -30,4 +31,5 @@ def customizeReco(process):
     process.nanoHGCMLSequence.insert(1, hgcRecHitsSequence)
     process.nanoHGCMLSequence.insert(2, pfCandTable)
     process.nanoHGCMLSequence.insert(3, pfTICLCandTable)
+    process.nanoHGCMLSequence.insert(4, trackTables)
     return process

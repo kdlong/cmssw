@@ -88,7 +88,7 @@ void SimHitRecHitAssociationProducer::produce(edm::Event &iEvent, const edm::Eve
 
   for (size_t i = 0; i < caloRechitCollectionTokens_.size(); i++) {
     std::string label = caloRechitTags_.at(i).instance();
-    std::vector<size_t> simhitIndices;
+    std::vector<size_t> rechitIndices;
 
     edm::Handle<edm::View<CaloRecHit>> caloRechitCollection;
     iEvent.getByToken(caloRechitCollectionTokens_.at(i), caloRechitCollection);
@@ -99,12 +99,12 @@ void SimHitRecHitAssociationProducer::produce(edm::Event &iEvent, const edm::Eve
         const CaloRecHit& caloRh = caloRechitCollection->at(h);
         size_t id = caloRh.detid().rawId();
         int match = hitDetIdToIndex.find(id) == hitDetIdToIndex.end() ? -1 : hitDetIdToIndex.at(id).first;
-        simhitIndices.push_back(match);
+        rechitIndices.push_back(match);
     }
 
     auto assoc = std::make_unique<edm::Association<SimClusterCollection>>(scCollection);
     edm::Association<SimClusterCollection>::Filler filler(*assoc);
-    filler.insert(caloRechitCollection, simhitIndices.begin(), simhitIndices.end());
+    filler.insert(caloRechitCollection, rechitIndices.begin(), rechitIndices.end());
     filler.fill();
     iEvent.put(std::move(assoc), label+"ToSimClus");
   }
