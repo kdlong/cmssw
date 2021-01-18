@@ -105,7 +105,9 @@ public:
   float p() const { return p4().P(); }
 
   /// @brief Energy. Note this is taken from the first SimTrack only.
-  float energy() const { return p4().E(); }
+  float energy() const { 
+    return p4().E();
+  }
 
   /// @brief Transverse energy. Note this is taken from the first SimTrack only.
   float et() const { return p4().Et(); }

@@ -15,8 +15,11 @@ simClusterTable = cms.EDProducer("SimpleSimClusterFlatTableProducer",
         impactPoint_x = Var('impactPoint().x()', 'float', precision=14, doc='x position'),
         impactPoint_y = Var('impactPoint().y()', 'float', precision=14, doc='y position'),
         impactPoint_z = Var('impactPoint().z()', 'float', precision=14, doc='z position'),
-        nSimHits = Var('numberOfSimHits', 'int', precision=-1, doc='total energy of simhits'),
-        simEnergy = Var('simEnergy', 'float', precision=14, doc='total energy of simhits'),
+        impactPoint_t = Var('impactPoint().t()', 'float', precision=14, doc='Impact time'),
+        # For stupid reasons lost on me, the nsimhits_ variable is uninitialized, and hits_ (which are really simhits)
+        # are often referred to as rechits in the SimCluster class
+        nHits = Var('numberOfRecHits', 'int', precision=-1, doc='total energy of simhits'),
+        energy = Var('energy', 'float', precision=14, doc='total energy of simhits'),
         trackId = Var('g4Tracks().at(0).trackId()', 'int', precision=10, doc='Geant track id'),
         trackIdAtBoundary = Var('g4Tracks().at(0).getIDAtBoundary()', 'int', precision=-1, doc='Track ID at boundary'),
     )
@@ -31,4 +34,21 @@ simClusterToCaloPartTable = cms.EDProducer("SimClusterToCaloParticleIndexTablePr
     docString = cms.string("Index of CaloPart containing SimCluster")
 )
 
-simClusterTables = cms.Sequence(simClusterTable+simClusterToCaloPartTable)
+hgcSimTruth = cms.EDProducer("HGCTruthProducer")
+
+simClusterToMergedSCTable = cms.EDProducer("SimClusterToSimClusterIndexTableProducer",
+    cut = simClusterTable.cut,
+    src = simClusterTable.src,
+    objName = simClusterTable.name,
+    branchName = cms.string("MergedSimCluster"),
+    objMap = cms.InputTag("hgcSimTruth"),
+    docString = cms.string("Index of Merged SimCluster containing SimCluster")
+)
+
+mergedSimClusterTable = simClusterTable.clone()
+mergedSimClusterTable.src = "hgcSimTruth"
+mergedSimClusterTable.name = "MergedSimCluster"
+
+simClusterTables = cms.Sequence(simClusterTable+simClusterToCaloPartTable
+        +hgcSimTruth+mergedSimClusterTable+simClusterToMergedSCTable
+    )
