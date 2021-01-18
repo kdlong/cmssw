@@ -226,7 +226,9 @@ G4bool CaloSD::ProcessHits(G4Step* aStep, G4TouchableHistory*) {
     if (!hitExists(aStep)) {
       currentHit = createNewHit(aStep, aStep->GetTrack());
     } else {
+#ifdef EDM_ML_DEBUG
       edm::LogVerbatim("DoFineCalo") << "Not creating new hit, only updating currentHit " << currentHit->getUnitID();
+#endif
     }
     return true;
   }
@@ -313,9 +315,9 @@ bool CaloSD::isItFineCalo(const G4VTouchable* touch) {
       G4LogicalVolume* lv = touch->GetVolume(ii)->GetLogicalVolume();
       ok = (lv == detector.lv);
 #ifdef EDM_ML_DEBUG
-      std::string name = (lv == 0) ? "Unknown" : lv->GetName();
-      edm::LogVerbatim("CaloSim") << "CaloSD: volume " << name << ":" << detector.name << " at Level " << detector.level
-                                  << " Flag " << ok;
+      std::string name1 = (lv == 0) ? "Unknown" : lv->GetName();
+      edm::LogVerbatim("CaloSim") << "CaloSD: volume " << name1 << ":" << detector.name << " at Level "
+                                  << detector.level << " Flag " << ok;
 #endif
       if (ok)
         break;
@@ -434,7 +436,7 @@ bool CaloSD::checkHit() {
 
 int CaloSD::getNumberOfHits() { return theHC->entries(); }
 
-std::string CaloSD::printableDecayChain(std::vector<unsigned int> decayChain) {
+std::string CaloSD::printableDecayChain(const std::vector<unsigned int>& decayChain) {
   /*
   Takes a vector of ints (representing trackIDs), and returns a formatted string
   for debugging purposes
@@ -510,7 +512,7 @@ void CaloSD::hitBookkeepingFineCalo(const G4Step* step, const G4Track* currentTr
                                      << ", which is an earlier ancestor than current primary " << hitID.trackID()
                                      << "; overwriting it.";
 #endif
-      hitID.overwriteTrackID(recordTrackID);
+      hitID.setTrackID(recordTrackID);
     }
     // Check if this parent fits the boundary-crossing criteria
     if (recordTrackWithHistory->crossedBoundary() && recordTrackWithHistory->getIDAtBoundary() == (int)recordTrackID) {
@@ -549,7 +551,7 @@ void CaloSD::hitBookkeepingFineCalo(const G4Step* step, const G4Track* currentTr
 #ifdef EDM_ML_DEBUG
   edm::LogVerbatim("DoFineCalo") << "Stored the following bookeeping for hit " << hit->getUnitID()
                                  << " hitID.trackID()=" << hitID.trackID()
-                                 << " hitID.getFineTrackID()=" << hitID.getFineTrackID()
+                                 << " hitID.fineTrackID()=" << hitID.fineTrackID()
                                  << " recordTrackWithHistory->trackID()=" << recordTrackWithHistory->trackID()
                                  << " recordTrackWithHistory->saved()=" << recordTrackWithHistory->saved();
 #endif
@@ -594,7 +596,7 @@ CaloG4Hit* CaloSD::createNewHit(const G4Step* aStep, const G4Track* theTrack) {
   edm::LogVerbatim("DoFineCalo") << "Creating new hit " << aHit->getUnitID() << " using "
                                  << (currentlyInsideFineVolume ? "FINECALO" : "normal CaloSD")
                                  << "; currentID.trackID=" << currentID.trackID()
-                                 << " currentID.getFineTrackID=" << currentID.getFineTrackID()
+                                 << " currentID.fineTrackID=" << currentID.fineTrackID()
                                  << " isItFineCalo(aStep->GetPostStepPoint()->GetTouchable())="
                                  << isItFineCalo(aStep->GetPostStepPoint()->GetTouchable())
                                  << " isItFineCalo(aStep->GetPreStepPoint()->GetTouchable())="
@@ -886,7 +888,6 @@ void CaloSD::storeHit(CaloG4Hit* hit) {
 
 bool CaloSD::saveHit(CaloG4Hit* aHit) {
   int tkID;
-  int fineTrackID;
   bool ok = true;
 
   double time = aHit->getTimeSlice();
@@ -895,36 +896,24 @@ bool CaloSD::saveHit(CaloG4Hit* aHit) {
 
   // Do track bookkeeping a little differently for fine tracking
   if (doFineCalo_ && aHit->getID().hasFineTrackID()) {
-    tkID = aHit->getTrackID();
-    fineTrackID = aHit->getID().getFineTrackID();
+    tkID = aHit->getID().fineTrackID();
 #ifdef EDM_ML_DEBUG
-    edm::LogVerbatim("DoFineCalo") << "Saving hit " << aHit->getUnitID() << " with trackID=" << tkID
-                                   << " fineTrackID=" << fineTrackID;
+    edm::LogVerbatim("DoFineCalo") << "Saving hit " << aHit->getUnitID() << " with trackID=" << tkID;
 #endif
     // Check if the track is actually in the trackManager
     if (m_trackManager) {
       if (!m_trackManager->trackExists(tkID)) {
         ok = false;
         throw cms::Exception("Unknown", "CaloSD")
-            << "aHit " << aHit->getUnitID() << " has primary trackID " << tkID << ", which is NOT IN THE TRACK MANAGER";
-      }
-      if (!m_trackManager->trackExists(fineTrackID)) {
-        ok = false;
-        throw cms::Exception("Unknown", "CaloSD") << "aHit " << aHit->getUnitID() << " has fineTrackID " << fineTrackID
-                                                  << ", which is NOT IN THE TRACK MANAGER";
+            << "aHit " << aHit->getUnitID() << " has fine trackID " << tkID << ", which is NOT IN THE TRACK MANAGER";
       }
     } else {
       ok = false;
       throw cms::Exception("Unknown", "CaloSD") << "m_trackManager not set, saveHit ok=false!";
     }
     // Take the aHit-information and move it to the actual PCaloHitContainer
-    slave.get()->processHits(aHit->getUnitID(),
-                             aHit->getEM() / CLHEP::GeV,
-                             aHit->getHadr() / CLHEP::GeV,
-                             time,
-                             tkID,
-                             fineTrackID,
-                             aHit->getDepth());
+    slave.get()->processHits(
+        aHit->getUnitID(), aHit->getEM() / CLHEP::GeV, aHit->getHadr() / CLHEP::GeV, time, tkID, aHit->getDepth());
   }
   // Regular, not-fine way:
   else {
@@ -1033,8 +1022,6 @@ void CaloSD::cleanHitCollection() {
 #ifdef EDM_ML_DEBUG
     edm::LogVerbatim("CaloSim") << "CaloSD::cleanHitCollection: remove the merged hits in buffer,"
                                 << " new size = " << hitvec.size();
-    // for (unsigned int i = 0; i < hitvec.size(); ++i)
-    //   edm::LogVerbatim("CaloSim") << i << " " << *hitvec[i];
 #endif
     hitvec.swap(*theCollection);
     totalHits = theHC->entries();
