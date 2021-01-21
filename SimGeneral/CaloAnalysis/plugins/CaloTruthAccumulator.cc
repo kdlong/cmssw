@@ -702,7 +702,7 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
   m_simHitBarcodeToIndex.clear();
   for (unsigned int i = 0; i < simHitPointers.size(); ++i) {
     auto* hit = simHitPointers[i].second;
-    auto trackId = hit->geantFineTrackId() != 0 ? hit->geantFineTrackId() : hit->geantTrackId();
+    auto trackId = hit->geantTrackId();
     m_simHitBarcodeToIndex.emplace(trackId, i);
   }
 
@@ -912,7 +912,7 @@ void CaloTruthAccumulator::fillSimHits(std::vector<std::pair<DetId, const PCaloH
       }
 
       returnValue.emplace_back(id, &simHit);
-      auto hitid = simHit.geantFineTrackId() != 0 ? simHit.geantFineTrackId() : simHit.geantTrackId();
+      auto hitid = simHit.geantTrackId();
       simTrackDetIdEnergyMap[hitid][id.rawId()] += simHit.energy();
       m_detIdToTotalSimEnergy[id.rawId()] += simHit.energy();
     }
@@ -952,8 +952,7 @@ void CaloTruthAccumulator::propagateSimClusterCoordinates(std::unique_ptr<SimClu
             continue;
         auto vertex = sc.impactPoint();
         auto momentum = sc.impactMomentum();
-
-        prop_.propagate(vertex, momentum, sc.g4Tracks().at(0).charge());
+        //prop_.propagate(vertex, momentum, sc.g4Tracks().at(0).charge());
 
         sc.setImpactPoint(vertex);
         sc.setImpactMomentum(momentum);

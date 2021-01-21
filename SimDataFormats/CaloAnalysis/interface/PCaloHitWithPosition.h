@@ -75,7 +75,6 @@ class PCaloHitWithPosition : public PCaloHit {
             detId = hit->id() ;
             myDepth = hit->depth() ;
             theEventId = hit->eventId() ;
-            myFineItra = hit->geantFineTrackId() ;
             }
 
     private:
