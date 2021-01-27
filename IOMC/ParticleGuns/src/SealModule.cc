@@ -26,6 +26,7 @@
 #include "IOMC/ParticleGuns/interface/RandomMultiParticlePGunProducer.h"
 #include "IOMC/ParticleGuns/interface/CloseByFlatDeltaRGunProducer.h"
 #include "IOMC/ParticleGuns/interface/RandomXiThetaGunProducer.h"
+#include "IOMC/ParticleGuns/interface/FlatEtaRangeGunProducer.h"
 // particle gun prototypes
 //
 
@@ -78,3 +79,5 @@ using edm::CloseByFlatDeltaRGunProducer;
 DEFINE_FWK_MODULE(CloseByFlatDeltaRGunProducer);
 using edm::RandomXiThetaGunProducer;
 DEFINE_FWK_MODULE(RandomXiThetaGunProducer);
+using edm::FlatEtaRangeGunProducer;
+DEFINE_FWK_MODULE(FlatEtaRangeGunProducer);
