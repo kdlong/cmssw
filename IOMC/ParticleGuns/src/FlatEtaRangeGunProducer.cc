@@ -51,7 +51,7 @@ edm::FlatEtaRangeGunProducer::FlatEtaRangeGunProducer(const edm::ParameterSet& p
       etaMax_(params.getParameter<double>("etaMax")),
       phiMin_(params.getParameter<double>("phiMin")),
       phiMax_(params.getParameter<double>("phiMax")),
-      debug_(params.getUntrackedParameter<bool>("debug")),
+      debug_(params.getUntrackedParameter<bool>("debug")) {
   produces<edm::HepMCProduct>("unsmeared");
   produces<GenEventInfoProduct>();
   produces<GenRunInfoProduct, edm::Transition::EndRun>();
