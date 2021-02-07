@@ -46,11 +46,13 @@ namespace gen {
         std::unique_ptr<GenWeightProduct>& product, double weight, std::string name, int weightNum, int groupIndex);
     int findContainingWeightGroup(std::string wgtId, int weightIndex, int previousGroupIndex);
     void setDebug(bool value) { debug_ = value; }
+    void setFailIfWeightMissing(bool value) { failIfWeightMissing_ = value; }
 
   protected:
     // TODO: Make this only print from one thread a la
     // https://github.com/kdlong/cmssw/blob/master/PhysicsTools/NanoAOD/plugins/GenWeightsTableProducer.cc#L1069
     bool debug_ = false;
+    bool failIfWeightMissing_ = false;
     const unsigned int FIRST_PSWEIGHT_ENTRY = 2;
     const unsigned int DEFAULT_PSWEIGHT_LENGTH = 46;
     std::string model_;
@@ -69,7 +71,7 @@ namespace gen {
     void updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight);
     void cleanupOrphanCentralWeight();
     bool splitPdfWeight(ParsedWeight& weight);
-
+    bool splitNNLOPSWeight(ParsedWeight& weight);
     int lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup);
     std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const;

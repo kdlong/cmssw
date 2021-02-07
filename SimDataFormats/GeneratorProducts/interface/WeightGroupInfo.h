@@ -86,6 +86,7 @@ namespace gen {
     bool isWellFormed() const { return isWellFormed_; }
     int weightIndexFromLabel(std::string weightLabel) const;
     std::vector<std::string> weightLabels() const;
+    bool isNNLOPS = false;
 
   protected:
     bool isWellFormed_ = false;

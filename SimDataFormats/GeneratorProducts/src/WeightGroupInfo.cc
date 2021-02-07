@@ -47,17 +47,16 @@ namespace gen {
     // First try ordered search
     size_t orderedEntry = weightEntry - firstId_;
     if (indexInRange(weightEntry) && orderedEntry < idsContained_.size()) {
-      if (wgtId.empty() || idsContained_.at(orderedEntry).id == wgtId) {
+      if (idsContained_.at(orderedEntry).id == wgtId) {
         return orderedEntry;
       }
     }
     // Fall back to search on ID
-    else if (!wgtId.empty()) {
-      auto it = std::find_if(
-          idsContained_.begin(), idsContained_.end(), [wgtId](const WeightMetaInfo& w) { return w.id == wgtId; });
-      if (it != idsContained_.end())
-        return std::distance(idsContained_.begin(), it);
-    }
+    auto it = std::find_if(
+        idsContained_.begin(), idsContained_.end(), [wgtId](const WeightMetaInfo& w) { return w.id == wgtId; });
+    if (it != idsContained_.end())
+      return std::distance(idsContained_.begin(), it);
+
     return -1;
   }
 
