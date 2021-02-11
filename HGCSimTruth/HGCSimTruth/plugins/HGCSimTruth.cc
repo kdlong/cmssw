@@ -262,12 +262,9 @@ void HGCTruthProducer::produce(edm::Event& event, const edm::EventSetup& setup) 
 
   std::vector<size_t> mergedIndices(simClusters.size(), 0);
   for (size_t i = 0; i < groups.size(); i++) {
-      std::cout << i << " paired with ";
       for (auto idx : groups.at(i)) {
           mergedIndices.at(idx) = i;
-          std::cout << idx << " ";
       }
-      std::cout << std::endl;
   }
 
   // do the actual merging
