@@ -4,6 +4,7 @@ from Configuration.Eras.Modifier_run2_miniAOD_80XLegacy_cff import run2_miniAOD_
 from Configuration.Eras.Modifier_run2_nanoAOD_94X2016_cff import run2_nanoAOD_94X2016
 from Configuration.Eras.Modifier_run2_nanoAOD_94XMiniAODv1_cff import run2_nanoAOD_94XMiniAODv1
 from Configuration.Eras.Modifier_run2_nanoAOD_94XMiniAODv2_cff import run2_nanoAOD_94XMiniAODv2
+from Configuration.Eras.Modifier_run2_nanoAOD_LowPU_cff import run2_nanoAOD_LowPU
 from Configuration.Eras.Modifier_run2_nanoAOD_102Xv1_cff import run2_nanoAOD_102Xv1
 from PhysicsTools.NanoAOD.common_cff import *
 import PhysicsTools.PatAlgos.producersLayer1.muonProducer_cfi
@@ -243,7 +244,7 @@ muonExternalVecVarsTable = cms.EDProducer("FlattenedCandValueMapVectorTableProdu
 )
 
 
-for modifier in  run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016, run2_nanoAOD_94XMiniAODv1, run2_nanoAOD_94XMiniAODv2:
+for modifier in  run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016, run2_nanoAOD_94XMiniAODv1, run2_nanoAOD_94XMiniAODv2, run2_nanoAOD_LowPU:
     modifier.toModify(muonTable.variables, puppiIsoId = None, softMva = None)
 
 run2_nanoAOD_102Xv1.toModify(muonTable.variables, puppiIsoId = None)
