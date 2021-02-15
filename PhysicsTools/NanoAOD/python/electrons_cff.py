@@ -309,6 +309,8 @@ run2_nanoAOD_LowPU.toModify(slimmedElectronsWithUserData.userFloats,
     ecalTrkEnergyErrPostCorrNew = cms.InputTag("calibratedPatElectronsLowPU","ecalTrkEnergyErrPostCorr"),
     ecalTrkEnergyPreCorrNew     = cms.InputTag("calibratedPatElectronsLowPU","ecalTrkEnergyPreCorr"),
     ecalTrkEnergyPostCorrNew    = cms.InputTag("calibratedPatElectronsLowPU","ecalTrkEnergyPostCorr"),
+    ecalEnergyPreCorrNew        = cms.InputTag("calibratedPatElectronsLowPU","ecalEnergyPreCorr"),
+    ecalEnergyPostCorrNew       = cms.InputTag("calibratedPatElectronsLowPU","ecalEnergyPostCorr"),
 )
 
 run2_nanoAOD_102Xv1.toModify(slimmedElectronsWithUserData.userFloats,
@@ -463,6 +465,11 @@ for modifier in run2_egamma_2017,run2_egamma_2018,run2_nanoAOD_94XMiniAODv1,run2
         energyErr = Var("userFloat('ecalTrkEnergyErrPostCorrNew')", float, precision=6, doc="energy error of the cluster-track combination"),
         eCorr = Var("userFloat('ecalTrkEnergyPostCorrNew')/userFloat('ecalTrkEnergyPreCorrNew')", float, doc="ratio of the calibrated energy/miniaod energy"),
         scEtOverPt = Var("(superCluster().energy()/(pt*userFloat('ecalTrkEnergyPostCorrNew')/userFloat('ecalTrkEnergyPreCorrNew')*cosh(superCluster().eta())))-1",float,doc="(supercluster transverse energy)/pt-1",precision=8),
+)
+
+run2_nanoAOD_LowPU.toModify(electronTable.variables,
+    ecalCorr = Var("userFloat('ecalEnergyPostCorrNew')/userFloat('ecalEnergyPreCorrNew')",float, doc="ratio of the calibrated ecal energy / miniaod ecal energy"),
+    pfIso03_all = Var("userFloat('PFIsoAll')",float,doc="PF isolation dR=0.3, total (with rho*EA PU corrections)"),
 )
 
 # scale and smearing only when available
