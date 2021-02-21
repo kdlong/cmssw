@@ -1,17 +1,17 @@
 from __future__ import print_function
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import *
-from hgcSimHits_cff import *
-from hgcSimTracks_cff import *
-from trackSimHits_cff import *
-from hgcRecHits_cff import *
-from simClusters_cff import *
-from caloParticles_cff import *
-from trackingParticles_cff import *
-from tracks_cff import *
-from genparticles_cff import genParticleTable
-from genVertex_cff import *
-from pfCands_cff import *
+from PhysicsTools.NanoAOD.genparticles_cff import genParticleTable
+from PhysicsTools.NanoAOD.genVertex_cff import *
+from DPGAnalysis.HGCalNanoAOD.hgcSimHits_cff import *
+from DPGAnalysis.HGCalNanoAOD.hgcSimTracks_cff import *
+from DPGAnalysis.HGCalNanoAOD.hgcRecHits_cff import *
+from DPGAnalysis.HGCalNanoAOD.simClusters_cff import *
+from DPGAnalysis.HGCalNanoAOD.caloParticles_cff import *
+from DPGAnalysis.TrackNanoAOD.trackSimHits_cff import *
+from DPGAnalysis.TrackNanoAOD.trackingParticles_cff import *
+from DPGAnalysis.TrackNanoAOD.tracks_cff import *
+from DPGAnalysis.PFNanoAOD.pfCands_cff import *
 
 nanoMetadata = cms.EDProducer("UniqueStringProducer",
     strings = cms.PSet(
