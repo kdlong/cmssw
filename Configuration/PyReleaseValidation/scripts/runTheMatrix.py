@@ -76,7 +76,8 @@ if __name__ == '__main__':
                      158.01, #reMiniAOD of 2018 HI MC with pp-like reco
                      312.0, #2021/Run3 HI MC Pyquen_ZeemumuJets_pt10 with pp-like reco
                      1306.0, #SingleMu Pt1 UP15
-                     1325.7, #test NanoAOD from existing MINI
+                     1325.81, #test NanoAOD from existing MINI UL 106Xv1
+                     136.8523, #test NanoAOD from existing reMINI UL 106Xv2
                      1330, #Run2 MC Zmm
                      135.4, #Run 2 Zee ttbar
                      10042.0, #2017 ZMM
@@ -85,7 +86,6 @@ if __name__ == '__main__':
                      10824.0, #2018 ttbar
                      11624.911, #2021 DD4hep ttbar
                      11634.0, #2021 ttbar
-                     11642.911, #2021 DD4hep Zmm
                      12434.0, #2023 ttbar
                      23234.0, #2026D49 ttbar (HLT TDR baseline w/ HGCal v11)
                      23434.999, #2026D49 ttbar premixing stage1+stage2, PU50
