@@ -203,8 +203,10 @@ def nanoAOD_recalibrateMETs(process,isData):
                                      ResponseTune_Graph=nanoAOD_DeepMET_switch.ResponseTune_Graph)
         # modify the graph for the low PU era
         run2_nanoAOD_LowPU.toModify(process.deepMETsResolutionTune, graph_path='PhysicsTools/NanoAOD/data/deepmetmodel/deepmet_lowPU.pb')
+        run2_nanoAOD_LowPU.toModify(process.deepMETsResponseTune, graph_path='PhysicsTools/NanoAOD/data/deepmetmodel/deepmet_lowPU_Resp.pb')
         # no leptons in the training. so remove leptons from the dnn input
         run2_nanoAOD_LowPU.toModify(process.deepMETsResolutionTune, ignore_leptons=cms.bool(True))
+        run2_nanoAOD_LowPU.toModify(process.deepMETsResponseTune, ignore_leptons=cms.bool(True))
 
     # if included in Nano, and not computed in the fly, then it should be extracted from minAOD
     extractDeepMETs = nanoAOD_DeepMET_switch.nanoAOD_addDeepMET_switch and not nanoAOD_DeepMET_switch.nanoAOD_produceDeepMET_switch
