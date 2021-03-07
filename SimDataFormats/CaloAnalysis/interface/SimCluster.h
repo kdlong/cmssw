@@ -69,9 +69,11 @@ public:
    * SimTracks from different crossings in the SimCluster. */
   EncodedEventId eventId() const { return event_; }
 
+  void merge();
+
   uint64_t particleId() const { return particleId_; }
 
-  // Setters for G4 and reco::GenParticle
+  // Setters for G4 and reco::GenParticle,2
   void addGenParticle(const reco::GenParticleRef &ref) { genParticles_.push_back(ref); }
   void addG4Track(const SimTrack &t) { g4Tracks_.push_back(t); }
   /// iterators
@@ -240,7 +242,11 @@ public:
 
   const std::vector<math::XYZTLorentzVectorF> &subImpactPoints() const { return subImpacts_; }
   void setSubImpactPoints(const std::vector<math::XYZTLorentzVectorF> &p) { subImpacts_ = p; }
+ 
+  void setPdgId(int id) { pdgId_ = id; }
 
+  SimCluster operator+(const SimCluster&);
+  SimCluster& operator+=(const SimCluster&);
 private:
   uint64_t nsimhits_;
   EncodedEventId event_;

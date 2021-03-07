@@ -56,6 +56,23 @@ SimCluster::SimCluster(const std::vector<SimTrack> &simtrks, int pdgId) {
   pdgId_ = pdgId;
 }
 
+SimCluster SimCluster::operator+(const SimCluster& toAdd) {
+	SimCluster orig = *this;
+	return orig += toAdd;
+}
+
+SimCluster& SimCluster::operator+=(const SimCluster& toMerge) {
+    for (auto& track : toMerge.g4Tracks())
+        this->addG4Track(track);
+
+    auto& mergeMom = toMerge.impactMomentum();
+    //float newE = impactMomentum_.energy() + mergeMom.energy();
+    //impactPoint_ = (impactPoint*impactMomentum_.energy() + mergeMom.energy()*toMerge.impactPoint()
+
+    this->impactMomentum_ += mergeMom;
+    return *this;
+}
+
 SimCluster::~SimCluster() {}
 
 std::ostream &operator<<(std::ostream &s, SimCluster const &tp) {
