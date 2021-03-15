@@ -65,9 +65,12 @@ SimCluster& SimCluster::operator+=(const SimCluster& toMerge) {
     for (auto& track : toMerge.g4Tracks())
         this->addG4Track(track);
 
+    for (auto& hit_and_e : toMerge.hits_and_fractions())
+        this->addDuplicateRecHitAndFraction(hit_and_e.first, hit_and_e.second);
+
     auto& mergeMom = toMerge.impactMomentum();
-    //float newE = impactMomentum_.energy() + mergeMom.energy();
-    //impactPoint_ = (impactPoint*impactMomentum_.energy() + mergeMom.energy()*toMerge.impactPoint()
+    float sumE = impactMomentum_.energy() + mergeMom.energy();
+    impactPoint_ = (impactPoint_*impactMomentum_.energy() + mergeMom.energy()*toMerge.impactPoint())/sumE;
 
     this->impactMomentum_ += mergeMom;
     return *this;
