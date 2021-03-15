@@ -27,7 +27,7 @@ hgcEERecHitsToSimClusterTable = cms.EDProducer("CaloRecHitToSimClusterIndexTable
     src = hgcEERecHitsTable.src,
     objName = hgcEERecHitsTable.name,
     branchName = cms.string("SimCluster"),
-    objMap = cms.InputTag("hgcRecHitsToSimClusters:HGCEERecHitsToSimClus"),
+    objMap = cms.InputTag("hgcRecHitsToSimClusters:HGCEERecHitsToBestSimClus"),
     docString = cms.string("SimCluster responsible for most sim energy in RecHit DetId")
 )
 
@@ -64,7 +64,7 @@ hgcHEfrontRecHitsTable.name = "RecHitHGCHEF"
 hgcHEfrontRecHitsToSimClusterTable = hgcEERecHitsToSimClusterTable.clone()
 hgcHEfrontRecHitsToSimClusterTable.src = hgcHEfrontRecHitsTable.src
 hgcHEfrontRecHitsToSimClusterTable.objName = hgcHEfrontRecHitsTable.name
-hgcHEfrontRecHitsToSimClusterTable.objMap = "hgcRecHitsToSimClusters:HGCHEFRecHitsToSimClus"
+hgcHEfrontRecHitsToSimClusterTable.objMap = "hgcRecHitsToSimClusters:HGCHEFRecHitsToBestSimClus"
 
 hgcHEfrontRecHitsToPFCandTable = hgcEERecHitsToPFCandTable.clone()
 hgcHEfrontRecHitsToPFCandTable.src = hgcHEfrontRecHitsTable.src
@@ -78,7 +78,7 @@ hgcHEbackRecHitsTable.name = "RecHitHGCHEB"
 hgcHEbackRecHitsToSimClusterTable = hgcEERecHitsToSimClusterTable.clone()
 hgcHEbackRecHitsToSimClusterTable.src = hgcHEbackRecHitsTable.src
 hgcHEbackRecHitsToSimClusterTable.objName = hgcHEbackRecHitsTable.name
-hgcHEbackRecHitsToSimClusterTable.objMap = "hgcRecHitsToSimClusters:HGCHEBRecHitsToSimClus"
+hgcHEbackRecHitsToSimClusterTable.objMap = "hgcRecHitsToSimClusters:HGCHEBRecHitsToBestSimClus"
 
 hgcHEbackRecHitsToPFCandTable = hgcEERecHitsToPFCandTable.clone()
 hgcHEbackRecHitsToPFCandTable.src = hgcHEbackRecHitsTable.src

@@ -26,6 +26,51 @@ SimCluster::SimCluster(EncodedEventId eventID, uint32_t particleID) {
   particleId_ = particleID;
 }
 
+SimCluster::SimCluster(const std::vector<SimTrack> &simtrks, int pdgId) {
+  if (simtrks.size() > 0) {
+    double sumPx = 0.;
+    double sumPy = 0.;
+    double sumPz = 0.;
+    double sumE = 0.;
+
+    for (const SimTrack &t : simtrks) {
+      addG4Track(t);
+      sumPx += t.momentum().px();
+      sumPy += t.momentum().py();
+      sumPz += t.momentum().pz();
+      sumE += t.momentum().E();
+    }
+
+    theMomentum_.SetPxPyPzE(sumPx, sumPy, sumPz, sumE);
+
+    // set event and particle ID (!= pdgID) from the first track for consistency
+    event_ = simtrks[0].eventId();
+    particleId_ = simtrks[0].trackId();
+  }
+
+  pdgId_ = pdgId;
+}
+
+SimCluster SimCluster::operator+(const SimCluster& toAdd) {
+	SimCluster orig = *this;
+	return orig += toAdd;
+}
+
+SimCluster& SimCluster::operator+=(const SimCluster& toMerge) {
+    for (auto& track : toMerge.g4Tracks())
+        this->addG4Track(track);
+
+    for (auto& hit_and_e : toMerge.hits_and_fractions())
+        this->addDuplicateRecHitAndFraction(hit_and_e.first, hit_and_e.second);
+
+    auto& mergeMom = toMerge.impactMomentum();
+    float sumE = impactMomentum_.energy() + mergeMom.energy();
+    impactPoint_ = (impactPoint_*impactMomentum_.energy() + mergeMom.energy()*toMerge.impactPoint())/sumE;
+
+    this->impactMomentum_ += mergeMom;
+    return *this;
+}
+
 SimCluster::~SimCluster() {}
 
 std::ostream &operator<<(std::ostream &s, SimCluster const &tp) {

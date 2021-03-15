@@ -22,4 +22,23 @@
   <class name="SimClusterRefVector"/>
   <class name="SimClusterRefProd"/>
   <class name="SimClusterContainer"/>
+  <class name="edm::Wrapper<SimClusterHistory>"/>
+  <class name="SimClusterHistory"/>
+  <class name="edm::Wrapper<std::vector<SimClusterHistory>>"/>
+  <class name="std::vector<SimClusterHistory>"/>
+  <class name="edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,float,unsigned int> >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,float,unsigned int> >>"/>
+  <class name="edm::AssociationMap<edm::OneToMany<std::vector<TrackingParticle>,std::vector<SimCluster>,unsigned int> >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToMany<std::vector<TrackingParticle>,std::vector<SimCluster>,unsigned int> >>"/>
+  <class name="edm::helpers::KeyVal<edm::RefProd<vector<TrackingParticle> >,edm::RefProd<vector<SimCluster> > >"/>
+
+  <class name="edm::helpers::KeyVal<edm::RefProd<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> > >,edm::RefProd<vector<SimCluster> > >"/>
+  <class name="edm::AssociationMap<edm::OneToManyWithQuality<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<SimCluster>,float,unsigned int> >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQuality<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<SimCluster>,float,unsigned int> > >"/>
 </lcgdict>
