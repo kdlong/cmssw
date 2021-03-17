@@ -55,4 +55,7 @@
 
   <class name="edm::helpers::KeyVal<edm::RefProd<vector<SimCluster> >,edm::RefProd<vector<reco::CaloCluster> > >" />
   <class name="edm::helpers::KeyVal<edm::RefProd<vector<reco::CaloCluster> >,edm::RefProd<vector<SimCluster> > >" />
+
+  <class name="edm::Association<std::vector<reco::CaloCluster> >"/>
+  <class name="edm::Wrapper<edm::Association<std::vector<reco::CaloCluster> > >"/>
 </lcgdict>

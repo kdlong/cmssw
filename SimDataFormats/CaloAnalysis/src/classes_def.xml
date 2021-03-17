@@ -41,4 +41,10 @@
     <field name="transientMap_" transient="true"/>
   </class>
   <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQuality<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<SimCluster>,float,unsigned int> > >"/>
+
+  <class name="edm::helpers::KeyVal<edm::RefProd<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> > >,edm::RefProd<vector<reco::CaloCluster> > >"/>
+  <class name="edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<reco::CaloCluster>,float,unsigned int> >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<reco::CaloCluster>,float,unsigned int> > >"/>
 </lcgdict>

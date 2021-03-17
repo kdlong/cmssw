@@ -57,6 +57,22 @@ hgcEERecHitsToPFCandTable = cms.EDProducer("CaloRecHitToPFCandIndexTableProducer
     docString = cms.string("PFCand with most associated energy in RecHit DetId")
 )
 
+hgcRecHitsToLayerClusters = cms.EDProducer("RecHitToLayerClusterAssociationProducer",
+    caloRecHits = cms.VInputTag("HGCalRecHit:HGCEERecHits",
+        "HGCalRecHit:HGCHEFRecHits", "HGCalRecHit:HGCHEBRecHits",
+    ),
+    layerClusters = cms.InputTag("hgcalLayerClusters"),
+)
+
+hgcEERecHitsToLayerClusterTable = cms.EDProducer("HGCRecHitToBestLayerClusterIndexTableProducer",
+    cut = hgcEERecHitsTable.cut,
+    src = hgcEERecHitsTable.src,
+    objName = hgcEERecHitsTable.name,
+    branchName = cms.string("LayerCluster"),
+    objMap = cms.InputTag("hgcRecHitsToLayerClusters:HGCEERecHitsToLayerCluster"),
+    docString = cms.string("LayerCluster assigned largest RecHit fraction")
+)
+
 hgcHEfrontRecHitsTable = hgcEERecHitsTable.clone()
 hgcHEfrontRecHitsTable.src = "HGCalRecHit:HGCHEFRecHits"
 hgcHEfrontRecHitsTable.name = "RecHitHGCHEF"
@@ -105,6 +121,8 @@ hgcRecHitsSequence = cms.Sequence(hgcEERecHitsTable+hgcHEbackRecHitsTable+hgcHEf
                 +simClusterRecEnergyTable 
                 +hgcRecHitsToPFCands
                 +hgcEERecHitsToPFCandTable+hgcHEfrontRecHitsToPFCandTable+hgcHEbackRecHitsToPFCandTable
+                +hgcRecHitsToLayerClusters 
+                +hgcEERecHitsToLayerClusterTable
                 +hgcEERecHitsPositionTable
                 +hgcHEfrontRecHitsPositionTable
                 +hgcHEbackRecHitsPositionTable
