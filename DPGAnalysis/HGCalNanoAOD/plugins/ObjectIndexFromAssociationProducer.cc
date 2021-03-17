@@ -7,6 +7,8 @@
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "SimDataFormats/CaloHit/interface/PCaloHitContainer.h"
 #include "DataFormats/CaloRecHit/interface/CaloRecHit.h"
+#include "DataFormats/CaloRecHit/interface/CaloCluster.h"
+#include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -23,9 +25,12 @@ typedef ObjectIndexFromAssociationTableProducer<SimClusterCollection, CaloPartic
     SimClusterToCaloParticleIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<SimClusterCollection, SimClusterCollection>
     SimClusterToSimClusterIndexTableProducer;
+typedef ObjectIndexFromAssociationTableProducer<HGCRecHitCollection, std::vector<reco::CaloCluster>>
+    HGCRecHitToLayerClusterIndexTableProducer;
 DEFINE_FWK_MODULE(SimTrackToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(CaloHitToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(SimClusterToCaloParticleIndexTableProducer);
 DEFINE_FWK_MODULE(CaloRecHitToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(SimClusterToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(CaloRecHitToPFCandIndexTableProducer);
+DEFINE_FWK_MODULE(HGCRecHitToLayerClusterIndexTableProducer);

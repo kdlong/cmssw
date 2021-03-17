@@ -7,6 +7,7 @@ from DPGAnalysis.HGCalNanoAOD.hgcSimHits_cff import *
 from DPGAnalysis.HGCalNanoAOD.hgcSimTracks_cff import *
 from DPGAnalysis.HGCalNanoAOD.hgcRecHits_cff import *
 from DPGAnalysis.HGCalNanoAOD.simClusters_cff import *
+from DPGAnalysis.HGCalNanoAOD.layerClusters_cff import *
 from DPGAnalysis.HGCalNanoAOD.caloParticles_cff import *
 from DPGAnalysis.TrackNanoAOD.trackSimHits_cff import *
 from DPGAnalysis.TrackNanoAOD.trackingParticles_cff import *
@@ -25,6 +26,7 @@ genParticleTable.variables = cms.PSet(genParticleTable.variables,
 
 nanoHGCMLSequence = cms.Sequence(nanoMetadata+genVertexTables+genParticleTable+
         trackingParticleTable+caloParticleTable+simClusterTables+
+        layerClusterTables+
         simTrackTables+hgcSimHitsSequence+trackerSimHitTables)
 
 def customizeReco(process):

@@ -51,23 +51,17 @@ private:
 
   std::vector<edm::InputTag> caloRechitTags_;
   std::vector<edm::EDGetTokenT<edm::PCaloHitContainer>> caloSimhitCollectionTokens_;
-  //std::vector<edm::EDGetTokenT<std::vector<PSimHit>> trackSimhitCollectionTokens_;
   std::vector<edm::EDGetTokenT<edm::View<CaloRecHit>>> caloRechitCollectionTokens_;
   edm::EDGetTokenT<reco::PFCandidateCollection> pfCollectionToken_;
 };
 
 RecHitToPFCandAssociationProducer::RecHitToPFCandAssociationProducer(const edm::ParameterSet& pset)
-    :  //caloSimhitCollectionTokens_(edm::vector_transform(pset.getParameter<std::vector<edm::InputTag>>("caloSimHits"),
-      //  [this](const edm::InputTag& tag) {return mayConsume<edm::PCaloHitContainer>(tag); })),
-      //trackSimhitCollectionTokens_(edm::vector_transform(pset.getParameter<edm::InputTag>("trackSimHits"),
-      //    [this](const edm::InputTag& tag) {return mayConsume<std::vector<PSimHit>(tag); }),
-      caloRechitTags_(pset.getParameter<std::vector<edm::InputTag>>("caloRecHits")),
+    : caloRechitTags_(pset.getParameter<std::vector<edm::InputTag>>("caloRecHits")),
       caloRechitCollectionTokens_(edm::vector_transform(
-          caloRechitTags_, [this](const edm::InputTag& tag) { return mayConsume<edm::View<CaloRecHit>>(tag); })),
+          caloRechitTags_, [this](const edm::InputTag& tag) { return consumes<edm::View<CaloRecHit>>(tag); })),
       pfCollectionToken_(consumes<reco::PFCandidateCollection>(pset.getParameter<edm::InputTag>("pfCands"))) {
   for (auto& tag : caloRechitTags_) {
     const std::string& label = tag.instance();
-    //TODO: Can this be an edm::View?
     produces<edm::Association<reco::PFCandidateCollection>>(label + "ToPFCand");
   }
 }
