@@ -17,20 +17,14 @@ typedef ObjectIndexFromAssociationTableProducer<edm::SimTrackContainer, SimClust
     SimTrackToSimClusterIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<edm::PCaloHitContainer, SimClusterCollection>
     CaloHitToSimClusterIndexTableProducer;
-typedef ObjectIndexFromAssociationTableProducer<edm::View<CaloRecHit>, SimClusterCollection>
-    CaloRecHitToSimClusterIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<edm::View<CaloRecHit>, reco::PFCandidateCollection>
     CaloRecHitToPFCandIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<SimClusterCollection, CaloParticleCollection>
     SimClusterToCaloParticleIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<SimClusterCollection, SimClusterCollection>
     SimClusterToSimClusterIndexTableProducer;
-typedef ObjectIndexFromAssociationTableProducer<HGCRecHitCollection, std::vector<reco::CaloCluster>>
-    HGCRecHitToLayerClusterIndexTableProducer;
 DEFINE_FWK_MODULE(SimTrackToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(CaloHitToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(SimClusterToCaloParticleIndexTableProducer);
-DEFINE_FWK_MODULE(CaloRecHitToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(SimClusterToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(CaloRecHitToPFCandIndexTableProducer);
-DEFINE_FWK_MODULE(HGCRecHitToLayerClusterIndexTableProducer);

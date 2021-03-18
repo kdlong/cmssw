@@ -22,7 +22,8 @@ public:
         objMap_(consumes<edm::AssociationMap<edm::OneToManyWithQualityGeneric<T, M, float>>>(
             params.getParameter<edm::InputTag>("objMap"))),
         cut_(params.getParameter<std::string>("cut"), true) {
-    produces<nanoaod::FlatTable>();
+    produces<nanoaod::FlatTable>("match");
+    produces<nanoaod::FlatTable>("count");
   }
 
   ~ObjectIndexFromOneToManyQualAssociationTableProducer() override {}
@@ -44,30 +45,30 @@ public:
       float quality = 0.0;
       int nmatch = 0;
       if (cut_(*tk)) {
-        // As far as I can tell try/catch is the only way to do this
         if (assoc->numberOfAssociations(tk)) {
             auto& matchWithQual = (*assoc)[tk];
-            // TODO: For now, just take the first
-            auto match = matchWithQual.front();
-            bool isvalid = match.first.isNonnull();
-            key = isvalid ? match.first.key() : -1;
-            //std::cout << "qual is " << match.second << std::endl;
-            quality = isvalid ? match.second : 0.0;
+            for (auto& match : matchWithQual) {
+                bool isvalid = match.first.isNonnull();
+                key = isvalid ? match.first.key() : -1;
+                quality = isvalid ? match.second : 0.0;
+                keys.emplace_back(key);
+                qualities.emplace_back(quality);
+            }
             nmatch = matchWithQual.size();
         }
         
         nMatches.emplace_back(nmatch);
-        keys.emplace_back(key);
-        qualities.emplace_back(quality);
       }
     }
 
-    auto tab = std::make_unique<nanoaod::FlatTable>(keys.size(), objName_, false, true);
-    tab->addColumn<int>(branchName_ + "BestIdx", keys, doc_);
-    tab->addColumn<int>(branchName_ + "BestMatchQual", qualities, doc_);
-    tab->addColumn<int>(branchName_ + "Matches", nMatches, doc_);
+    auto tabNum = std::make_unique<nanoaod::FlatTable>(nMatches.size(), objName_, false, true);
+    tabNum->addColumn<int>(branchName_ + "NumMatch", nMatches, doc_);
+    auto tabMatches = std::make_unique<nanoaod::FlatTable>(keys.size(), objName_+"_"+branchName_, false, false);
+    tabMatches->addColumn<int>("MatchIdx", keys, doc_);
+    tabMatches->addColumn<int>("MatchQual", qualities, doc_);
 
-    iEvent.put(std::move(tab));
+    iEvent.put(std::move(tabMatches), "match");
+    iEvent.put(std::move(tabNum), "count");
   }
 
 protected:

@@ -20,7 +20,7 @@
 
 #include "DataFormats/Common/interface/Association.h"
 #include "DataFormats/Common/interface/AssociationMap.h"
-#include "DataFormats/Common/interface/OneToManyWithQuality.h"
+#include "DataFormats/Common/interface/OneToManyWithQualityGeneric.h"
 #include "DataFormats/Common/interface/RefToBase.h"
 
 
@@ -32,7 +32,7 @@
 // class decleration
 //
 typedef std::pair<size_t, float> IdxAndFraction;
-typedef edm::AssociationMap<edm::OneToManyWithQuality<
+typedef edm::AssociationMap<edm::OneToManyWithQualityGeneric<
     HGCRecHitCollection, SimClusterCollection, float>> RecHitToSimCluster;
 
 class SimClusterRecHitAssociationProducer : public edm::stream::EDProducer<> {
