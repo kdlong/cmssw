@@ -20,7 +20,7 @@ layerClusterTable = cms.EDProducer("SimpleCaloClusterFlatTableProducer",
     )
 )
 
-layerClusterToSimClusterTable = cms.EDProducer("LayerClusterToBestSimClusterIndexTableProducer",
+layerClusterToSimClusterTable = cms.EDProducer("LayerClusterToSimClusterIndexTableProducer",
     cut = layerClusterTable.cut,
     src = layerClusterTable.src,
     objName = layerClusterTable.name,

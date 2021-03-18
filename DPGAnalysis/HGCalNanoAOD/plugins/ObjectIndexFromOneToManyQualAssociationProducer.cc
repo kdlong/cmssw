@@ -7,9 +7,12 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 typedef ObjectIndexFromOneToManyQualAssociationTableProducer<std::vector<reco::CaloCluster>, SimClusterCollection>
-    LayerClusterToBestSimClusterIndexTableProducer;
+    LayerClusterToSimClusterIndexTableProducer;
+typedef ObjectIndexFromOneToManyQualAssociationTableProducer<HGCRecHitCollection, SimClusterCollection>
+    CaloRecHitToSimClusterIndexTableProducer;
 
 typedef ObjectIndexFromOneToManyQualAssociationTableProducer<HGCRecHitCollection, std::vector<reco::CaloCluster>>
-    HGCRecHitToBestLayerClusterIndexTableProducer;
-DEFINE_FWK_MODULE(LayerClusterToBestSimClusterIndexTableProducer);
-DEFINE_FWK_MODULE(HGCRecHitToBestLayerClusterIndexTableProducer);
+    HGCRecHitToLayerClusterIndexTableProducer;
+DEFINE_FWK_MODULE(LayerClusterToSimClusterIndexTableProducer);
+DEFINE_FWK_MODULE(HGCRecHitToLayerClusterIndexTableProducer);
+DEFINE_FWK_MODULE(CaloRecHitToSimClusterIndexTableProducer);
