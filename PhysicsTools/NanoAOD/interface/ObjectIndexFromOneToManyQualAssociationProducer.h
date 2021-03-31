@@ -41,21 +41,18 @@ public:
     std::vector<int> nMatches;
     for (unsigned int i = 0; i < objs->size(); ++i) {
       edm::Ref<T> tk(objs, i);
-      int key = -1;
-      float quality = 0.0;
       int nmatch = 0;
       if (cut_(*tk)) {
         if (assoc->numberOfAssociations(tk)) {
             auto& matchWithQual = (*assoc)[tk];
             for (auto& match : matchWithQual) {
-                bool isvalid = match.first.isNonnull();
-                key = isvalid ? match.first.key() : -1;
-                quality = isvalid ? match.second : 0.0;
-                keys.emplace_back(key);
-                qualities.emplace_back(quality);
+                if (match.first.isNonnull()) {
+                    keys.emplace_back(match.first.key());
+                    keys.emplace_back(match.second);
+                }
             }
             nmatch = matchWithQual.size();
-        }
+        } 
         
         nMatches.emplace_back(nmatch);
       }
