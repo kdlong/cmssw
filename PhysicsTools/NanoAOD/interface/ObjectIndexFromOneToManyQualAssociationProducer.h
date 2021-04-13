@@ -48,7 +48,7 @@ public:
             for (auto& match : matchWithQual) {
                 if (match.first.isNonnull()) {
                     keys.emplace_back(match.first.key());
-                    keys.emplace_back(match.second);
+                    qualities.emplace_back(match.second);
                 }
             }
             nmatch = matchWithQual.size();
