@@ -72,6 +72,7 @@ void SimClusterRecHitAssociationProducer::produce(edm::Event& iEvent, const edm:
 
   for (size_t s = 0; s < scCollection->size(); s++) {
     const auto& sc = scCollection->at(s);
+    // Need to initialize because not all SimClusters lead to rechits
     (*simClusterToRecEnergy)[s] = 0.;
     for (auto& hf : sc.hits_and_fractions()) {
       // Can have two unique hits with the same detId

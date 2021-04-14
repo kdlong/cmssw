@@ -19,6 +19,8 @@ typedef ObjectIndexFromAssociationTableProducer<edm::PCaloHitContainer, SimClust
     CaloHitToSimClusterIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<edm::View<CaloRecHit>, reco::PFCandidateCollection>
     CaloRecHitToPFCandIndexTableProducer;
+typedef ObjectIndexFromAssociationTableProducer<edm::View<CaloRecHit>, SimClusterCollection>
+    CaloRecHitToBestSimClusterIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<SimClusterCollection, CaloParticleCollection>
     SimClusterToCaloParticleIndexTableProducer;
 typedef ObjectIndexFromAssociationTableProducer<SimClusterCollection, SimClusterCollection>
@@ -28,3 +30,4 @@ DEFINE_FWK_MODULE(CaloHitToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(SimClusterToCaloParticleIndexTableProducer);
 DEFINE_FWK_MODULE(SimClusterToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(CaloRecHitToPFCandIndexTableProducer);
+DEFINE_FWK_MODULE(CaloRecHitToBestSimClusterIndexTableProducer);

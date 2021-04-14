@@ -15,32 +15,6 @@ hgcEERecHitsTable = cms.EDProducer("SimpleCaloRecHitFlatTableProducer",
     )
 )
 
-hgcRecHitsToSimClusters = cms.EDProducer("SimClusterRecHitAssociationProducer",
-    caloRecHits = cms.VInputTag("HGCalRecHit:HGCEERecHits",
-        "HGCalRecHit:HGCHEFRecHits", "HGCalRecHit:HGCHEBRecHits",
-    ),
-    simClusters = cms.InputTag("mix:MergedCaloTruth"),
-)
-
-hgcEERecHitsToSimClusterTable = cms.EDProducer("CaloRecHitToSimClusterIndexTableProducer",
-    cut = hgcEERecHitsTable.cut,
-    src = hgcEERecHitsTable.src,
-    objName = hgcEERecHitsTable.name,
-    branchName = cms.string("SimCluster"),
-    objMap = cms.InputTag("hgcRecHitsToSimClusters:HGCEERecHitsToSimClus"),
-    docString = cms.string("SimCluster responsible for most sim energy in RecHit DetId")
-)
-
-# TODO: Pair with simclusters
-simClusterRecEnergyTable = cms.EDProducer("SimClusterRecEnergyTableProducer",
-    src = cms.InputTag("mix:MergedCaloTruth"),
-    cut = cms.string(""),
-    objName = cms.string("SimCluster"),
-    branchName = cms.string("recEnergy"),
-    valueMap = cms.InputTag("hgcRecHitsToSimClusters"),
-    docString = cms.string("SimCluster deposited reconstructed energy associated to SimCluster")
-)
-
 hgcRecHitsToPFCands = cms.EDProducer("RecHitToPFCandAssociationProducer",
     caloRecHits = cms.VInputTag("HGCalRecHit:HGCEERecHits",
         "HGCalRecHit:HGCHEFRecHits", "HGCalRecHit:HGCHEBRecHits",
@@ -77,11 +51,6 @@ hgcHEfrontRecHitsTable = hgcEERecHitsTable.clone()
 hgcHEfrontRecHitsTable.src = "HGCalRecHit:HGCHEFRecHits"
 hgcHEfrontRecHitsTable.name = "RecHitHGCHEF"
 
-hgcHEfrontRecHitsToSimClusterTable = hgcEERecHitsToSimClusterTable.clone()
-hgcHEfrontRecHitsToSimClusterTable.src = hgcHEfrontRecHitsTable.src
-hgcHEfrontRecHitsToSimClusterTable.objName = hgcHEfrontRecHitsTable.name
-hgcHEfrontRecHitsToSimClusterTable.objMap = "hgcRecHitsToSimClusters:HGCHEFRecHitsToSimClus"
-
 hgcHEfrontRecHitsToPFCandTable = hgcEERecHitsToPFCandTable.clone()
 hgcHEfrontRecHitsToPFCandTable.src = hgcHEfrontRecHitsTable.src
 hgcHEfrontRecHitsToPFCandTable.objName = hgcHEfrontRecHitsTable.name
@@ -95,11 +64,6 @@ hgcHEfrontRecHitsToLayerClusterTable.objMap = "hgcRecHitsToLayerClusters:HGCHEFR
 hgcHEbackRecHitsTable = hgcEERecHitsTable.clone()
 hgcHEbackRecHitsTable.src = "HGCalRecHit:HGCHEBRecHits"
 hgcHEbackRecHitsTable.name = "RecHitHGCHEB"
-
-hgcHEbackRecHitsToSimClusterTable = hgcEERecHitsToSimClusterTable.clone()
-hgcHEbackRecHitsToSimClusterTable.src = hgcHEbackRecHitsTable.src
-hgcHEbackRecHitsToSimClusterTable.objName = hgcHEbackRecHitsTable.name
-hgcHEbackRecHitsToSimClusterTable.objMap = "hgcRecHitsToSimClusters:HGCHEBRecHitsToSimClus"
 
 hgcHEbackRecHitsToPFCandTable = hgcEERecHitsToPFCandTable.clone()
 hgcHEbackRecHitsToPFCandTable.src = hgcHEbackRecHitsTable.src
@@ -127,8 +91,6 @@ hgcHEbackRecHitsPositionTable.name = hgcHEbackRecHitsTable.name
 hgcHEbackRecHitsPositionTable.src = hgcHEbackRecHitsTable.src
 
 hgcRecHitsSequence = cms.Sequence(hgcEERecHitsTable+hgcHEbackRecHitsTable+hgcHEfrontRecHitsTable
-                +hgcRecHitsToSimClusters
-                +simClusterRecEnergyTable 
                 +hgcRecHitsToPFCands
                 +hgcEERecHitsToPFCandTable+hgcHEfrontRecHitsToPFCandTable+hgcHEbackRecHitsToPFCandTable
                 +hgcRecHitsToLayerClusters 
@@ -136,7 +98,4 @@ hgcRecHitsSequence = cms.Sequence(hgcEERecHitsTable+hgcHEbackRecHitsTable+hgcHEf
                 +hgcEERecHitsPositionTable
                 +hgcHEfrontRecHitsPositionTable
                 +hgcHEbackRecHitsPositionTable
-                +hgcEERecHitsToSimClusterTable
-                +hgcHEfrontRecHitsToSimClusterTable
-                +hgcHEbackRecHitsToSimClusterTable
 )

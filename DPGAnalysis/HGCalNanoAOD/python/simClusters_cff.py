@@ -39,8 +39,8 @@ simClusterToCaloPartTable = cms.EDProducer("SimClusterToCaloParticleIndexTablePr
     docString = cms.string("Index of CaloPart containing SimCluster")
 )
 
-#hgcSimTruth = cms.EDProducer("HGCTruthProducer")
-hgcSimTruth = cms.EDProducer("simmerger")
+#hgcSimTruth = cms.EDProducer("simmerger")
+hgcSimTruth = cms.EDProducer("HGCTruthProducer")
 
 simClusterToMergedSCTable = cms.EDProducer("SimClusterToSimClusterIndexTableProducer",
     cut = simClusterTable.cut,
