@@ -6,6 +6,7 @@ from PhysicsTools.NanoAOD.genVertex_cff import *
 from DPGAnalysis.HGCalNanoAOD.hgcSimHits_cff import *
 from DPGAnalysis.HGCalNanoAOD.hgcSimTracks_cff import *
 from DPGAnalysis.HGCalNanoAOD.hgcRecHits_cff import *
+from DPGAnalysis.HGCalNanoAOD.hgcRecHitSimAssociations_cff import *
 from DPGAnalysis.HGCalNanoAOD.simClusters_cff import *
 from DPGAnalysis.HGCalNanoAOD.layerClusters_cff import *
 from DPGAnalysis.HGCalNanoAOD.caloParticles_cff import *
@@ -31,9 +32,10 @@ nanoHGCMLSequence = cms.Sequence(nanoMetadata+genVertexTables+genParticleTable+
 
 def customizeReco(process):
     process.nanoHGCMLSequence.insert(1, hgcRecHitsSequence)
-    process.nanoHGCMLSequence.insert(2, pfCandTable)
-    process.nanoHGCMLSequence.insert(3, pfTICLCandTable)
-    process.nanoHGCMLSequence.insert(4, trackTables)
+    process.nanoHGCMLSequence.insert(2, hgcRecHitSimAssociationSequence)
+    process.nanoHGCMLSequence.insert(3, pfCandTable)
+    process.nanoHGCMLSequence.insert(4, pfTICLCandTable)
+    process.nanoHGCMLSequence.insert(5, trackTables)
     return process
 
 def customizeNoMergedCaloTruth(process):
