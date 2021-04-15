@@ -51,7 +51,7 @@ RecHitToLayerClusterAssociationProducer::RecHitToLayerClusterAssociationProducer
           caloRechitTags_, [this](const edm::InputTag& tag) { return consumes<HGCRecHitCollection>(tag); })),
       layerClusterToken_(consumes<std::vector<reco::CaloCluster>>(pset.getParameter<edm::InputTag>("layerClusters"))) {
   for (auto& tag : caloRechitTags_) {
-    const std::string& label = tag.instance();
+    const std::string& label = !tag.instance().empty() ? tag.instance() : tag.label();
     produces<edm::Association<std::vector<reco::CaloCluster>>>(label + "ToBestLayerCluster");
     produces<RecHitToLayerCluster>(label + "ToLayerCluster");
   }
@@ -77,6 +77,8 @@ void RecHitToLayerClusterAssociationProducer::produce(edm::Event& iEvent, const 
 
   for (size_t i = 0; i < caloRechitCollectionTokens_.size(); i++) {
     std::string label = caloRechitTags_.at(i).instance();
+	if (label.empty())
+		label = caloRechitTags_.at(i).label();
     std::vector<int> rechitIndices;
 
     edm::Handle<HGCRecHitCollection> caloRechitCollection;

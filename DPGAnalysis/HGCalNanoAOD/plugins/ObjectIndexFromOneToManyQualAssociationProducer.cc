@@ -10,9 +10,12 @@ typedef ObjectIndexFromOneToManyQualAssociationTableProducer<std::vector<reco::C
     LayerClusterToSimClusterIndexTableProducer;
 typedef ObjectIndexFromOneToManyQualAssociationTableProducer<HGCRecHitCollection, SimClusterCollection>
     CaloRecHitToSimClusterIndexTableProducer;
-
 typedef ObjectIndexFromOneToManyQualAssociationTableProducer<HGCRecHitCollection, std::vector<reco::CaloCluster>>
     HGCRecHitToLayerClusterIndexTableProducer;
+typedef ObjectIndexFromOneToManyQualAssociationTableProducer<SimClusterCollection, SimClusterCollection>
+    SimClusterToSimClustersIndexTableProducer;
+
 DEFINE_FWK_MODULE(LayerClusterToSimClusterIndexTableProducer);
 DEFINE_FWK_MODULE(HGCRecHitToLayerClusterIndexTableProducer);
 DEFINE_FWK_MODULE(CaloRecHitToSimClusterIndexTableProducer);
+DEFINE_FWK_MODULE(SimClusterToSimClustersIndexTableProducer);

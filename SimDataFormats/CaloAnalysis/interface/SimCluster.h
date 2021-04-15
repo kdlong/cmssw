@@ -240,10 +240,15 @@ public:
   void setImpactMomentum(const math::XYZTLorentzVectorF &mom) { impactMomentum_ = mom; }
   const math::XYZTLorentzVectorF &impactMomentum() const { return impactMomentum_; }
 
+  math::XYZTLorentzVectorF impactMomentumMuOnly() const;
+  math::XYZTLorentzVectorF impactMomentumNoMu() const;
+
   const std::vector<math::XYZTLorentzVectorF> &subImpactPoints() const { return subImpacts_; }
   void setSubImpactPoints(const std::vector<math::XYZTLorentzVectorF> &p) { subImpacts_ = p; }
  
   void setPdgId(int id) { pdgId_ = id; }
+
+  bool isHGCAL() const;
 
   SimCluster operator+(const SimCluster&);
   SimCluster& operator+=(const SimCluster&);

@@ -925,15 +925,11 @@ void CaloTruthAccumulator::assignSimClusterCoordinates(std::unique_ptr<SimCluste
     if (sc.g4Tracks().size()) {
 
       const auto &t = sc.g4Tracks().at(0);
-      const auto mom = t.momentum();
+      const auto mom = t.getMomentumAtBoundary();
+      const auto pos = t.getPositionAtBoundary();
       math::XYZTLorentzVectorF momentum(mom.x(), mom.y(), mom.z(), mom.t());
       math::XYZTLorentzVectorF vertex(0, 0, 10000, 0);
-      if (t.vertIndex() >= (int)vs.size() || t.vertIndex() < 0) {
-        edm::LogWarning("CaloTruthAccumulator") << "no vertex associated to g4Track or vertex could not be found.";
-      } else {
-        const auto &pos = vs.at(t.vertIndex()).position();
-        vertex = math::XYZTLorentzVectorF(pos.x(), pos.y(), pos.z(), pos.t());
-      }
+      vertex = math::XYZTLorentzVectorF(pos.x(), pos.y(), pos.z(), pos.t());
       sc.setImpactPoint(vertex);
       sc.setImpactMomentum(momentum);
 

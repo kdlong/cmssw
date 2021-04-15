@@ -61,7 +61,7 @@ RecHitToPFCandAssociationProducer::RecHitToPFCandAssociationProducer(const edm::
           caloRechitTags_, [this](const edm::InputTag& tag) { return consumes<edm::View<CaloRecHit>>(tag); })),
       pfCollectionToken_(consumes<reco::PFCandidateCollection>(pset.getParameter<edm::InputTag>("pfCands"))) {
   for (auto& tag : caloRechitTags_) {
-    const std::string& label = tag.instance();
+    const std::string& label = !tag.instance().empty() ? tag.instance() : tag.label();
     produces<edm::Association<reco::PFCandidateCollection>>(label + "ToPFCand");
   }
 }
@@ -103,6 +103,8 @@ void RecHitToPFCandAssociationProducer::produce(edm::Event& iEvent, const edm::E
 
   for (size_t i = 0; i < caloRechitCollectionTokens_.size(); i++) {
     std::string label = caloRechitTags_.at(i).instance();
+	if (label.empty())
+		label = caloRechitTags_.at(i).label();
     std::vector<size_t> rechitIndices;
 
     edm::Handle<edm::View<CaloRecHit>> caloRechitCollection;

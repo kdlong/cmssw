@@ -54,7 +54,7 @@ SimClusterRecHitAssociationProducer::SimClusterRecHitAssociationProducer(const e
           caloRechitTags_, [this](const edm::InputTag& tag) { return consumes<HGCRecHitCollection>(tag); })),
       scCollectionToken_(consumes<SimClusterCollection>(pset.getParameter<edm::InputTag>("simClusters"))) {
   for (auto& tag : caloRechitTags_) {
-    const std::string& label = tag.instance();
+    const std::string& label = !tag.instance().empty() ? tag.instance() : tag.label();
     produces<edm::Association<SimClusterCollection>>(label + "ToBestSimClus");
     produces<RecHitToSimCluster>(label + "ToSimClus");
   }
@@ -84,6 +84,8 @@ void SimClusterRecHitAssociationProducer::produce(edm::Event& iEvent, const edm:
 
   for (size_t i = 0; i < caloRechitCollectionTokens_.size(); i++) {
     std::string label = caloRechitTags_.at(i).instance();
+	if (label.empty())
+		label = caloRechitTags_.at(i).label();
     std::vector<size_t> rechitIndices;
 
     edm::Handle<HGCRecHitCollection> caloRechitCollection;

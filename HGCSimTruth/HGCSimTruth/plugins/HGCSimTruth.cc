@@ -54,6 +54,8 @@
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 
 #include "HGCSimTruth/HGCSimTruth/interface/SimClusterTools.h"
+#include "DataFormats/Common/interface/AssociationMap.h"
+#include "DataFormats/Common/interface/OneToManyWithQualityGeneric.h"
 
 #include "TMath.h"
 #include "TCanvas.h"
@@ -106,6 +108,8 @@ struct ChainIndex {
 };
 
 typedef std::pair<size_t, float> IdxAndFraction;
+typedef edm::AssociationMap<edm::OneToManyWithQualityGeneric<
+    SimClusterCollection, SimClusterCollection, float>> SimClusterToSimClusters;
 
 class HGCTruthProducer : public edm::stream::EDProducer<> {
 public:
@@ -215,6 +219,7 @@ HGCTruthProducer::HGCTruthProducer(const edm::ParameterSet& params)
   //  produces<edm::Association<SimClusterCollection>>(label+"ToSimClus");
   //}
   produces<edm::Association<SimClusterCollection>>();
+  produces<SimClusterToSimClusters>();
 }
 
 HGCTruthProducer::~HGCTruthProducer() {}
@@ -260,14 +265,6 @@ void HGCTruthProducer::produce(edm::Event& event, const edm::EventSetup& setup) 
   std::vector<std::vector<int>> groups;
   determineSimClusterGroups(simClusters, simClusterHistory, groups, radii, vectors);
 
-  std::vector<size_t> mergedIndices(simClusters.size(), 0);
-  for (size_t i = 0; i < groups.size(); i++) {
-      for (auto idx : groups.at(i)) {
-          mergedIndices.at(idx) = i;
-      }
-  }
-
-  // do the actual merging
   mergeSimClusters(simClusters, simClusterHistory, groups, mergedSimClusters, allrechits, detid_to_rh_index);
 
   std::cout << "initial simclusters " << simClusters.size() << " merged: " << mergedSimClusters->size()
@@ -278,6 +275,22 @@ void HGCTruthProducer::produce(edm::Event& event, const edm::EventSetup& setup) 
   event.put(std::move(radii));
   event.put(std::move(vectors));
 
+  auto assocMap = std::make_unique<SimClusterToSimClusters>(mergedSCHandle, simClusterHandle);
+
+  std::vector<size_t> mergedIndices(simClusters.size(), 0);
+  for (size_t i = 0; i < groups.size(); i++) {
+      SimClusterRef msc(mergedSCHandle, i);
+      float mergedE = msc->impactMomentum().energy();
+      for (auto idx : groups.at(i)) {
+          mergedIndices.at(idx) = i;
+          SimClusterRef sc(simClusterHandle, idx);
+          float scE = sc->impactMomentum().energy();
+          assocMap->insert(msc, std::make_pair(sc, mergedE/scE));
+      }
+  }
+  event.put(std::move(assocMap));
+
+  // do the actual merging
   auto assoc = std::make_unique<edm::Association<SimClusterCollection>>(mergedSCHandle);
   edm::Association<SimClusterCollection>::Filler filler(*assoc);
   filler.insert(simClusterHandle, mergedIndices.begin(), mergedIndices.end());
@@ -632,7 +645,7 @@ void HGCTruthProducer::mergeSimClusters(const SimClusterCollection& simClusters,
     float esum = 0;
     for (const int& iSC : group) {
       // there is currently only one track per sim clusters
-      float E = simClusters[iSC].p4().E();
+      float E = simClusters[iSC].impactMomentum().E();
       esum+=E;
       combinedmomentum += simClusters[iSC].impactMomentum();
       combinedimpact += simClusters[iSC].impactPoint() * E;

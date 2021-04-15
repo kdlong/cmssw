@@ -1,11 +1,17 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import Var,P3Vars
 
-hgcEERecHitsTable = cms.EDProducer("SimpleCaloRecHitFlatTableProducer",
-    src = cms.InputTag("HGCalRecHit:HGCEERecHits"),
+hgcRecHits = cms.EDProducer("HGCRecHitCollectionMerger",
+	src = cms.VInputTag("HGCalRecHit:HGCEERecHits",
+        "HGCalRecHit:HGCHEFRecHits", "HGCalRecHit:HGCHEBRecHits",
+	)	
+)
+
+hgcRecHitsTable = cms.EDProducer("SimpleCaloRecHitFlatTableProducer",
+    src = cms.InputTag("hgcRecHits"),
     cut = cms.string(""), 
-    name = cms.string("RecHitHGCEE"),
-    doc  = cms.string("RecHits in HGCAL Electromagnetic endcap"),
+    name = cms.string("RecHitHGC"),
+    doc  = cms.string("HGCAL RecHits"),
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(
@@ -16,86 +22,45 @@ hgcEERecHitsTable = cms.EDProducer("SimpleCaloRecHitFlatTableProducer",
 )
 
 hgcRecHitsToPFCands = cms.EDProducer("RecHitToPFCandAssociationProducer",
-    caloRecHits = cms.VInputTag("HGCalRecHit:HGCEERecHits",
-        "HGCalRecHit:HGCHEFRecHits", "HGCalRecHit:HGCHEBRecHits",
-    ),
+    caloRecHits = cms.VInputTag("hgcRecHits"),
     pfCands = cms.InputTag("particleFlow"),
 )
 
-hgcEERecHitsToPFCandTable = cms.EDProducer("CaloRecHitToPFCandIndexTableProducer",
-    cut = hgcEERecHitsTable.cut,
-    src = hgcEERecHitsTable.src,
-    objName = hgcEERecHitsTable.name,
+hgcRecHitsToPFCandTable = cms.EDProducer("CaloRecHitToPFCandIndexTableProducer",
+    cut = hgcRecHitsTable.cut,
+    src = hgcRecHitsTable.src,
+    objName = hgcRecHitsTable.name,
     branchName = cms.string("PFCand"),
-    objMap = cms.InputTag("hgcRecHitsToPFCands:HGCEERecHitsToPFCand"),
+    objMap = cms.InputTag("hgcRecHitsToPFCands:hgcRecHitsToPFCand"),
     docString = cms.string("PFCand with most associated energy in RecHit DetId")
 )
 
 hgcRecHitsToLayerClusters = cms.EDProducer("RecHitToLayerClusterAssociationProducer",
-    caloRecHits = cms.VInputTag("HGCalRecHit:HGCEERecHits",
-        "HGCalRecHit:HGCHEFRecHits", "HGCalRecHit:HGCHEBRecHits",
-    ),
+    caloRecHits = cms.VInputTag("hgcRecHits"),
     layerClusters = cms.InputTag("hgcalLayerClusters"),
 )
 
-hgcEERecHitsToLayerClusterTable = cms.EDProducer("HGCRecHitToLayerClusterIndexTableProducer",
-    cut = hgcEERecHitsTable.cut,
-    src = hgcEERecHitsTable.src,
-    objName = hgcEERecHitsTable.name,
+hgcRecHitsToLayerClusterTable = cms.EDProducer("HGCRecHitToLayerClusterIndexTableProducer",
+    cut = hgcRecHitsTable.cut,
+    src = hgcRecHitsTable.src,
+    objName = hgcRecHitsTable.name,
     branchName = cms.string("LayerCluster"),
-    objMap = cms.InputTag("hgcRecHitsToLayerClusters:HGCEERecHitsToLayerCluster"),
+    objMap = cms.InputTag("hgcRecHitsToLayerClusters:hgcRecHitsToLayerCluster"),
     docString = cms.string("LayerCluster assigned largest RecHit fraction")
 )
 
-hgcHEfrontRecHitsTable = hgcEERecHitsTable.clone()
-hgcHEfrontRecHitsTable.src = "HGCalRecHit:HGCHEFRecHits"
-hgcHEfrontRecHitsTable.name = "RecHitHGCHEF"
-
-hgcHEfrontRecHitsToPFCandTable = hgcEERecHitsToPFCandTable.clone()
-hgcHEfrontRecHitsToPFCandTable.src = hgcHEfrontRecHitsTable.src
-hgcHEfrontRecHitsToPFCandTable.objName = hgcHEfrontRecHitsTable.name
-hgcHEfrontRecHitsToPFCandTable.objMap = "hgcRecHitsToPFCands:HGCHEFRecHitsToPFCand"
-
-hgcHEfrontRecHitsToLayerClusterTable = hgcEERecHitsToLayerClusterTable.clone()
-hgcHEfrontRecHitsToLayerClusterTable.src = hgcHEfrontRecHitsTable.src
-hgcHEfrontRecHitsToLayerClusterTable.objName = hgcHEfrontRecHitsTable.name
-hgcHEfrontRecHitsToLayerClusterTable.objMap = "hgcRecHitsToLayerClusters:HGCHEFRecHitsToLayerCluster"
-
-hgcHEbackRecHitsTable = hgcEERecHitsTable.clone()
-hgcHEbackRecHitsTable.src = "HGCalRecHit:HGCHEBRecHits"
-hgcHEbackRecHitsTable.name = "RecHitHGCHEB"
-
-hgcHEbackRecHitsToPFCandTable = hgcEERecHitsToPFCandTable.clone()
-hgcHEbackRecHitsToPFCandTable.src = hgcHEbackRecHitsTable.src
-hgcHEbackRecHitsToPFCandTable.objName = hgcHEbackRecHitsTable.name
-hgcHEbackRecHitsToPFCandTable.objMap = "hgcRecHitsToPFCands:HGCHEBRecHitsToPFCand"
-
-hgcHEbackRecHitsToLayerClusterTable = hgcEERecHitsToLayerClusterTable.clone()
-hgcHEbackRecHitsToLayerClusterTable.src = hgcHEbackRecHitsTable.src
-hgcHEbackRecHitsToLayerClusterTable.objName = hgcHEbackRecHitsTable.name
-hgcHEbackRecHitsToLayerClusterTable.objMap = "hgcRecHitsToLayerClusters:HGCHEBRecHitsToLayerCluster"
-
-hgcEERecHitsPositionTable = cms.EDProducer("HGCRecHitPositionTableProducer",
-    src = hgcEERecHitsTable.src,
-    cut = hgcEERecHitsTable.cut, 
-    name = hgcEERecHitsTable.name,
-    doc  = hgcEERecHitsTable.doc,
+hgcRecHitsPositionTable = cms.EDProducer("HGCRecHitPositionTableProducer",
+    src = hgcRecHitsTable.src,
+    cut = hgcRecHitsTable.cut, 
+    name = hgcRecHitsTable.name,
+    doc  = hgcRecHitsTable.doc,
 )
-#
-hgcHEfrontRecHitsPositionTable = hgcEERecHitsPositionTable.clone()
-hgcHEfrontRecHitsPositionTable.name = hgcHEfrontRecHitsTable.name
-hgcHEfrontRecHitsPositionTable.src = hgcHEfrontRecHitsTable.src
 
-hgcHEbackRecHitsPositionTable = hgcEERecHitsPositionTable.clone()
-hgcHEbackRecHitsPositionTable.name = hgcHEbackRecHitsTable.name
-hgcHEbackRecHitsPositionTable.src = hgcHEbackRecHitsTable.src
-
-hgcRecHitsSequence = cms.Sequence(hgcEERecHitsTable+hgcHEbackRecHitsTable+hgcHEfrontRecHitsTable
+hgcRecHitsSequence = cms.Sequence(hgcRecHits
+				+hgcRecHitsTable
                 +hgcRecHitsToPFCands
-                +hgcEERecHitsToPFCandTable+hgcHEfrontRecHitsToPFCandTable+hgcHEbackRecHitsToPFCandTable
+                +hgcRecHitsToPFCandTable
                 +hgcRecHitsToLayerClusters 
-                +hgcEERecHitsToLayerClusterTable+hgcHEfrontRecHitsToLayerClusterTable+hgcHEbackRecHitsToLayerClusterTable
-                +hgcEERecHitsPositionTable
-                +hgcHEfrontRecHitsPositionTable
-                +hgcHEbackRecHitsPositionTable
+                +hgcRecHitsToLayerClusterTable
+                +hgcRecHitsPositionTable
 )
