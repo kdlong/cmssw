@@ -17,10 +17,6 @@ simClusterTable = cms.EDProducer("SimpleSimClusterFlatTableProducer",
         impactPoint_y = Var('impactPoint().y()', 'float', precision=14, doc='y position'),
         impactPoint_z = Var('impactPoint().z()', 'float', precision=14, doc='z position'),
         impactPoint_t = Var('impactPoint().t()', 'float', precision=14, doc='Impact time'),
-        #impactPoint_x = Var('g4Tracks().at(0).getPositionAtBoundary().x()', 'float', precision=14, doc='x position'),
-        #impactPoint_y = Var('g4Tracks().at(0).getPositionAtBoundary().y()', 'float', precision=14, doc='y position'),
-        #impactPoint_z = Var('g4Tracks().at(0).getPositionAtBoundary().z()', 'float', precision=14, doc='z position'),
-        #impactPoint_t = Var('g4Tracks().at(0).getPositionAtBoundary().t()', 'float', precision=14, doc='Impact time'),
         # For stupid reasons lost on me, the nsimhits_ variable is uninitialized, and hits_ (which are really simhits)
         # are often referred to as rechits in the SimCluster class
         nHits = Var('numberOfRecHits', 'int', precision=-1, doc='number of simhits'),
@@ -28,9 +24,13 @@ simClusterTable = cms.EDProducer("SimpleSimClusterFlatTableProducer",
         boundaryPmag = Var('impactMomentum.P()', 'float', precision=14, doc='magnitude of the boundary 3-momentum vector'),
         boundaryP4 = Var('impactMomentum.mag()', 'float', precision=14, doc='magnitude of four vector'),
         boundaryEnergy = Var('impactMomentum.energy()', 'float', precision=14, doc='magnitude of four vector'),
+        boundaryEnergyNoMu = Var('impactMomentumNoMu.energy()', 'float', precision=14, doc='magnitude of four vector'),
         boundaryPt = Var('impactMomentum.pt()', 'float', precision=14, doc='magnitude of four vector'),
         trackId = Var('g4Tracks().at(0).trackId()', 'int', precision=-1, doc='Geant track id'),
         trackIdAtBoundary = Var('g4Tracks().at(0).getIDAtBoundary()', 'int', precision=-1, doc='Track ID at boundary'),
+        inHGCAL = Var('isHGCAL', 'bool', doc='Has at least 1 simHit in HGCAL'),
+        onHGCFrontFace = Var('abs(impactPoint().z()) - 320 < 5', 'bool', doc='SimCluster position is consistent with the front of the HGCAL'),
+        isTrainable = Var('numberOfRecHits > 5 && isHGCAL', 'bool', doc='Should be used for training'),
     )
 )
 
@@ -58,6 +58,15 @@ mergedSimClusterTable = simClusterTable.clone()
 mergedSimClusterTable.src = "hgcSimTruth"
 mergedSimClusterTable.name = "MergedSimCluster"
 
+mergedToUnmergedSCTable = cms.EDProducer("SimClusterToSimClustersIndexTableProducer",
+    cut = mergedSimClusterTable.cut,
+    src = mergedSimClusterTable.src,
+    objName = mergedSimClusterTable.name,
+    branchName = cms.string("SimCluster"),
+    objMap = cms.InputTag("hgcSimTruth"),
+    docString = cms.string("Index of Merged SimCluster containing SimCluster")
+)
+
 simClusterTables = cms.Sequence(simClusterTable+simClusterToCaloPartTable)
 
-mergedSimClusterTables = cms.Sequence(hgcSimTruth+mergedSimClusterTable+simClusterToMergedSCTable)
+mergedSimClusterTables = cms.Sequence(hgcSimTruth+mergedSimClusterTable+mergedToUnmergedSCTable+simClusterToMergedSCTable)
