@@ -248,7 +248,8 @@ public:
  
   void setPdgId(int id) { pdgId_ = id; }
 
-  bool isHGCAL() const;
+  bool hasHGCALHit() const;
+  bool allHitsHGCAL() const;
 
   SimCluster operator+(const SimCluster&);
   SimCluster& operator+=(const SimCluster&);

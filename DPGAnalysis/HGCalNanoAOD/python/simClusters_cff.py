@@ -30,9 +30,10 @@ simClusterTable = cms.EDProducer("SimpleSimClusterFlatTableProducer",
         boundaryPt = Var('impactMomentum.pt()', 'float', precision=14, doc='magnitude of four vector'),
         trackId = Var('g4Tracks().at(0).trackId()', 'int', precision=-1, doc='Geant track id'),
         trackIdAtBoundary = Var('g4Tracks().at(0).getIDAtBoundary()', 'int', precision=-1, doc='Track ID at boundary'),
-        inHGCAL = Var('isHGCAL', 'bool', doc='Has at least 1 simHit in HGCAL'),
-        onHGCFrontFace = Var('abs(impactPoint().z()) - 320 < 5', 'bool', doc='SimCluster position is consistent with the front of the HGCAL'),
-        isTrainable = Var('numberOfRecHits > 5 && isHGCAL', 'bool', doc='Should be used for training'),
+        hasHGCALHit = Var('hasHGCALHit', 'bool', doc='Has at least 1 simHit in HGCAL'),
+        allHitsHGCAL = Var('allHitsHGCAL', 'bool', doc='all simHits are in HGCAL'),
+        onHGCFrontFace = Var('abs(impactPoint().z()) - 322 < 1', 'bool', doc='SimCluster position is consistent with the front of the HGCAL'),
+        isTrainable = Var('numberOfRecHits > 5 && allHitsHGCAL', 'bool', doc='Should be used for training'),
     )
 )
 

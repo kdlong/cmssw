@@ -618,7 +618,7 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
     event.put(std::move(simClusterHistory), "MergedCaloTruth");
   }
 
-  propagateSimClusterCoordinates(output_.pSimClusters);
+  //propagateSimClusterCoordinates(output_.pSimClusters);
 
   // save the SimCluster orphan handle so we can fill the calo particles
   auto scHandle = event.put(std::move(output_.pSimClusters), "MergedCaloTruth");

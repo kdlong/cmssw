@@ -99,7 +99,22 @@ SimCluster& SimCluster::operator+=(const SimCluster& toMerge) {
 }
 
 // At least one simHit in the HGCAL
-bool SimCluster::isHGCAL() const {
+bool SimCluster::allHitsHGCAL() const {
+    for (const auto& hitsAndEnergies : hits_and_fractions()) {
+        const DetId id = hitsAndEnergies.first;
+        bool forward = id.det() == DetId::HGCalEE
+                || id.det() == DetId::HGCalHSi
+                || id.det() == DetId::HGCalHSc
+                || (id.det() == DetId::Forward && id.subdetId() != static_cast<int>(HFNose))
+                || (id.det() == DetId::Hcal && id.subdetId() == HcalSubdetector::HcalEndcap);
+
+        if(!forward)
+            return false;
+    }
+    return true;
+}
+
+bool SimCluster::hasHGCALHit() const {
     for (const auto& hitsAndEnergies : hits_and_fractions()) {
         const DetId id = hitsAndEnergies.first;
         bool forward = id.det() == DetId::HGCalEE
