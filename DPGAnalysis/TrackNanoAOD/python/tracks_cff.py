@@ -25,6 +25,12 @@ generalTrackTable = cms.EDProducer("SimpleTrackFlatTableProducer",
     )
 )
 
+generalTrackHGCPositionTable = cms.EDProducer("TrackPositionAtHGCALTableProducer",
+    src = generalTrackTable.src,
+    name = generalTrackTable.name,
+    cut = generalTrackTable.cut,
+)
+
 trackConversionsTable = generalTrackTable.clone()
 trackConversionsTable.src = "conversionStepTracks"
 trackConversionsTable.name = "TrackConv"
@@ -45,4 +51,4 @@ trackDisplacedTable = cms.EDProducer("SimpleTrackFlatTableProducer",
     )
 )
 
-trackTables = cms.Sequence(generalTrackTable+trackConversionsTable+trackDisplacedTable)
+trackTables = cms.Sequence(generalTrackTable+generalTrackHGCPositionTable+trackConversionsTable+trackDisplacedTable)

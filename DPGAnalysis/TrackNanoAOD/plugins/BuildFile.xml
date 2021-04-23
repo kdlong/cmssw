@@ -12,6 +12,7 @@
 <use name="IOPool/Provenance"/>
 <use name="CondFormats/RunInfo"/>
 <use name="CondFormats/DataRecord"/>
+<use name="RecoHGCal/GraphReco"/>
 <library file="*.cc" name="DPGAnalysisTrackNanoAODPlugins">
   <flags EDM_PLUGIN="1"/>
 </library>
