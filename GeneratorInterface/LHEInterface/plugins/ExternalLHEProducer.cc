@@ -51,10 +51,16 @@ Implementation:
 #include "SimDataFormats/GeneratorProducts/interface/LHERunInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEXMLStringProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenWeightInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenWeightProduct.h"
 
 #include "GeneratorInterface/LHEInterface/interface/LHERunInfo.h"
 #include "GeneratorInterface/LHEInterface/interface/LHEEvent.h"
 #include "GeneratorInterface/LHEInterface/interface/LHEReader.h"
+
+#include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenWeightProduct.h"
+#include "GeneratorInterface/Core/interface/LHEWeightHelper.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/RandomNumberGenerator.h"
@@ -65,7 +71,8 @@ Implementation:
 // class declaration
 //
 
-class ExternalLHEProducer : public edm::one::EDProducer<edm::BeginRunProducer, edm::EndRunProducer> {
+class ExternalLHEProducer
+    : public edm::one::EDProducer<edm::BeginRunProducer, edm::EndRunProducer, edm::BeginLuminosityBlockProducer> {
 public:
   explicit ExternalLHEProducer(const edm::ParameterSet& iConfig);
 
@@ -75,6 +82,7 @@ private:
   void produce(edm::Event&, const edm::EventSetup&) override;
   void beginRunProduce(edm::Run& run, edm::EventSetup const& es) override;
   void endRunProduce(edm::Run&, edm::EventSetup const&) override;
+  void beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) override;
   void preallocThreads(unsigned int) override;
 
   std::vector<std::string> makeArgs(uint32_t nEvents, unsigned int nThreads, std::uint32_t seed) const;
@@ -98,6 +106,7 @@ private:
   std::map<unsigned, std::pair<unsigned, unsigned>> nPartonMapping_{};
 
   std::unique_ptr<lhef::LHEReader> reader_;
+  gen::LHEWeightHelper weightHelper_;
   std::shared_ptr<lhef::LHERunInfo> runInfoLast_;
   std::shared_ptr<lhef::LHERunInfo> runInfo_;
   std::shared_ptr<lhef::LHEEvent> partonLevel_;
@@ -157,9 +166,11 @@ ExternalLHEProducer::ExternalLHEProducer(const edm::ParameterSet& iConfig)
 
   produces<LHEXMLStringProduct, edm::Transition::BeginRun>("LHEScriptOutput");
 
+  produces<GenWeightProduct>();
   produces<LHEEventProduct>();
   produces<LHERunInfoProduct, edm::Transition::BeginRun>();
   produces<LHERunInfoProduct, edm::Transition::EndRun>();
+  produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
 }
 
 //
@@ -187,6 +198,10 @@ void ExternalLHEProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
   std::for_each(partonLevel_->weights().begin(),
                 partonLevel_->weights().end(),
                 std::bind(&LHEEventProduct::addWeight, product.get(), std::placeholders::_1));
+
+  auto weightProduct = weightHelper_.weightProduct(partonLevel_->weights(), partonLevel_->originalXWGTUP());
+  iEvent.put(std::move(weightProduct));
+
   product->setScales(partonLevel_->scales());
   if (nPartonMapping_.empty()) {
     product->setNpLO(partonLevel_->npLO());
@@ -413,6 +428,14 @@ std::vector<std::string> ExternalLHEProducer::makeArgs(uint32_t nEvents,
   }
 
   return args;
+}
+
+void ExternalLHEProducer::beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) {
+  auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();
+  for (auto& weightGroup : weightHelper_.weightGroups()) {
+    weightInfoProduct->addWeightGroupInfo(std::unique_ptr<gen::WeightGroupInfo>(weightGroup.clone()));
+  }
+  lumi.put(std::move(weightInfoProduct));
 }
 
 // ------------ Close all the open file descriptors ------------
