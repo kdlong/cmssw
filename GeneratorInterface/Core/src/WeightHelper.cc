@@ -229,6 +229,7 @@ namespace gen {
     if (isUnassociated) {
       group.addContainedId(weightNum, name, name);
     }
+
     int entry = !isUnassociated ? group.weightVectorEntry(name, weightNum) : group.nIdsContained();
     if (debug_)
       std::cout << "Adding weight " << entry << " to group " << groupIndex;

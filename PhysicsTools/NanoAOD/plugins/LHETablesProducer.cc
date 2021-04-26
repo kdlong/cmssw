@@ -149,22 +149,22 @@ public:
       lheVpt = std::hypot(pup[v.first][0] + pup[v.second][0], pup[v.first][1] + pup[v.second][1]);
     }
 
-    out.addColumnValue<uint8_t>("Njets", lheNj, "Number of jets (partons) at LHE step");
-    out.addColumnValue<uint8_t>("Nb", lheNb, "Number of b partons at LHE step");
-    out.addColumnValue<uint8_t>("Nc", lheNc, "Number of c partons at LHE step");
-    out.addColumnValue<uint8_t>("Nuds", lheNuds, "Number of u,d,s partons at LHE step");
-    out.addColumnValue<uint8_t>("Nglu", lheNglu, "Number of gluon partons at LHE step");
-    out.addColumnValue<float>("HT", lheHT, "HT, scalar sum of parton pTs at LHE step");
+    out.addColumnValue<uint8_t>("Njets", lheNj, "Number of jets (partons) at LHE step", nanoaod::FlatTable::UInt8Column);
+    out.addColumnValue<uint8_t>("Nb", lheNb, "Number of b partons at LHE step", nanoaod::FlatTable::UInt8Column);
+    out.addColumnValue<uint8_t>("Nc", lheNc, "Number of c partons at LHE step", nanoaod::FlatTable::UInt8Column);
+    out.addColumnValue<uint8_t>("Nuds", lheNuds, "Number of u,d,s partons at LHE step", nanoaod::FlatTable::UInt8Column);
+    out.addColumnValue<uint8_t>("Nglu", lheNglu, "Number of gluon partons at LHE step", nanoaod::FlatTable::UInt8Column);
+    out.addColumnValue<float>("HT", lheHT, "HT, scalar sum of parton pTs at LHE step", nanoaod::FlatTable::FloatColumn);
     out.addColumnValue<float>(
-        "HTIncoming", lheHTIncoming, "HT, scalar sum of parton pTs at LHE step, restricted to partons");
-    out.addColumnValue<float>("Vpt", lheVpt, "pT of the W or Z boson at LHE step");
-    out.addColumnValue<uint8_t>("NpNLO", lheProd.npNLO(), "number of partons at NLO");
-    out.addColumnValue<uint8_t>("NpLO", lheProd.npLO(), "number of partons at LO");
-    out.addColumnValue<float>("AlphaS", alphaS, "Per-event alphaS");
+        "HTIncoming", lheHTIncoming, "HT, scalar sum of parton pTs at LHE step, restricted to partons", nanoaod::FlatTable::FloatColumn);
+    out.addColumnValue<float>("Vpt", lheVpt, "pT of the W or Z boson at LHE step", nanoaod::FlatTable::FloatColumn);
+    out.addColumnValue<uint8_t>("NpNLO", lheProd.npNLO(), "number of partons at NLO", nanoaod::FlatTable::UInt8Column);
+    out.addColumnValue<uint8_t>("NpLO", lheProd.npLO(), "number of partons at LO", nanoaod::FlatTable::UInt8Column);
+    out.addColumnValue<float>("AlphaS", alphaS, "Per-event alphaS", nanoaod::FlatTable::FloatColumn);
     if (storeAllLHEInfo_) {
-      out.addColumnValue<float>("AlphaQED", alphaQED, "Per-event alphaQED");
-      out.addColumnValue<float>("Scale", scale, "Per-event scale");
-      out.addColumnValue<uint8_t>("ProcessID", idproc, "Process id (as in the card ordering)");
+      out.addColumnValue<float>("AlphaQED", alphaQED, "Per-event alphaQED", nanoaod::FlatTable::FloatColumn);
+      out.addColumnValue<float>("Scale", scale, "Per-event scale", nanoaod::FlatTable::FloatColumn);
+      out.addColumnValue<uint8_t>("ProcessID", idproc, "Process id (as in the card ordering)", nanoaod::FlatTable::UInt8Column);
     }
     auto outPart = std::make_unique<nanoaod::FlatTable>(vals_pt.size(), "LHEPart", false);
     outPart->addColumn<float>("pt", vals_pt, "Pt of LHE particles", nanoaod::FlatTable::FloatColumn, this->precision_);
