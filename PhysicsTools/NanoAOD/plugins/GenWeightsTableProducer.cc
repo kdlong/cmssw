@@ -176,10 +176,6 @@ GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params
       keepAllPSWeights_(params.getParameter<bool>("keepAllPSWeights")) {
   if (weightgroups_.size() != maxGroupsPerType_.size())
     throw std::invalid_argument("Inputs 'weightgroups' and 'weightgroupNums' must have equal size");
-  //for (auto& wg : weightTypeNames_) {
-  //  produces<nanoaod::FlatTable>(wg.second);
-  //  produces<nanoaod::FlatTable>(wg.second + "sizes");
-  //}
   produces<nanoaod::FlatTable>("GENWeight");
   produces<nanoaod::MergeableCounterTable, edm::Transition::EndRun>();
   produces<std::string>("genModel");
@@ -246,21 +242,6 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
   addWeightGroupToTable(
 	lheWeightTables, weightVecsizes, weightlabels, lheWeightTablevec, weightInfos.at(inGen), genWeights, counter, genWeight);
 
-  for (auto& wg : weightTypeNames_) {
-    std::string wname = wg.second;
-    auto& weightVec = lheWeightTables[wg.first];
-    counter.incLHE(genWeight, weightVec, wname);
-    auto outTable = std::make_unique<nanoaod::FlatTable>(weightVec.size(), wname, false);
-    outTable->addColumn<float>("", weightVec, weightlabels[wg.first], lheWeightPrecision_);
-
-    //now add the vector containing the sizes of alt sets
-    auto outTableSizes =
-        std::make_unique<nanoaod::FlatTable>(weightVecsizes[wg.first].size(), wname + "_AltSetSizes", false);
-    outTableSizes->addColumn<float>(
-        "", weightVecsizes[wg.first], "Sizes of weight arrays for weight type:" + wname, lheWeightPrecision_);
-    //iEvent.put(std::move(outTable), wname);
-    //iEvent.put(std::move(outTableSizes), wname + "sizes");
-  }
   iEvent.put(std::move(lheWeightTablevec),"LHEWeightTableVec");
 }
 
@@ -323,7 +304,6 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
     }
     lheWeightTablevec->emplace_back(weights.size(), entryName, false);
     lheWeightTablevec->back().addColumn<float>("", weights, label, lheWeightPrecision_);
-
 
     weightlabels[weightType].append(label);
     typeCount[weightType]++;

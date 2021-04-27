@@ -14,8 +14,8 @@ from PhysicsTools.NanoAOD.extraflags_cff import *
 from PhysicsTools.NanoAOD.ttbarCategorization_cff import *
 from PhysicsTools.NanoAOD.genparticles_cff import *
 from PhysicsTools.NanoAOD.particlelevel_cff import *
-from PhysicsTools.NanoAOD.genVertex_cff import *
 from PhysicsTools.NanoAOD.genWeights_cff import *
+from PhysicsTools.NanoAOD.genVertex_cff import *
 from PhysicsTools.NanoAOD.vertices_cff import *
 from PhysicsTools.NanoAOD.met_cff import *
 from PhysicsTools.NanoAOD.triggerObjects_cff import *
@@ -23,7 +23,6 @@ from PhysicsTools.NanoAOD.isotracks_cff import *
 from PhysicsTools.NanoAOD.protons_cff import *
 from PhysicsTools.NanoAOD.btagWeightTable_cff import *
 from PhysicsTools.NanoAOD.NanoAODEDMEventContent_cff import *
-
 
 nanoMetadata = cms.EDProducer("UniqueStringProducer",
     strings = cms.PSet(

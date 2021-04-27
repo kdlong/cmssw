@@ -218,7 +218,6 @@ void NanoAODOutputModule::write(edm::EventForOutput const& iEvent) {
   for (unsigned int extensions = 0; extensions <= 1; ++extensions) {
     size_t iTable = 0;
     for (auto& table : tables) {
-      std::cout << "Calling fill for table " << iTable << std::endl;
       m_tables[iTable].fill(*table, *m_tree, extensions);
       ++iTable;
     }
@@ -348,7 +347,7 @@ void NanoAODOutputModule::openFile(edm::FileBlock const&) {
   for (const auto& keep : keeps[edm::InLumi]) {
     if (keep.first->className() == "nanoaod::MergeableCounterTable")
       m_lumiTables.push_back(SummaryTableOutputBranches(keep.first, keep.second));
-    else if (keep.first->className() == "nanoaod::UniqueString" && keep.first->moduleLabel() == "nanoMetadata")
+    else if (keep.first->className() == "nanoaod::UniqueString")
       m_nanoMetadata.emplace_back(keep.first->productInstanceName(), keep.second);
     else
       throw cms::Exception(
@@ -359,7 +358,7 @@ void NanoAODOutputModule::openFile(edm::FileBlock const&) {
   for (const auto& keep : keeps[edm::InRun]) {
     if (keep.first->className() == "nanoaod::MergeableCounterTable")
       m_runTables.push_back(SummaryTableOutputBranches(keep.first, keep.second));
-    else if (keep.first->className() == "nanoaod::UniqueString" && keep.first->moduleLabel() == "nanoMetadata")
+    else if (keep.first->className() == "nanoaod::UniqueString")
       m_nanoMetadata.emplace_back(keep.first->productInstanceName(), keep.second);
     else if (keep.first->className() == "nanoaod::FlatTable")
       m_runFlatTableTokens.emplace_back(keep.second);
