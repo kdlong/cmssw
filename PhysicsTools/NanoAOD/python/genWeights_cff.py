@@ -2,12 +2,13 @@ import FWCore.ParameterSet.Config as cms
 
 genWeights = cms.EDProducer("GenWeightProductProducer",
     genInfo = cms.InputTag("generator"),
-    genLumiInfoHeader = cms.InputTag("generator"))
+    genLumiInfoHeader = cms.InputTag("generator")),
+    debug = cms.untracked.bool(False),
 
 lheWeights = cms.EDProducer("LHEWeightProductProducer",
     lheSourceLabels = cms.vstring(["externalLHEProducer", "source"]),
     failIfInvalidXML = cms.untracked.bool(False),
-    debug = cms.untracked.bool(True),
+    debug = cms.untracked.bool(False),
 )
 
 genWeightsTable = cms.EDProducer(
