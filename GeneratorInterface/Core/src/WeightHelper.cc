@@ -104,7 +104,6 @@ namespace gen {
         int dynNum = std::stoi(dynNumText);
         scaleGroup.setDyn(weight.index, weight.id, muR, muF, dynNum, dynType);
       } catch (std::invalid_argument& e) {
-        std::cout << "Tried to convert (" << dynNumText << ")  a int" << std::endl;
         scaleGroup.setWeightIsCorrupt();
         /// do something here
       }
@@ -123,6 +122,10 @@ namespace gen {
 
   int WeightHelper::lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) {
     std::string lhaidText = searchAttributes("pdf", weight);
+
+    if (debug_)
+        std::cout << "Looking for LHAPDF info in ID " << lhaidText << std::endl;
+
     if (!lhaidText.empty()) {
       try {
         return std::stoi(lhaidText);
@@ -132,6 +135,8 @@ namespace gen {
     } else if (!pdfGroup.lhaIds().empty()) {
       return pdfGroup.lhaIds().back() + 1;
     } else {
+      if (debug_)
+          std::cout << "Looking up LHAPDF ID from name" << weight.groupname << std::endl;
       return LHAPDF::lookupLHAPDFID(weight.groupname);
     }
     return -1;
@@ -139,6 +144,8 @@ namespace gen {
 
   void WeightHelper::updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight) {
     int lhaid = lhapdfId(weight, pdfGroup);
+    if (debug_)
+        std::cout << "LHAID identified as " << lhaid << std::endl;
     if (pdfGroup.parentLhapdfId() < 0) {
       int parentId = lhaid - LHAPDF::lookupPDF(lhaid).second;
       pdfGroup.setParentLhapdfInfo(parentId);
@@ -209,7 +216,7 @@ namespace gen {
     bool isUnassociated = false;
     try {
       groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
-    } catch (const std::range_error& e) {
+    } catch (const cms::Exception& e) {
       std::cerr << "WARNING: " << e.what() << std::endl;
       isUnassociated = true;
 
@@ -225,7 +232,14 @@ namespace gen {
         addUnassociatedGroup();
       }
     }
+
+    // This should be impossible, but in case the try/catch doesn't work, come here
+    if (groupIndex < 0 || groupIndex >= static_cast<int>(weightGroups_.size()))
+        throw cms::Exception("Unmatched Generator weight! ID was " + name + " index was " + std::to_string(weightNum) +
+                    "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
+
     auto& group = weightGroups_[groupIndex];
+
     if (isUnassociated) {
       group.addContainedId(weightNum, name, name);
     }
@@ -255,7 +269,7 @@ namespace gen {
       counter++;
     }
     // Needs to be properly handled
-    cms::Exception("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex) +
+    throw cms::Exception("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex) +
                    "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
     return -1;
   }
@@ -305,16 +319,35 @@ namespace gen {
       std::cout << "Building group for weight group " << weight.groupname << " weight content is " << weight.content
                 << std::endl;
     }
-    if (isScaleWeightGroup(weight))
+    if (isScaleWeightGroup(weight)) {
+      if (debug_)
+          std::cout << "Weight type is scale\n";
       return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
-    else if (isPdfWeightGroup(weight))
+    }
+    else if (isPdfWeightGroup(weight)) {
+      if (debug_)
+          std::cout << "Weight type is PDF\n";
       return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
-    else if (isMEParamWeightGroup(weight))
+    }
+    else if (isMEParamWeightGroup(weight)) {
+      if (debug_)
+          std::cout << "Weight type is MEParam\n";
       return std::make_unique<MEParamWeightGroupInfo>(weight.groupname);
-    else if (isPartonShowerWeightGroup(weight))
+    }
+    else if (isPartonShowerWeightGroup(weight)) {
+      if (debug_)
+          std::cout << "Weight type is parton shower\n";
       return std::make_unique<PartonShowerWeightGroupInfo>("shower");
-    else if (isOrphanPdfWeightGroup(weight))
+    }
+    else if (isOrphanPdfWeightGroup(weight)) {
+      if (debug_)
+          std::cout << "Weight type is PDF\n";
       return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
+    }
+    if (debug_)
+        std::cout << "Weight type is unknown\n";
+
+    std::cout << "Group name is " << weight.groupname << std::endl;
 
     return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
   }
@@ -330,9 +363,11 @@ namespace gen {
 
       int numGroups = static_cast<int>(weightGroups_.size());
       if (weight.wgtGroup_idx == numGroups) {
+        std::cout << "Building a group";
         weightGroups_.push_back(*buildGroup(weight));
+        std::cout << "The name is now " << weightGroups_[weightGroups_.size()-1].name() << std::endl;
       } else if (weight.wgtGroup_idx >= numGroups)
-        cms::Exception("Invalid group index " + std::to_string(weight.wgtGroup_idx));
+        throw cms::Exception("Invalid group index " + std::to_string(weight.wgtGroup_idx));
 
       // split PDF groups
       if (splitPdfWeight(weight))

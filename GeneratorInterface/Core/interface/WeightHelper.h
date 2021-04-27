@@ -103,8 +103,9 @@ namespace gen {
     // Just add an empty product (need for all cases or...?)
     if (weights.size() > 1) {
       for (const auto& weight : weights) {
-        if constexpr (std::is_same<T, gen::WeightsInfo>::value)
+        if constexpr (std::is_same<T, gen::WeightsInfo>::value) {
           weightGroupIndex = addWeightToProduct(weightProduct, weight.wgt, weight.id, i, weightGroupIndex);
+        }
         else if (std::is_same<T, double>::value)
           weightGroupIndex = addWeightToProduct(weightProduct, weight, std::to_string(i), i, weightGroupIndex);
         i++;
