@@ -1,5 +1,5 @@
-#ifndef SimDataFormats_PFParticle_h
-#define SimDataFormats_PFParticle_h
+#ifndef SimDataFormats_PFTruthParticle_h
+#define SimDataFormats_PFTruthParticle_h
 
 #include <vector>
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingParticleFwd.h"
@@ -18,8 +18,8 @@ class TrackingVertex;
 class SimTrack;
 class EncodedEventId;
 
-class PFParticle {
-  friend std::ostream& operator<<(std::ostream& s, PFParticle const& tp);
+class PFTruthParticle {
+  friend std::ostream& operator<<(std::ostream& s, PFTruthParticle const& tp);
 
 public:
   typedef int Charge;                                       ///< electric charge type
@@ -39,12 +39,12 @@ public:
      * crash or give undefined results if this isn't true. This constructor should only be used to
      * create a placeholder until setParentVertex() and addG4Track() can be called.
      */
-  PFParticle();
+  PFTruthParticle();
 
-  PFParticle(const TrackingParticleRefVector& trackingParticles, const SimClusterRefVector& simClusters);
+  PFTruthParticle(const TrackingParticleRefVector& trackingParticles, const SimClusterRefVector& simClusters);
 
   // destructor
-  ~PFParticle();
+  ~PFTruthParticle();
     void setTrackingParticles(const TrackingParticleRefVector& refs);
     void setSimClusters(const SimClusterRefVector& refs);
     void addSimCluster(const SimClusterRef& sc);
@@ -64,7 +64,7 @@ public:
   /** @brief Signal source, crossing number.
      *
      * Note this is taken from the first SimTrack only, but there shouldn't be any SimTracks from different
-     * crossings in the PFParticle. */
+     * crossings in the PFTruthParticle. */
   EncodedEventId eventId() const { return g4Tracks_[0].eventId(); }
 
   // Setters for G4 and reco::GenParticle
@@ -160,5 +160,5 @@ private:
   TrackingParticleRefVector trackingParticles_;
 };
 
-#endif  // SimDataFormats_PFParticle_H
+#endif  // SimDataFormats_PFTruthParticle_H
 

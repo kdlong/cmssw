@@ -83,9 +83,13 @@ void RecHitToPFCandAssociationProducer::produce(edm::Event& iEvent, const edm::E
     const reco::PFCandidate::ElementsInBlocks& elements = pfCand.elementsInBlocks();
     for (auto& element : elements) {
       const reco::PFBlockRef blockRef = element.first;
+      if (!blockRef.isNonnull())
+          continue;
       for (const auto& block : blockRef->elements()) {
-        if (block.type() == reco::PFBlockElement::HGCAL) {
-          const reco::PFClusterRef& cluster = block.clusterRef();
+        // This seems to not work for PFTICL
+        //if (block.type() == reco::PFBlockElement::HGCAL) {
+        const reco::PFClusterRef cluster = block.clusterRef();
+        if (cluster.isNonnull()) {
           const std::vector<reco::PFRecHitFraction>& rhf = cluster->recHitFractions();
           for (const auto& hf : rhf) {
             auto& hit = hf.recHitRef();
