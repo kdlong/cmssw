@@ -35,6 +35,20 @@ hgcRecHitsToPFCandTable = cms.EDProducer("CaloRecHitToPFCandIndexTableProducer",
     docString = cms.string("PFCand with most associated energy in RecHit DetId")
 )
 
+hgcRecHitsToPFTICLCands = cms.EDProducer("RecHitToPFCandAssociationProducer",
+    caloRecHits = cms.VInputTag("hgcRecHits"),
+    pfCands = cms.InputTag("pfTICL"),
+)
+
+hgcRecHitsToPFTICLCandTable = cms.EDProducer("CaloRecHitToPFCandIndexTableProducer",
+    cut = hgcRecHitsTable.cut,
+    src = hgcRecHitsTable.src,
+    objName = hgcRecHitsTable.name,
+    branchName = cms.string("PFTICLCand"),
+    objMap = cms.InputTag("hgcRecHitsToPFTICLCands:hgcRecHitsToPFCand"),
+    docString = cms.string("PFTICLCand with most associated energy in RecHit DetId")
+)
+
 hgcRecHitsToLayerClusters = cms.EDProducer("RecHitToLayerClusterAssociationProducer",
     caloRecHits = cms.VInputTag("hgcRecHits"),
     layerClusters = cms.InputTag("hgcalLayerClusters"),
@@ -60,6 +74,8 @@ hgcRecHitsSequence = cms.Sequence(hgcRecHits
 				+hgcRecHitsTable
                 +hgcRecHitsToPFCands
                 +hgcRecHitsToPFCandTable
+                +hgcRecHitsToPFTICLCands
+                +hgcRecHitsToPFTICLCandTable
                 +hgcRecHitsToLayerClusters 
                 +hgcRecHitsToLayerClusterTable
                 +hgcRecHitsPositionTable

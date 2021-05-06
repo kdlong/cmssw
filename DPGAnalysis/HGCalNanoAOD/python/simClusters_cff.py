@@ -46,8 +46,8 @@ simClusterToCaloPartTable = cms.EDProducer("SimClusterToCaloParticleIndexTablePr
     docString = cms.string("Index of CaloPart containing SimCluster")
 )
 
-#hgcSimTruth = cms.EDProducer("simmerger")
-hgcSimTruth = cms.EDProducer("HGCTruthProducer")
+hgcSimTruth = cms.EDProducer("simmerger")
+hgcSimTruthDR = cms.EDProducer("HGCTruthProducer")
 
 simClusterToMergedSCTable = cms.EDProducer("SimClusterToSimClusterIndexTableProducer",
     cut = simClusterTable.cut,
@@ -62,6 +62,10 @@ mergedSimClusterTable = simClusterTable.clone()
 mergedSimClusterTable.src = "hgcSimTruth"
 mergedSimClusterTable.name = "MergedSimCluster"
 
+mergedSimClusterDRTable = simClusterTable.clone()
+mergedSimClusterDRTable.src = "hgcSimTruthDR"
+mergedSimClusterDRTable.name = "MergedByDRSimCluster"
+
 mergedToUnmergedSCTable = cms.EDProducer("SimClusterToSimClustersIndexTableProducer",
     cut = mergedSimClusterTable.cut,
     src = mergedSimClusterTable.src,
@@ -73,4 +77,4 @@ mergedToUnmergedSCTable = cms.EDProducer("SimClusterToSimClustersIndexTableProdu
 
 simClusterTables = cms.Sequence(simClusterTable+simClusterToCaloPartTable)
 
-mergedSimClusterTables = cms.Sequence(hgcSimTruth+mergedSimClusterTable+mergedToUnmergedSCTable+simClusterToMergedSCTable)
+mergedSimClusterTables = cms.Sequence(hgcSimTruth+mergedSimClusterTable+hgcSimTruthDR+mergedSimClusterDRTable+mergedToUnmergedSCTable+simClusterToMergedSCTable)
