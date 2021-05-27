@@ -124,7 +124,7 @@ namespace gen {
     std::string lhaidText = searchAttributes("pdf", weight);
 
     if (debug_)
-        std::cout << "Looking for LHAPDF info in ID " << lhaidText << std::endl;
+      std::cout << "Looking for LHAPDF info in ID " << lhaidText << std::endl;
 
     if (!lhaidText.empty()) {
       try {
@@ -145,7 +145,7 @@ namespace gen {
   void WeightHelper::updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight) {
     int lhaid = lhapdfId(weight, pdfGroup);
     if (debug_)
-        std::cout << "LHAID identified as " << lhaid << std::endl;
+      std::cout << "LHAID identified as " << lhaid << std::endl;
     if (pdfGroup.parentLhapdfId() < 0) {
       int parentId = lhaid - LHAPDF::lookupPDF(lhaid).second;
       pdfGroup.setParentLhapdfInfo(parentId);
@@ -244,9 +244,9 @@ namespace gen {
       group.addContainedId(weightNum, name, name);
     }
 
-    int entry = !isUnassociated ? group.weightVectorEntry(name, weightNum) : group.nIdsContained();
+    int entry = !isUnassociated ? group.weightVectorEntry(name, weightNum) : group.nIdsContained() - 1;
     if (debug_)
-      std::cout << "Adding weight " << entry << " to group " << groupIndex;
+      std::cout << "Adding weight " << entry << " to group " << groupIndex << std::endl;
     product->addWeight(weight, groupIndex, entry);
     return groupIndex;
   }
