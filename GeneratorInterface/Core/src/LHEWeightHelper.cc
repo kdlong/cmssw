@@ -17,20 +17,20 @@ namespace gen {
     if (debug_)
       std::cout << "Full header is \n" << fullHeader << std::endl;
     int xmlError = xmlDoc.Parse(fullHeader.c_str());
-    ErrorType errorType = findErrorType(xmlError, fullHeader);
+    ErrorType errorType;
 
-    for (;errorType != ErrorType::NoError; errorType = findErrorType(xmlError, fullHeader)) {
+    while (errorType = findErrorType(xmlError, fullHeader), errorType != ErrorType::NoError) {
       if (failIfInvalidXML_) {
         xmlDoc.PrintError();
         throw cms::Exception("LHEWeightHelper")
-           << "The LHE header is not valid XML! Weight information was not properly parsed.";
+            << "The LHE header is not valid XML! Weight information was not properly parsed.";
       } else if (errorType == ErrorType::HTMLStyle) {
         if (debug_)
           std::cout << "  >>> This file uses &gt; instead of >\n";
         xmlError = tryReplaceHtmlStyle(xmlDoc, fullHeader);
       } else if (errorType == ErrorType::SwapHeader) {
         if (debug_)
-            std::cout << "  >>> Some headers in the file are swapped\n";
+          std::cout << "  >>> Some headers in the file are swapped\n";
         swapHeaders();
         fullHeader = boost::algorithm::join(headerLines_, "");
         xmlError = xmlDoc.Parse(fullHeader.c_str());
@@ -39,8 +39,7 @@ namespace gen {
           std::cout << "  >>> There is non-XML text at the end of this file\n";
         xmlError = tryRemoveTrailings(xmlDoc, fullHeader);
       } else {
-        std::string error =
-          "Fatal error when parsing the LHE header. The header is not valid XML! Parsing error was ";
+        std::string error = "Fatal error when parsing the LHE header. The header is not valid XML! Parsing error was ";
         error += xmlDoc.ErrorStr();
         throw cms::Exception("LHEWeightHelper") << error;
       }
@@ -85,7 +84,7 @@ namespace gen {
           std::cout << ">>>> Found a weight group: " << groupName << std::endl;
         for (auto inner = e->FirstChildElement("weight"); inner != nullptr; inner = inner->NextSiblingElement("weight"))
           addGroup(inner, groupName, groupIndex, weightIndex);
-      } 
+      }
       groupIndex++;
     }
     buildGroups();
@@ -103,8 +102,8 @@ namespace gen {
         return groupName;
       }
     }
-    bool hardFail = true;
-    if (hardFail) {
+
+    if (!fillEmptyIfWeightFails_) {
       throw std::runtime_error("couldn't find groupname");
     }
     return "";
@@ -119,8 +118,7 @@ namespace gen {
         if (curLevel != 0) {
           return false;
         }
-      }
-      else if (line.find("weightgroup") != std::string::npos) {
+      } else if (line.find("weightgroup") != std::string::npos) {
         curLevel++;
         if (curLevel != 1) {
           return false;
@@ -178,13 +176,13 @@ namespace gen {
     else if (fullHeader.find("&lt;") != std::string::npos || fullHeader.find("&gt;") != std::string::npos)
       return ErrorType::HTMLStyle;
     else if (xmlError != 0) {
-      std::string trailingCand = fullHeader.substr(fullHeader.rfind(weightgroupKet_) + std::string(weightgroupKet_).length());
+      std::string trailingCand =
+          fullHeader.substr(fullHeader.rfind(weightgroupKet_) + std::string(weightgroupKet_).length());
       if (trailingCand.find('<') == std::string::npos || trailingCand.find('>') == std::string::npos)
         return ErrorType::TrailingStr;
       else
         return ErrorType::Unknown;
-    }
-    else
+    } else
       return ErrorType::NoError;
   }
 }  // namespace gen
