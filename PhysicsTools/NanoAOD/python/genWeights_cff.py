@@ -4,6 +4,7 @@ genWeights = cms.EDProducer("GenWeightProductProducer",
     genInfo = cms.InputTag("generator"),
     genLumiInfoHeader = cms.InputTag("generator"),
     debug = cms.untracked.bool(False),
+    fillEmptyIfWeightFails = cms.untracked.bool(True),
 )
 
 lheWeights = cms.EDProducer("LHEWeightProductProducer",
