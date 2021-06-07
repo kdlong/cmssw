@@ -69,4 +69,4 @@ mergedToUnmergedSCTable = cms.EDProducer("SimClusterToSimClustersIndexTableProdu
 
 simClusterTables = cms.Sequence(simClusterTable+simClusterToCaloPartTable)
 
-mergedSimClusterTables = cms.Sequence(hgcSimTruth+mergedSimClusterTable+mergedToUnmergedSCTable+simClusterToMergedSCTable)
+#mergedSimClusterTables = cms.Sequence(hgcSimTruth+mergedSimClusterTable+mergedToUnmergedSCTable+simClusterToMergedSCTable)

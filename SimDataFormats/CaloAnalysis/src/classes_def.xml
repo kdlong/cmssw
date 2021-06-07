@@ -8,7 +8,8 @@
   <class name="CaloParticleRefVector"/>
   <class name="CaloParticleRefProd"/>
   <class name="CaloParticleContainer"/>
-  <class name="SimCluster"  ClassVersion="4">
+  <class name="SimCluster"  ClassVersion="5">
+    <version ClassVersion="5" checksum="1356980487"/>
     <version ClassVersion="4" checksum="3868743425"/>
     <version ClassVersion="3" checksum="1773780587"/>
   </class>
@@ -22,20 +23,6 @@
   <class name="SimClusterRefVector"/>
   <class name="SimClusterRefProd"/>
   <class name="SimClusterContainer"/>
-  <class name="edm::Wrapper<SimClusterHistory>"/>
-  <class name="SimClusterHistory"/>
-  <class name="edm::Wrapper<std::vector<SimClusterHistory>>"/>
-  <class name="std::vector<SimClusterHistory>"/>
-  <class name="edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,float,unsigned int> >">
-    <field name="transientMap_" transient="true"/>
-  </class>
-  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,float,unsigned int> >>"/>
-  <class name="edm::AssociationMap<edm::OneToMany<std::vector<TrackingParticle>,std::vector<SimCluster>,unsigned int> >">
-    <field name="transientMap_" transient="true"/>
-  </class>
-  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToMany<std::vector<TrackingParticle>,std::vector<SimCluster>,unsigned int> >>"/>
-  <class name="edm::helpers::KeyVal<edm::RefProd<vector<TrackingParticle> >,edm::RefProd<vector<SimCluster> > >"/>
-
   <class name="edm::helpers::KeyVal<edm::RefProd<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> > >,edm::RefProd<vector<SimCluster> > >"/>
   <class name="edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<SimCluster>,float,unsigned int> >">
     <field name="transientMap_" transient="true"/>

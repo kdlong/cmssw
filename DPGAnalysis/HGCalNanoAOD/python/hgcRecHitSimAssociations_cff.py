@@ -67,11 +67,7 @@ mergedSimClusterRecEnergyTable = cms.EDProducer("SimClusterRecEnergyTableProduce
 )
 
 hgcRecHitSimAssociationSequence = cms.Sequence(hgcRecHitsToSimClusters
-                +hgcRecHitsToMergedSimClusters
                 +simClusterRecEnergyTable 
-                +mergedSimClusterRecEnergyTable 
                 +hgcRecHitsToSimClusterTable
                 +hgcRecHitsToBestSimClusterTable
-                +hgcRecHitsToMergedSimClusterTable
-                +hgcRecHitsToBestMergedSimClusterTable
 )
