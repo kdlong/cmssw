@@ -21,7 +21,7 @@ namespace gen {
   public:
     LHEWeightHelper() : WeightHelper(){};
 
-    enum class ErrorType { SwapHeader, HTMLStyle, TrailingStr, Unknown, NoError };
+    enum class ErrorType { Empty, SwapHeader, HTMLStyle, NoWeightGroup, TrailingStr, Unknown, NoError };
 
     void setHeaderLines(std::vector<std::string> headerLines);
     void parseWeights();
