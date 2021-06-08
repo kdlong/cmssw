@@ -42,6 +42,7 @@ public:
   void addWeightGroupToTable(std::map<gen::WeightType, std::vector<double>>& lheWeightTables,
                              std::map<gen::WeightType, std::vector<int>>& weightVecsizes,
                              std::map<gen::WeightType, std::string>& weightlabels,
+			     std::unique_ptr<std::vector<nanoaod::FlatTable>>& lheWeightTablevec,
                              const char* typeName,
                              const WeightGroupDataContainer& weightInfos,
                              WeightsContainer& allWeights,
@@ -183,6 +184,7 @@ GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params
   produces<nanoaod::FlatTable>("GENWeight");
   produces<nanoaod::MergeableCounterTable, edm::Transition::EndRun>();
   produces<std::string>("genModel");
+  produces<std::vector<nanoaod::FlatTable>>("LHEWeightTableVec");
 }
 
 void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
@@ -235,13 +237,15 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
     weightVecsizes.insert(std::make_pair(wg.first, std::vector<int>()));
     weightlabels.insert(std::make_pair(wg.first, ""));
   }
+
+  auto lheWeightTablevec = std::make_unique<std::vector<nanoaod::FlatTable>>();
   if (foundLheWeights) {
     addWeightGroupToTable(
-        lheWeightTables, weightVecsizes, weightlabels, "LHE", weightInfos.at(inLHE), lheWeights, counter, genWeight);
+        lheWeightTables, weightVecsizes, weightlabels, lheWeightTablevec, "LHE", weightInfos.at(inLHE), lheWeights, counter, genWeight);
   }
 
   addWeightGroupToTable(
-      lheWeightTables, weightVecsizes, weightlabels, "Gen", weightInfos.at(inGen), genWeights, counter, genWeight);
+	lheWeightTables, weightVecsizes, weightlabels, lheWeightTablevec, "Gen", weightInfos.at(inGen), genWeights, counter, genWeight);
 
   for (auto& wg : weightTypeNames_) {
     std::string wname = wg.second;
@@ -258,6 +262,7 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
     iEvent.put(std::move(outTable), wname);
     iEvent.put(std::move(outTableSizes), wname + "sizes");
   }
+  iEvent.put(std::move(lheWeightTablevec),"LHEWeightTableVec");
 }
 
 /*
@@ -266,6 +271,7 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
 void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, std::vector<double>>& lheWeightTables,
                                                     std::map<gen::WeightType, std::vector<int>>& weightVecsizes,
                                                     std::map<gen::WeightType, std::string>& weightlabels,
+						    std::unique_ptr<std::vector<nanoaod::FlatTable>>& lheWeightTablevec,
                                                     const char* typeName,
                                                     const WeightGroupDataContainer& weightInfos,
                                                     WeightsContainer& allWeights,
@@ -276,7 +282,7 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
     typeCount[type] = 0;
 
   for (const auto& groupInfo : weightInfos) {
-    //std::string entryName = typeName;
+    std::string entryName = typeName;
     gen::WeightType weightType = groupInfo.group->weightType();
     std::string name = weightTypeNames_.at(weightType);
     std::string label = "[" + std::to_string(typeCount[weightType]) + "] " + groupInfo.group->description();
@@ -317,6 +323,13 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
 
     if (weightlabels[weightType].empty())
       weightlabels[weightType].append("[idx in AltSetSizes array] Name [start idx in weight array];\n");
+    if(typeCount[weightType] > 0) {
+      entryName.append("AltSet");
+      entryName.append(std::to_string(typeCount[weightType]));
+    }
+    lheWeightTablevec->emplace_back(weights.size(), entryName, false);
+    lheWeightTablevec->back().addColumn<float>("", weights, label, lheWeightPrecision_);
+
 
     weightlabels[weightType].append(label);
     typeCount[weightType]++;
