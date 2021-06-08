@@ -41,7 +41,7 @@ public:
   void addWeightGroupToTable(std::map<gen::WeightType, std::vector<double>>& lheWeightTables,
                              std::map<gen::WeightType, std::vector<int>>& weightVecsizes,
                              std::map<gen::WeightType, std::string>& weightlabels,
-                             const char* typeName,
+			     std::unique_ptr<std::vector<nanoaod::FlatTable>>& lheWeightTablevec,
                              const WeightGroupDataContainer& weightInfos,
                              WeightsContainer& allWeights,
                              Counter& counter,
@@ -175,13 +175,10 @@ GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params
       keepAllPSWeights_(params.getParameter<bool>("keepAllPSWeights")) {
   if (weightgroups_.size() != maxGroupsPerType_.size())
     throw std::invalid_argument("Inputs 'weightgroups' and 'weightgroupNums' must have equal size");
-  for (auto& wg : weightTypeNames_) {
-    produces<nanoaod::FlatTable>(wg.second);
-    produces<nanoaod::FlatTable>(wg.second + "sizes");
-  }
   produces<nanoaod::FlatTable>("GENWeight");
   produces<nanoaod::MergeableCounterTable, edm::Transition::EndRun>();
   produces<std::string>("genModel");
+  produces<std::vector<nanoaod::FlatTable>>("LHEWeightTableVec");
 }
 
 void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
@@ -233,29 +230,17 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
     weightVecsizes.insert(std::make_pair(wg.first, std::vector<int>()));
     weightlabels.insert(std::make_pair(wg.first, ""));
   }
+
+  auto lheWeightTablevec = std::make_unique<std::vector<nanoaod::FlatTable>>();
   if (foundLheWeights) {
     addWeightGroupToTable(
-        lheWeightTables, weightVecsizes, weightlabels, "LHE", weightInfos.at(inLHE), lheWeights, counter, genWeight);
+        lheWeightTables, weightVecsizes, weightlabels, lheWeightTablevec, weightInfos.at(inLHE), lheWeights, counter, genWeight);
   }
 
   addWeightGroupToTable(
-      lheWeightTables, weightVecsizes, weightlabels, "Gen", weightInfos.at(inGen), genWeights, counter, genWeight);
+	lheWeightTables, weightVecsizes, weightlabels, lheWeightTablevec, weightInfos.at(inGen), genWeights, counter, genWeight);
 
-  for (auto& wg : weightTypeNames_) {
-    std::string wname = wg.second;
-    auto& weightVec = lheWeightTables[wg.first];
-    counter.incLHE(genWeight, weightVec, wname);
-    auto outTable = std::make_unique<nanoaod::FlatTable>(weightVec.size(), wname, false);
-    outTable->addColumn<float>("", weightVec, weightlabels[wg.first], nanoaod::FlatTable::FloatColumn, lheWeightPrecision_);
-
-    //now add the vector containing the sizes of alt sets
-    auto outTableSizes =
-        std::make_unique<nanoaod::FlatTable>(weightVecsizes[wg.first].size(), wname + "_AltSetSizes", false);
-    outTableSizes->addColumn<float>(
-        "", weightVecsizes[wg.first], "Sizes of weight arrays for weight type:" + wname, nanoaod::FlatTable::FloatColumn, lheWeightPrecision_);
-    iEvent.put(std::move(outTable), wname);
-    iEvent.put(std::move(outTableSizes), wname + "sizes");
-  }
+  iEvent.put(std::move(lheWeightTablevec),"LHEWeightTableVec");
 }
 
 /*
@@ -264,7 +249,7 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
 void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, std::vector<double>>& lheWeightTables,
                                                     std::map<gen::WeightType, std::vector<int>>& weightVecsizes,
                                                     std::map<gen::WeightType, std::string>& weightlabels,
-                                                    const char* typeName,
+						    std::unique_ptr<std::vector<nanoaod::FlatTable>>& lheWeightTablevec,
                                                     const WeightGroupDataContainer& weightInfos,
                                                     WeightsContainer& allWeights,
                                                     Counter& counter,
@@ -274,15 +259,13 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
     typeCount[type] = 0;
 
   for (const auto& groupInfo : weightInfos) {
-    //std::string entryName = typeName;
     gen::WeightType weightType = groupInfo.group->weightType();
-    std::string name = weightTypeNames_.at(weightType);
+    std::string entryName = weightTypeNames_.at(weightType);
     std::string label = "[" + std::to_string(typeCount[weightType]) + "] " + groupInfo.group->description();
     label.append("[");
     label.append(std::to_string(lheWeightTables[weightType].size()));  //to append the start index of this set
     label.append("]; ");
     auto& weights = allWeights.at(groupInfo.index);
-    //std::cout << "Group name is " << groupInfo.group->name() << " is it wellFormed? " << groupInfo.group->isWellFormed() << std::endl;
     if (weightType == gen::WeightType::kScaleWeights) {
       if (groupInfo.group->isWellFormed()) {
         const auto scaleGroup = *static_cast<const gen::ScaleWeightGroupInfo*>(groupInfo.group.get());
@@ -316,6 +299,13 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
 
     if (weightlabels[weightType].empty())
       weightlabels[weightType].append("[idx in AltSetSizes array] Name [start idx in weight array];\n");
+    if(typeCount[weightType] > 0) {
+      entryName.append("AltSet");
+      entryName.append(std::to_string(typeCount[weightType]));
+    }
+    lheWeightTablevec->emplace_back(weights.size(), entryName, false);
+    lheWeightTablevec->back().addColumn<float>("", weights, label, nanoaod::FlatTable::FloatColumn, lheWeightPrecision_);
+
 
     weightlabels[weightType].append(label);
     typeCount[weightType]++;
