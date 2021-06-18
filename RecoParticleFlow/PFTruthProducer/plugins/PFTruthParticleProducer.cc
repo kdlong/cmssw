@@ -50,6 +50,8 @@ PFTruthParticleProducer::PFTruthParticleProducer(const edm::ParameterSet &pset)
         scCollectionToken_(consumes<SimClusterCollection>(pset.getParameter<edm::InputTag>("simClusters")))
 {
   produces<PFTruthParticleCollection>();
+  produces<edm::Association<PFTruthParticleCollection>>("trackingPartToPFTruth");
+  produces<edm::Association<PFTruthParticleCollection>>("simClusToPFTruth");
 }
 
 PFTruthParticleProducer::~PFTruthParticleProducer() {}
@@ -82,6 +84,7 @@ void PFTruthParticleProducer::produce(edm::StreamID, edm::Event &iEvent, const e
   // Not used right now, but useful for the trackID lookup later
   std::unordered_map<unsigned int, TrackingParticleRef> trackIdToTPRef;
 
+  std::vector<int> trackingIndices;
   for (size_t i = 0; i < tpCollection->size(); i++) {
       TrackingParticleRef trackingParticle(tpCollection, i);
       PFTruthParticle particle;
@@ -90,12 +93,14 @@ void PFTruthParticleProducer::produce(edm::StreamID, edm::Event &iEvent, const e
       particle.setPdgId(trackingParticle->pdgId());
       particle.setP4(trackingParticle->p4());
       out->push_back(particle);
+      trackingIndices.push_back(i);
       for (auto& track : trackingParticle->g4Tracks()) {
           unsigned int trackId = track.trackId();
           trackIdToTPRef[trackId] = trackingParticle;
       }
   }
 
+  std::vector<int> scIndices;
   for (size_t i = 0; i < scCollection->size(); i++) {
       SimClusterRef simclus(scCollection, i);
       // Doesn't really do much anyway
@@ -104,9 +109,23 @@ void PFTruthParticleProducer::produce(edm::StreamID, edm::Event &iEvent, const e
       int tpIdx = i % out->size();
       auto& pf = out->at(tpIdx);
       pf.addSimCluster(simclus);
+      scIndices.push_back(tpIdx);
   }
+  auto pfTruthHand = iEvent.put(std::move(out));
 
-  iEvent.put(std::move(out));
+  auto tpAssoc = std::make_unique<edm::Association<PFTruthParticleCollection>>(pfTruthHand);
+  auto scAssoc = std::make_unique<edm::Association<PFTruthParticleCollection>>(pfTruthHand);
+
+  edm::Association<PFTruthParticleCollection>::Filler tpFiller(*tpAssoc);
+  tpFiller.insert(tpCollection, trackingIndices.begin(), trackingIndices.end());
+  tpFiller.fill();
+
+  edm::Association<PFTruthParticleCollection>::Filler scFiller(*scAssoc);
+  scFiller.insert(scCollection, scIndices.begin(), scIndices.end());
+  scFiller.fill();
+
+  iEvent.put(std::move(tpAssoc), "trackingPartToPFTruth");
+  iEvent.put(std::move(scAssoc), "simClusToPFTruth");
 }
 
 // define this as a plug-in
