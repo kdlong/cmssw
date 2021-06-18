@@ -44,6 +44,7 @@ public:
     void setPdgId(int pdgId);
     void setCharge(int charge);
     void setP4(LorentzVector p4);
+    void setVertex(LorentzVector vertex);
     void addSimCluster(const SimClusterRef sc);
     void addTrackingParticle(const TrackingParticleRef tp);
 
@@ -64,58 +65,61 @@ public:
   
   const std::vector<SimTrack>& g4Tracks() const { return g4Tracks_; }
 
-  /// @brief Electric charge. Note this is taken from the first SimTrack only.
+  /// @brief Electric charge.
   float charge() const { return charge_; }
 
-  /// @brief Four-momentum Lorentz vector. Note this is taken from the first SimTrack only.
+  /// @brief Four-momentum Lorentz vector.
   const LorentzVector& p4() const { return p4_; }
+
+  /// @brief Vertex XYZT.
+  const LorentzVector& vertex() const { return vertex_; }
 
   /// @brief spatial momentum vector
   Vector momentum() const { return p4().Vect(); }
 
-  /// @brief Magnitude of momentum vector. Note this is taken from the first SimTrack only.
+  /// @brief Magnitude of momentum vector.
   double p() const { return p4().P(); }
 
-  /// @brief Energy. Note this is taken from the first SimTrack only.
+  /// @brief Energy.
   double energy() const { return p4().E(); }
 
-  /// @brief Transverse energy. Note this is taken from the first SimTrack only.
+  /// @brief Transverse energy.
   double et() const { return p4().Et(); }
 
-  /// @brief Mass. Note this is taken from the first SimTrack only.
+  /// @brief Mass.
   double mass() const { return p4().M(); }
 
-  /// @brief Mass squared. Note this is taken from the first SimTrack only.
+  /// @brief Mass squared.
   double massSqr() const { return pow(mass(), 2); }
 
-  /// @brief Transverse mass. Note this is taken from the first SimTrack only.
+  /// @brief Transverse mass.
   double mt() const { return p4().Mt(); }
 
-  /// @brief Transverse mass squared. Note this is taken from the first SimTrack only.
+  /// @brief Transverse mass squared.
   double mtSqr() const { return p4().Mt2(); }
 
-  /// @brief x coordinate of momentum vector. Note this is taken from the first SimTrack only.
+  /// @brief x coordinate of momentum vector.
   double px() const { return p4().Px(); }
 
-  /// @brief y coordinate of momentum vector. Note this is taken from the first SimTrack only.
+  /// @brief y coordinate of momentum vector.
   double py() const { return p4().Py(); }
 
-  /// @brief z coordinate of momentum vector. Note this is taken from the first SimTrack only.
+  /// @brief z coordinate of momentum vector.
   double pz() const { return p4().Pz(); }
 
-  /// @brief Transverse momentum. Note this is taken from the first SimTrack only.
+  /// @brief Transverse momentum.
   double pt() const { return p4().Pt(); }
 
-  /// @brief Momentum azimuthal angle. Note this is taken from the first SimTrack only.
+  /// @brief Momentum azimuthal angle.
   double phi() const { return p4().Phi(); }
 
-  /// @brief Momentum polar angle. Note this is taken from the first SimTrack only.
+  /// @brief Momentum polar angle.
   double theta() const { return p4().Theta(); }
 
-  /// @brief Momentum pseudorapidity. Note this is taken from the first SimTrack only.
+  /// @brief Momentum pseudorapidity.
   double eta() const { return p4().Eta(); }
 
-  /// @brief Rapidity. Note this is taken from the first SimTrack only.
+  /// @brief Rapidity.
   double rapidity() const { return p4().Rapidity(); }
 
   /// @brief Same as rapidity().
@@ -125,7 +129,7 @@ private:
   /// references to G4 and reco::GenParticle tracks
   int charge_;
   int pdgId_;
-  LorentzVector p4_;
+  LorentzVector p4_, vertex_;
   std::vector<SimTrack> g4Tracks_;
   reco::GenParticleRefVector genParticles_;
   SimClusterRefVector simClusters_;
