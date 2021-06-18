@@ -49,7 +49,7 @@ PFTruthParticleProducer::PFTruthParticleProducer(const edm::ParameterSet &pset)
     : tpCollectionToken_(consumes<TrackingParticleCollection>(pset.getParameter<edm::InputTag>("trackingParticles"))),
         scCollectionToken_(consumes<SimClusterCollection>(pset.getParameter<edm::InputTag>("simClusters")))
 {
-  produces<TrackingParticleToSimCluster>();
+  produces<PFTruthParticleCollection>();
 }
 
 PFTruthParticleProducer::~PFTruthParticleProducer() {}
@@ -86,6 +86,9 @@ void PFTruthParticleProducer::produce(edm::StreamID, edm::Event &iEvent, const e
       TrackingParticleRef trackingParticle(tpCollection, i);
       PFTruthParticle particle;
       particle.addTrackingParticle(trackingParticle);
+      particle.setCharge(trackingParticle->charge());
+      particle.setPdgId(trackingParticle->pdgId());
+      particle.setP4(trackingParticle->p4());
       out->push_back(particle);
       for (auto& track : trackingParticle->g4Tracks()) {
           unsigned int trackId = track.trackId();
@@ -93,19 +96,16 @@ void PFTruthParticleProducer::produce(edm::StreamID, edm::Event &iEvent, const e
       }
   }
 
-  // NOTE: not every trackingparticle will be in the association.
-  // could add empty SCs in this case, but that might be worse...
   for (size_t i = 0; i < scCollection->size(); i++) {
       SimClusterRef simclus(scCollection, i);
       // Doesn't really do much anyway
       //findTrackingParticleMatch(trackIdToTPRef, simclus))
       // For now just randomly assign the SCs as a dummy
-      for (size_t j = 0; j < out->size(); j++) {
-          if (i % j) {
-              auto& pf = out->at(j);
-              pf.addSimCluster(simclus);
-          }
-      }
+      int tpIdx = i % out->size();
+      std::cout << "Out index is " << tpIdx << std::endl;
+      auto& pf = out->at(tpIdx);
+      std::cout << "Charge " << pf.charge() << "\n";
+      pf.addSimCluster(simclus);
   }
 
   iEvent.put(std::move(out));

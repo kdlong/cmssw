@@ -22,15 +22,9 @@ class PFTruthParticle {
   friend std::ostream& operator<<(std::ostream& s, PFTruthParticle const& tp);
 
 public:
-  typedef int Charge;                                       ///< electric charge type
   typedef math::XYZTLorentzVectorD LorentzVector;           ///< Lorentz vector
-  typedef math::PtEtaPhiMLorentzVector PolarLorentzVector;  ///< Lorentz vector
   typedef math::XYZPointD Point;                            ///< point in the space
   typedef math::XYZVectorD Vector;                          ///< point in the space
-
-  /// reference to reco::GenParticle
-  typedef reco::GenParticleRefVector::iterator genp_iterator;
-  typedef std::vector<SimTrack>::const_iterator g4t_iterator;
 
   /** @brief Default constructor. Note that the object will be useless until it is provided
      * with a SimTrack and parent TrackingVertex.
@@ -47,52 +41,32 @@ public:
   ~PFTruthParticle();
     void setTrackingParticles(const TrackingParticleRefVector& refs);
     void setSimClusters(const SimClusterRefVector& refs);
-    void addSimCluster(const SimClusterRef& sc);
-    void addTrackingParticle(const TrackingParticleRef& tp);
+    void setPdgId(int pdgId);
+    void setCharge(int charge);
+    void setP4(LorentzVector p4);
+    void addSimCluster(const SimClusterRef sc);
+    void addTrackingParticle(const TrackingParticleRef tp);
 
   /** @brief PDG ID.
      *
      * Returns the PDG ID of the first associated gen particle. If there are no gen particles associated
      * then it returns type() from the first SimTrack. */
   int pdgId() const {
-    if (genParticles_.empty())
-      return g4Tracks_[0].type();
-    else
-      return (*genParticles_.begin())->pdgId();
+    return pdgId_;
   }
 
-  /** @brief Signal source, crossing number.
-     *
-     * Note this is taken from the first SimTrack only, but there shouldn't be any SimTracks from different
-     * crossings in the PFTruthParticle. */
-  EncodedEventId eventId() const { return g4Tracks_[0].eventId(); }
-
-  // Setters for G4 and reco::GenParticle
-  void addGenParticle(const reco::GenParticleRef& );
   void addG4Track(const SimTrack& t);
-  /// iterators
-  genp_iterator genParticle_begin() const;
-  genp_iterator genParticle_end() const;
-  g4t_iterator g4Track_begin() const;
-  g4t_iterator g4Track_end() const;
   
-  // Getters for Embd and Sim Tracks
-  const reco::GenParticleRefVector& genParticles() const { return genParticles_; }
   const std::vector<SimTrack>& g4Tracks() const { return g4Tracks_; }
 
   /// @brief Electric charge. Note this is taken from the first SimTrack only.
-  float charge() const { return g4Tracks_[0].charge(); }
-  /// Gives charge in unit of quark charge (should be 3 times "charge()")
-  int threeCharge() const { return lrintf(3.f * charge()); }
+  float charge() const { return charge_; }
 
   /// @brief Four-momentum Lorentz vector. Note this is taken from the first SimTrack only.
-  const LorentzVector& p4() const { return g4Tracks_[0].momentum(); }
+  const LorentzVector& p4() const { return p4_; }
 
   /// @brief spatial momentum vector
   Vector momentum() const { return p4().Vect(); }
-
-  /// @brief Vector to boost to the particle centre of mass frame.
-  Vector boostToCM() const { return p4().BoostToCM(); }
 
   /// @brief Magnitude of momentum vector. Note this is taken from the first SimTrack only.
   double p() const { return p4().P(); }
@@ -142,18 +116,11 @@ public:
   /// @brief Same as rapidity().
   double y() const { return rapidity(); }
 
-  /** @brief Status word.
-     *
-     * Returns status() from the first gen particle, or -99 if there are no gen particles attached. */
-  int status() const { return genParticles_.empty() ? -99 : (*genParticles_[0]).status(); }
-
-  static const unsigned int longLivedTag;  ///< long lived flag
-
-  /// is long lived?
-  bool longLived() const { return status() & longLivedTag; }
-
 private:
   /// references to G4 and reco::GenParticle tracks
+  int charge_;
+  int pdgId_;
+  LorentzVector p4_;
   std::vector<SimTrack> g4Tracks_;
   reco::GenParticleRefVector genParticles_;
   SimClusterRefVector simClusters_;

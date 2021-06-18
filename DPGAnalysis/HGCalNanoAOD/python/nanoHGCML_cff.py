@@ -13,7 +13,8 @@ from DPGAnalysis.HGCalNanoAOD.caloParticles_cff import *
 from DPGAnalysis.TrackNanoAOD.trackSimHits_cff import *
 from DPGAnalysis.TrackNanoAOD.trackingParticles_cff import *
 from DPGAnalysis.TrackNanoAOD.tracks_cff import *
-from DPGAnalysis.CommonNanoAOD.pfCands_cff import *
+from DPGAnalysis.PFNanoAOD.pfCands_cff import *
+from DPGAnalysis.PFNanoAOD.pfTruth_cff import *
 
 nanoMetadata = cms.EDProducer("UniqueStringProducer",
     strings = cms.PSet(
@@ -30,12 +31,11 @@ nanoHGCMLSequence = cms.Sequence(nanoMetadata+genVertexTables+genParticleTable+
         layerClusterTables+
         simTrackTables+hgcSimHitsSequence+trackerSimHitTables)
 
+nanoHGCMLRecoSequence = cms.Sequence(hgcRecHitsSequence+hgcRecHitSimAssociationSequence+
+        pfCandTable+pfTruth+pfTICLCandTable+trackTables)
+
 def customizeReco(process):
-    process.nanoHGCMLSequence.insert(1, hgcRecHitsSequence)
-    process.nanoHGCMLSequence.insert(2, hgcRecHitSimAssociationSequence)
-    process.nanoHGCMLSequence.insert(3, pfCandTable)
-    process.nanoHGCMLSequence.insert(4, pfTICLCandTable)
-    process.nanoHGCMLSequence.insert(5, trackTables)
+    process.nanoHGCMLSequence.insert(1, nanoHGCMLRecoSequence)
     return process
 
 def customizeNoMergedCaloTruth(process):

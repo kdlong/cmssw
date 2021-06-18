@@ -15,22 +15,34 @@ PFTruthParticle::PFTruthParticle(const TrackingParticleRefVector& trackingPartic
     setSimClusters(simClusters);
 }
 
-void PFTruthParticle::setTrackingParticles(const TrackingParticleRefVector& refs) { trackingParticles_ = refs; }
+void PFTruthParticle::setTrackingParticles(const TrackingParticleRefVector& refs) {
+    for (auto& tp : refs) {
+      addTrackingParticle(tp); 
+    }
+}
 
-void PFTruthParticle::setSimClusters(const SimClusterRefVector& refs) { simClusters_ = refs; }
+void PFTruthParticle::setSimClusters(const SimClusterRefVector& refs) { 
+    for (auto& sc : refs) {
+      addSimCluster(sc); 
+    }
+}
 
-void PFTruthParticle::addSimCluster(const SimClusterRef& sc) { simClusters_.push_back(sc); }
+void PFTruthParticle::addSimCluster(const SimClusterRef sc) { 
+    simClusters_.push_back(sc); 
+    for (auto& track : sc->g4Tracks())
+        g4Tracks_.push_back(track);
+}
 
-void PFTruthParticle::addTrackingParticle(const TrackingParticleRef& tp) { trackingParticles_.push_back(tp); }
+void PFTruthParticle::addTrackingParticle(const TrackingParticleRef tp) { 
+    trackingParticles_.push_back(tp); 
+    for (auto& track : tp->g4Tracks())
+        g4Tracks_.push_back(track);
+}
 
-void PFTruthParticle::addGenParticle(const reco::GenParticleRef& gp) { genParticles_.push_back(gp); }
+void PFTruthParticle::setPdgId(int pdgId) { pdgId_ = pdgId; }
+
+void PFTruthParticle::setCharge(int charge) { charge_ = charge; }
+
+void PFTruthParticle::setP4(LorentzVector p4) { p4_ = p4; }
 
 void PFTruthParticle::addG4Track(const SimTrack& t) { g4Tracks_.push_back(t); }
-
-PFTruthParticle::genp_iterator PFTruthParticle::genParticle_begin() const { return genParticles_.begin(); }
-
-PFTruthParticle::genp_iterator PFTruthParticle::genParticle_end() const { return genParticles_.end(); }
-
-PFTruthParticle::g4t_iterator PFTruthParticle::g4Track_begin() const { return g4Tracks_.begin(); }
-
-PFTruthParticle::g4t_iterator PFTruthParticle::g4Track_end() const { return g4Tracks_.end(); }
