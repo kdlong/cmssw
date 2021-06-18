@@ -47,6 +47,11 @@ public:
     void addSimCluster(const SimClusterRef sc);
     void addTrackingParticle(const TrackingParticleRef tp);
 
+    SimClusterRefVector& simClusters() { return simClusters_; }
+    TrackingParticleRefVector& trackingParticles() { return trackingParticles_; }
+    size_t nSimCluster() const { return simClusters_.size(); }
+    size_t nTrackingParticle() const { return trackingParticles_.size(); }
+
   /** @brief PDG ID.
      *
      * Returns the PDG ID of the first associated gen particle. If there are no gen particles associated

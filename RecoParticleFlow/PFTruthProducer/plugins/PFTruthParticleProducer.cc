@@ -102,9 +102,7 @@ void PFTruthParticleProducer::produce(edm::StreamID, edm::Event &iEvent, const e
       //findTrackingParticleMatch(trackIdToTPRef, simclus))
       // For now just randomly assign the SCs as a dummy
       int tpIdx = i % out->size();
-      std::cout << "Out index is " << tpIdx << std::endl;
       auto& pf = out->at(tpIdx);
-      std::cout << "Charge " << pf.charge() << "\n";
       pf.addSimCluster(simclus);
   }
 

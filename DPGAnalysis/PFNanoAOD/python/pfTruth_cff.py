@@ -14,6 +14,8 @@ pfTruthTable = cms.EDProducer("SimplePFTruthParticleFlatTableProducer",
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(CandVars,
+        nSimCluster = Var("nSimCluster", 'int', precision=-1, doc='Number of associated SimClusters'),
+        nTrackingPart = Var("nTrackingParticle", 'int', precision=-1, doc='Number of associated SimClusters'),
     )
 )
 
