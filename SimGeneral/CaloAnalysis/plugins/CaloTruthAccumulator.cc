@@ -35,6 +35,8 @@
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
 #include "DataFormats/HcalDetId/interface/HcalTestNumbering.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/Math/interface/deltaPhi.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
 #include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
 
@@ -58,6 +60,16 @@
 #include "Geometry/HcalTowerAlgo/interface/HcalGeometry.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 
+#include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
+#include "RecoHGCal/GraphReco/interface/HGCalParticlePropagator.h"
+#include "HGCSimTruth/HGCSimTruth/interface/SimClusterTools.h"
+
+#include "TMath.h"
+#include "TCanvas.h"
+#include "TH1F.h"
+
+#include <sys/time.h>
+
 namespace {
   using Index_t = unsigned;
   using Barcode_t = int;
@@ -66,7 +78,7 @@ namespace {
 
 using boost::add_edge;
 using boost::adjacency_list;
-using boost::directedS;
+using boost::bidirectionalS;
 using boost::edge;
 using boost::edge_weight;
 using boost::edge_weight_t;
@@ -76,6 +88,11 @@ using boost::vecS;
 using boost::vertex;
 using boost::vertex_name;
 using boost::vertex_name_t;
+
+//DEBUG
+#include "TH2D.h"
+
+//debug
 
 /* GRAPH DEFINITIONS
 
@@ -121,11 +138,20 @@ struct VertexProperty {
 
 using EdgeParticleClustersProperty = property<edge_weight_t, EdgeProperty>;
 using VertexMotherParticleProperty = property<vertex_name_t, VertexProperty>;
-using DecayChain = adjacency_list<listS, vecS, directedS, VertexMotherParticleProperty, EdgeParticleClustersProperty>;
+using DecayChain =
+    adjacency_list<listS, vecS, bidirectionalS, VertexMotherParticleProperty, EdgeParticleClustersProperty>;
 
 class CaloTruthAccumulator : public DigiAccumulatorMixMod {
 public:
   explicit CaloTruthAccumulator(const edm::ParameterSet &config, edm::ProducesCollector, edm::ConsumesCollector &iC);
+
+  ~CaloTruthAccumulator() {
+    for (auto it = debughistos.begin(); it != debughistos.end(); it++) {
+      TCanvas cv;
+      it->second.Draw("colz");
+      cv.Print(it->first + ".pdf");
+    }
+  }
 
 private:
   void initializeEvent(const edm::Event &event, const edm::EventSetup &setup) override;
@@ -147,6 +173,20 @@ private:
                    std::unordered_map<int, std::map<int, float>> &simTrackDetIdEnergyMap,
                    const T &event,
                    const edm::EventSetup &setup);
+  std::unique_ptr<edm::Association<SimClusterCollection>> fillSimHitAssociation(
+        edm::Handle<std::vector<PCaloHit>>& inColl, edm::OrphanHandle<SimClusterCollection>& matchColl);
+
+  /** @brief Assigns the coordinates of the associated SimTrack/Vertex.*/
+  void assignSimClusterCoordinates(std::unique_ptr<SimClusterCollection> &,
+                                   const std::vector<SimVertex> &,
+                                   const size_t previous_simclusters);
+
+  /** @brief propagates the simcluster coordinates to the HGCal surface in case of HGCal simclusters*/
+  void propagateSimClusterCoordinates(std::unique_ptr<SimClusterCollection> &);
+
+  HGCalParticlePropagator prop_;
+  SimClusterTools sctools_;
+  std::map<TString, TH2D> debughistos;
 
   const std::string messageCategory_;
 
@@ -183,6 +223,10 @@ public:
   struct OutputCollections {
     std::unique_ptr<SimClusterCollection> pSimClusters;
     std::unique_ptr<CaloParticleCollection> pCaloParticles;
+    std::unique_ptr<edm::Association<SimClusterCollection>> pTrackSCAssoc;
+    std::unique_ptr<edm::Association<SimClusterCollection>> pHGCEEHitSCAssoc;
+    std::unique_ptr<edm::Association<SimClusterCollection>> pHGCHEfrontHitSCAssoc;
+    std::unique_ptr<edm::Association<SimClusterCollection>> pHGCHEbackHitSCAssoc;
   };
 
   struct calo_particles {
@@ -208,7 +252,14 @@ private:
   calo_particles m_caloParticles;
   // geometry type (0 pre-TDR; 1 TDR)
   int geometryType_;
+
   bool doHGCAL;
+
+  bool saveSimClusterHistory_;
+  hgcal::RecHitTools recHitTools_;
+  std::vector<SimClusterHistory> simClusterHistory_;
+  std::vector<int> trackToSimClusterIndices_;
+  std::unordered_map<uint32_t, int> caloHitToSimClusterIdx_;
 };
 
 /* Graph utility functions */
@@ -291,11 +342,15 @@ namespace {
                              CaloTruthAccumulator::calo_particles &caloParticles,
                              std::unordered_multimap<Barcode_t, Index_t> &simHitBarcodeToIndex,
                              std::unordered_map<int, std::map<int, float>> &simTrackDetIdEnergyMap,
+                             std::vector<SimClusterHistory> &simClusterHistory,
+                             std::unordered_map<uint32_t, int> &caloHitToSimClusterIdxMap,
                              Selector selector)
         : output_(output),
           caloParticles_(caloParticles),
           simHitBarcodeToIndex_(simHitBarcodeToIndex),
           simTrackDetIdEnergyMap_(simTrackDetIdEnergyMap),
+          simClusterHistory_(simClusterHistory),
+          caloHitIdToSimClusterIdxMap_(caloHitToSimClusterIdxMap),
           selector_(selector) {}
     template <typename Vertex, typename Graph>
     void discover_vertex(Vertex u, const Graph &g) {
@@ -314,11 +369,34 @@ namespace {
         auto &simcluster = output_.pSimClusters->back();
         std::unordered_map<uint32_t, float> acc_energy;
         for (auto const &hit_and_energy : simTrackDetIdEnergyMap_[trackIdx]) {
+          caloHitIdToSimClusterIdxMap_[hit_and_energy.first] = output_.pSimClusters->size() - 1;
           acc_energy[hit_and_energy.first] += hit_and_energy.second;
         }
         for (auto const &hit_and_energy : acc_energy) {
           simcluster.addRecHitAndFraction(hit_and_energy.first, hit_and_energy.second);
         }
+
+        // save parent vertices and their pdgId in the history
+        SimClusterHistory history;
+        std::vector<Vertex> vertexLookup = {u};
+        while (vertexLookup.size() > 0) {
+          Vertex v = vertexLookup[0];
+          vertexLookup.erase(vertexLookup.begin());
+          auto range = in_edges(v, g);
+          for (auto it = range.first; it != range.second; it++) {
+            Vertex w = source(*it, g);
+            auto const vprop = get(vertex_name, g, w);
+            int pdgId = vprop.simTrack ? vprop.simTrack->type() : 0;
+            history.push_back(std::pair<int, int>(w, pdgId));
+            if (w != 0) {
+              vertexLookup.push_back(w);
+            }
+          }
+        }
+        // the vertex discovery is top-down, while the common ancestor lookup is bottom-up,
+        // so reverse the vertices before storing them
+        std::reverse(history.begin(), history.end());
+        simClusterHistory_.push_back(history);
       }
     }
     template <typename Edge, typename Graph>
@@ -353,6 +431,8 @@ namespace {
     CaloTruthAccumulator::calo_particles &caloParticles_;
     std::unordered_multimap<Barcode_t, Index_t> &simHitBarcodeToIndex_;
     std::unordered_map<int, std::map<int, float>> &simTrackDetIdEnergyMap_;
+    std::vector<SimClusterHistory> &simClusterHistory_;
+    std::unordered_map<uint32_t, int> &caloHitIdToSimClusterIdxMap_;
     Selector selector_;
   };
 }  // namespace
@@ -372,12 +452,26 @@ CaloTruthAccumulator::CaloTruthAccumulator(const edm::ParameterSet &config,
       maxPseudoRapidity_(config.getParameter<double>("MaxPseudoRapidity")),
       premixStage1_(config.getParameter<bool>("premixStage1")),
       geometryType_(-1),
-      doHGCAL(config.getParameter<bool>("doHGCAL")) {
+      doHGCAL(config.getParameter<bool>("doHGCAL")) ,saveSimClusterHistory_(config.getParameter<bool>("saveSimClusterHistory")) {
   producesCollector.produces<SimClusterCollection>("MergedCaloTruth");
   producesCollector.produces<CaloParticleCollection>("MergedCaloTruth");
   if (premixStage1_) {
     producesCollector.produces<std::vector<std::pair<unsigned int, float>>>("MergedCaloTruth");
   }
+
+  if (saveSimClusterHistory_) {
+    producesCollector.produces<std::vector<SimClusterHistory>>("MergedCaloTruth");
+  }
+
+  if (true) {
+    producesCollector.produces<edm::Association<CaloParticleCollection>>("simClusterToCaloParticle");
+    producesCollector.produces<edm::Association<SimClusterCollection>>("simTrackToSimCluster");
+    producesCollector.produces<edm::Association<SimClusterCollection>>("simHitHGCEEToSimCluster");
+    producesCollector.produces<edm::Association<SimClusterCollection>>("simHitHGCHEfrontToSimCluster");
+    producesCollector.produces<edm::Association<SimClusterCollection>>("simHitHGCHEbackToSimCluster");
+  }
+
+  iC.consumes<std::vector<SimTrack>>(simTrackLabel_);
 
   iC.consumes<std::vector<SimTrack>>(simTrackLabel_);
   iC.consumes<std::vector<SimVertex>>(simVertexLabel_);
@@ -397,6 +491,9 @@ CaloTruthAccumulator::CaloTruthAccumulator(const edm::ParameterSet &config,
   for (auto const &collectionTag : collectionTags_) {
     iC.consumes<std::vector<PCaloHit>>(collectionTag);
   }
+
+  debughistos["misass_vs_energy"] = TH2D("misass_vs_energy", "misass_vs_energy", 15, 0, 20, 30, 0, 1);
+  debughistos["misass_vs_eta"] = TH2D("misass_vs_eta", "misass_vs_eta", 15, 1.5, 3, 30, 0, 1);
 }
 
 void CaloTruthAccumulator::beginLuminosityBlock(edm::LuminosityBlock const &iLumiBlock, const edm::EventSetup &iSetup) {
@@ -441,8 +538,13 @@ void CaloTruthAccumulator::beginLuminosityBlock(edm::LuminosityBlock const &iLum
 void CaloTruthAccumulator::initializeEvent(edm::Event const &event, edm::EventSetup const &setup) {
   output_.pSimClusters = std::make_unique<SimClusterCollection>();
   output_.pCaloParticles = std::make_unique<CaloParticleCollection>();
+  simClusterHistory_.clear();
 
   m_detIdToTotalSimEnergy.clear();
+  prop_.setEventSetup(setup);
+  sctools_.setRechitTools(recHitTools_);
+  caloHitToSimClusterIdx_.clear();
+  trackToSimClusterIndices_.clear();
 }
 
 /** Create handle to edm::HepMCProduct here because event.getByLabel with
@@ -509,24 +611,72 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
     }
   }
 
+  // save SimCluster history
+  if (saveSimClusterHistory_) {
+    std::unique_ptr<std::vector<SimClusterHistory>> simClusterHistory =
+        std::make_unique<std::vector<SimClusterHistory>>(simClusterHistory_);
+    event.put(std::move(simClusterHistory), "MergedCaloTruth");
+  }
+
+  //propagateSimClusterCoordinates(output_.pSimClusters);
+
   // save the SimCluster orphan handle so we can fill the calo particles
   auto scHandle = event.put(std::move(output_.pSimClusters), "MergedCaloTruth");
+  output_.pTrackSCAssoc = std::make_unique<edm::Association<SimClusterCollection>>(scHandle);
+  edm::Association<SimClusterCollection>::Filler filler(*output_.pTrackSCAssoc);
+  filler.insert(hSimTracks, trackToSimClusterIndices_.begin(), trackToSimClusterIndices_.end());
+  filler.fill();
+  event.put(std::move(output_.pTrackSCAssoc), "simTrackToSimCluster");
+
+  for (auto const &collectionTag : collectionTags_) {
+    edm::Handle<std::vector<PCaloHit>> hSimHits;
+    const bool isHGCal = (collectionTag.instance().find("HGCHits") != std::string::npos);
+    if (!isHGCal)
+      continue;
+    event.getByLabel(collectionTag, hSimHits);
+
+    if (collectionTag.instance().find("HEfront") != std::string::npos) {
+      output_.pHGCHEfrontHitSCAssoc = fillSimHitAssociation(hSimHits, scHandle);
+    } else if (collectionTag.instance().find("HEback") != std::string::npos) {
+      output_.pHGCHEbackHitSCAssoc = fillSimHitAssociation(hSimHits, scHandle);
+    } else
+      output_.pHGCEEHitSCAssoc = fillSimHitAssociation(hSimHits, scHandle);
+  }
+  event.put(std::move(output_.pHGCEEHitSCAssoc), "simHitHGCEEToSimCluster");
+  event.put(std::move(output_.pHGCHEfrontHitSCAssoc), "simHitHGCHEfrontToSimCluster");
+  event.put(std::move(output_.pHGCHEbackHitSCAssoc), "simHitHGCHEbackToSimCluster");
+
+  std::unordered_map<int, int> simClusIdxToCaloParticleIdxMap;
 
   // now fill the calo particles
   for (unsigned i = 0; i < output_.pCaloParticles->size(); ++i) {
     auto &cp = (*output_.pCaloParticles)[i];
     for (unsigned j = m_caloParticles.sc_start_[i]; j < m_caloParticles.sc_stop_[i]; ++j) {
       edm::Ref<SimClusterCollection> ref(scHandle, j);
+      simClusIdxToCaloParticleIdxMap[j] = i;
       cp.addSimCluster(ref);
     }
   }
 
-  event.put(std::move(output_.pCaloParticles), "MergedCaloTruth");
+  auto cpHandle = event.put(std::move(output_.pCaloParticles), "MergedCaloTruth");
 
   calo_particles().swap(m_caloParticles);
 
   std::unordered_map<Index_t, float>().swap(m_detIdToTotalSimEnergy);
   std::unordered_multimap<Barcode_t, Index_t>().swap(m_simHitBarcodeToIndex);
+
+  std::vector<int> caloPartIdx;
+  for (size_t i = 0; i < scHandle->size(); i++) {
+    int matchIdx = -1;
+    if (simClusIdxToCaloParticleIdxMap.find(i) != simClusIdxToCaloParticleIdxMap.end())
+      matchIdx = simClusIdxToCaloParticleIdxMap[i];
+    caloPartIdx.emplace_back(matchIdx);
+  }
+  auto assocMap = std::make_unique<edm::Association<CaloParticleCollection>>(cpHandle);
+  edm::Association<CaloParticleCollection>::Filler cpfiller(*assocMap);
+  cpfiller.insert(scHandle, caloPartIdx.begin(), caloPartIdx.end());
+  cpfiller.fill();
+  event.put(std::move(assocMap), "simClusterToCaloParticle");
 }
 
 template <class T>
@@ -645,6 +795,7 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
       put(vertexMothersProp, v.vertexId(), VertexProperty(&tracks[trackid_to_track_index[v.parentIndex()]], 0));
     }
   }
+  int previous_simclusters = output_.pSimClusters->size();  //already added ones
   SimHitsAccumulator_dfs_visitor vis;
   depth_first_search(decay, visitor(vis));
   CaloParticle_dfs_visitor caloParticleCreator(
@@ -652,6 +803,8 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
       m_caloParticles,
       m_simHitBarcodeToIndex,
       simTrackDetIdEnergyMap,
+      simClusterHistory_,
+      caloHitToSimClusterIdx_,
       [&](EdgeProperty &edge_property) -> bool {
         // Apply selection on SimTracks in order to promote them to be
         // CaloParticles. The function returns TRUE if the particle satisfies
@@ -663,12 +816,43 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
       });
   depth_first_search(decay, visitor(caloParticleCreator));
 
+  assignSimClusterCoordinates(output_.pSimClusters, vertices, previous_simclusters);
+  std::unordered_map<int, int> trackIdxToSimClusterIdx;
+  for (size_t i = 0; i < output_.pSimClusters->size(); i ++) {
+    auto& sc = output_.pSimClusters->at(i);
+    for (auto tk : sc.g4Tracks()) {
+      trackIdxToSimClusterIdx[trackid_to_track_index.at(tk.trackId())] = i;
+    }
+  }
+
+  for (size_t i = 0; i < hSimTracks->size(); i++) {
+    int idx = trackIdxToSimClusterIdx.find(i) != trackIdxToSimClusterIdx.end() ? trackIdxToSimClusterIdx[i] : -1;
+    trackToSimClusterIndices_.emplace_back(idx);
+  }
+
 #if DEBUG
   boost::write_graphviz(std::cout,
                         decay,
                         make_label_writer(make_transform_value_property_map(&graphviz_vertex, get(vertex_name, decay))),
                         make_label_writer(make_transform_value_property_map(&graphviz_edge, get(edge_weight, decay))));
 #endif
+}
+
+std::unique_ptr<edm::Association<SimClusterCollection>> CaloTruthAccumulator::fillSimHitAssociation(
+    edm::Handle<std::vector<PCaloHit>> &inColl, edm::OrphanHandle<SimClusterCollection> &matchColl) {
+  std::vector<int> matchIndices(inColl->size(), -1);
+
+  for (size_t i = 0; i < inColl->size(); i++) {
+    auto &hit = inColl->at(i);
+    if (caloHitToSimClusterIdx_.find(hit.id()) != caloHitToSimClusterIdx_.end())
+      matchIndices[i] = caloHitToSimClusterIdx_[hit.id()];
+  }
+
+  auto assocMap = std::make_unique<edm::Association<SimClusterCollection>>(matchColl);
+  edm::Association<SimClusterCollection>::Filler filler(*assocMap);
+  filler.insert(inColl, matchIndices.begin(), matchIndices.end());
+  filler.fill();
+  return assocMap;
 }
 
 template <class T>
@@ -729,5 +913,48 @@ void CaloTruthAccumulator::fillSimHits(std::vector<std::pair<DetId, const PCaloH
   }  // end of loop over InputTags
 }
 
+void CaloTruthAccumulator::assignSimClusterCoordinates(std::unique_ptr<SimClusterCollection> &scs,
+                                                       const std::vector<SimVertex> &vs,
+                                                       const size_t previous_simclusters) {
+
+
+
+  for (size_t isc = previous_simclusters; isc < scs->size(); isc++) {
+    auto &sc = scs->at(isc);
+
+    if (sc.g4Tracks().size()) {
+
+      const auto &t = sc.g4Tracks().at(0);
+      const auto mom = t.getMomentumAtBoundary();
+      const auto pos = t.getPositionAtBoundary();
+      math::XYZTLorentzVectorF momentum(mom.x(), mom.y(), mom.z(), mom.t());
+      math::XYZTLorentzVectorF vertex(0, 0, 10000, 0);
+      vertex = math::XYZTLorentzVectorF(pos.x(), pos.y(), pos.z(), pos.t());
+      sc.setImpactPoint(vertex);
+      sc.setImpactMomentum(momentum);
+
+    } else {
+      throw cms::Exception("Simcluster without genParticle or G4track");
+    }
+  }
+
+}
+
+void CaloTruthAccumulator::propagateSimClusterCoordinates(std::unique_ptr<SimClusterCollection> & sc_coll){
+    for(auto& sc : *sc_coll){
+        if(!sctools_.isHGCal(sc))
+            continue;
+        auto vertex = sc.impactPoint();
+        auto momentum = sc.impactMomentum();
+
+        prop_.propagate(vertex, momentum, sc.g4Tracks().at(0).charge());
+
+        sc.setImpactPoint(vertex);
+        sc.setImpactMomentum(momentum);
+
+    }
+}
+
 // Register with the framework
 DEFINE_DIGI_ACCUMULATOR(CaloTruthAccumulator);
+

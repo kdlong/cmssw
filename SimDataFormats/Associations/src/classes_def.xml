@@ -38,6 +38,12 @@
   <class name="map<unsigned int,vector<pair<unsigned int,pair<float,float> > > >" />
   <class name="vector<pair<unsigned int,pair<float,float> > >" />
 
+  <class name="edm::Wrapper<std::vector<std::vector<std::pair<int,int>>>>"/>
+  <class name="std::vector<std::vector<std::pair<int,int> > >"/>
+
+  <class name="edm::Wrapper<std::unordered_map<int,float>>"/>
+  <class name="std::unordered_map<int,float>"/>
+
   <class name="hgcal::SimToRecoCollectionWithSimClusters" >
    <field name="transientMap_" transient="true"/>
   </class>
@@ -49,4 +55,7 @@
 
   <class name="edm::helpers::KeyVal<edm::RefProd<vector<SimCluster> >,edm::RefProd<vector<reco::CaloCluster> > >" />
   <class name="edm::helpers::KeyVal<edm::RefProd<vector<reco::CaloCluster> >,edm::RefProd<vector<SimCluster> > >" />
+
+  <class name="edm::Association<std::vector<reco::CaloCluster> >"/>
+  <class name="edm::Wrapper<edm::Association<std::vector<reco::CaloCluster> > >"/>
 </lcgdict>
