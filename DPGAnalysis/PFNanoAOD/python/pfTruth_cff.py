@@ -1,5 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import CandVars,Var
+from DPGAnalysis.HGCalNanoAOD.simClusters_cff import simClusterTable
+from DPGAnalysis.TrackNanoAOD.trackingParticles_cff import trackingParticleTable
 
 pfTruthParticles = cms.EDProducer("PFTruthParticleProducer",
     simClusters = cms.InputTag("mix:MergedCaloTruth"),
@@ -19,5 +21,23 @@ pfTruthTable = cms.EDProducer("SimplePFTruthParticleFlatTableProducer",
     )
 )
 
-pfTruth = cms.Sequence(pfTruthParticles+pfTruthTable)
+simClusterToPFTruthTable = cms.EDProducer("SimClusterToPFTruthParticleIndexTableProducer",
+    cut = cms.string(""),
+    src = cms.InputTag("mix:MergedCaloTruth"),
+    objName = simClusterTable.name,
+    branchName = pfTruthTable.name,
+    objMap = cms.InputTag("pfTruthParticles:simClusToPFTruth"),
+    docString = cms.string("PFTruth particle to which the SimCluster is associated")
+)
+
+trackingPartToPFTruthTable = cms.EDProducer("TrackingParticleToPFTruthParticleIndexTableProducer",
+    cut = cms.string(""),
+    src = cms.InputTag("mix:MergedTrackTruth"),
+    objName = trackingParticleTable.name,
+    branchName = pfTruthTable.name,
+    objMap = cms.InputTag("pfTruthParticles:trackingPartToPFTruth"),
+    docString = cms.string("PFTruth particle to which the TrackingPart is associated")
+)
+
+pfTruth = cms.Sequence(pfTruthParticles+pfTruthTable+simClusterToPFTruthTable+trackingPartToPFTruthTable)
 
