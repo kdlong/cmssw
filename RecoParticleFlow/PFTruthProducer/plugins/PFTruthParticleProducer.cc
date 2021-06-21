@@ -94,7 +94,7 @@ private:
 
 PFTruthParticleProducer::PFTruthParticleProducer(const edm::ParameterSet &pset)
     : tpCollectionToken_(consumes<TrackingParticleCollection>(pset.getParameter<edm::InputTag>("trackingParticles"))),
-      cpCollectionToken_(consumes<SimClusterCollection>(pset.getParameter<edm::InputTag>("caloParticles"))),
+      cpCollectionToken_(consumes<CaloParticleCollection>(pset.getParameter<edm::InputTag>("caloParticles"))),
       svCollectionToken_(consumes<std::vector<SimVertex> >(pset.getParameter<edm::InputTag>("simVertices"))),
       stCollectionToken_(consumes<std::vector<SimTrack> >(pset.getParameter<edm::InputTag>("simTracks")))
 {
@@ -114,14 +114,14 @@ const SimTrack* PFTruthParticleProducer::getRoot(
         const std::vector<SimVertex> & simvertices,
         const std::map<int,int>&  trackIdToTrackIdxAsso ) const{
 
-    SimTrack* out=st;
+    const SimTrack* out=st;
     int vidx = out->vertIndex();//starting point
     while(true){
         if(vidx<0)
             break; //no vertex
         const SimVertex& vertex = simvertices.at(vidx);
         int stid = vertex.parentIndex();//this is Geant track ID, not vector index
-        int stidx = trackIdToTrackIdxAsso[stid]; //get vector index
+        int stidx = trackIdToTrackIdxAsso.at(stid); //get vector index
         if(stidx<0)
             break;
         const SimTrack & simtrack = simtracks.at(stidx);
@@ -162,7 +162,6 @@ void PFTruthParticleProducer::produce(edm::StreamID, edm::Event &iEvent, const e
       TrackingParticleRefVector tprefs;
       const SimClusterRefVector& screfs = cp.simClusters();
 
-      bool hascharged=false;
       //match the tracking particle(s)
       for(size_t i=0; i< tpCollection->size(); i++){
           if(std::find(matchedtptocp.begin(),matchedtptocp.end(), i) != matchedtptocp.end())
@@ -174,14 +173,11 @@ void PFTruthParticleProducer::produce(edm::StreamID, edm::Event &iEvent, const e
           auto stp = getRoot(& tpref->g4Tracks().at(0),
                   *stCollection,*svCollection, trackIdToTrackIdxAsso);
 
-
           //match
           if(stp->trackId() == cp.g4Tracks().at(0).trackId()
                   && stp->eventId() == cp.g4Tracks().at(0).eventId()){
               matchedtptocp.push_back(i);
               tprefs.push_back(tpref);
-              if(tpref->charge())
-                  hascharged=true;
           }
       }
       PFTruthParticle pftp(tprefs,screfs);
@@ -240,7 +236,7 @@ void PFTruthParticleProducer::produce(edm::StreamID, edm::Event &iEvent, const e
       auto trimmed_pfp = pftp;
       SimClusterRefVector trimmersc;
       for(auto & sc: trimmed_pfp.simClusters()){
-          if(sc->impactMomentum().E() > trimmed_pfp.p4().E()){
+          if(sc->impactMomentum().E() > trimmed_pfp.p4().E() * softkill_relthreshold){
               trimmersc.push_back(sc);
           }
       }
