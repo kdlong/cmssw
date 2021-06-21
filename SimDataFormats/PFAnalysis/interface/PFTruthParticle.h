@@ -22,9 +22,8 @@ class PFTruthParticle {
   friend std::ostream& operator<<(std::ostream& s, PFTruthParticle const& tp);
 
 public:
-  typedef math::XYZTLorentzVectorD LorentzVector;           ///< Lorentz vector
-  typedef math::XYZPointD Point;                            ///< point in the space
-  typedef math::XYZVectorD Vector;                          ///< point in the space
+  typedef math::XYZTLorentzVectorF LorentzVectorF;           ///< Lorentz vector
+  typedef math::XYZVectorF VectorF;                          ///< point in the space
 
   /** @brief Default constructor. Note that the object will be useless until it is provided
      * with a SimTrack and parent TrackingVertex.
@@ -43,13 +42,15 @@ public:
     void setSimClusters(const SimClusterRefVector& refs);
     void setPdgId(int pdgId);
     void setCharge(int charge);
-    void setP4(LorentzVector p4);
-    void setVertex(LorentzVector vertex);
+    void setP4(LorentzVectorF p4);
+    void setVertex(LorentzVectorF vertex);
     void addSimCluster(const SimClusterRef sc);
     void addTrackingParticle(const TrackingParticleRef tp);
 
     SimClusterRefVector& simClusters() { return simClusters_; }
     TrackingParticleRefVector& trackingParticles() { return trackingParticles_; }
+    const SimClusterRefVector& simClusters() const { return simClusters_; }
+    const TrackingParticleRefVector& trackingParticles() const { return trackingParticles_; }
     size_t nSimCluster() const { return simClusters_.size(); }
     size_t nTrackingParticle() const { return trackingParticles_.size(); }
 
@@ -69,13 +70,13 @@ public:
   float charge() const { return charge_; }
 
   /// @brief Four-momentum Lorentz vector.
-  const LorentzVector& p4() const { return p4_; }
+  const LorentzVectorF& p4() const { return p4_; }
 
   /// @brief Vertex XYZT.
-  const LorentzVector& vertex() const { return vertex_; }
+  const LorentzVectorF& vertex() const { return vertex_; }
 
   /// @brief spatial momentum vector
-  Vector momentum() const { return p4().Vect(); }
+  VectorF momentum() const { return p4().Vect(); }
 
   /// @brief Magnitude of momentum vector.
   double p() const { return p4().P(); }
@@ -129,7 +130,7 @@ private:
   /// references to G4 and reco::GenParticle tracks
   int charge_;
   int pdgId_;
-  LorentzVector p4_, vertex_;
+  LorentzVectorF p4_, vertex_;
   std::vector<SimTrack> g4Tracks_;
   reco::GenParticleRefVector genParticles_;
   SimClusterRefVector simClusters_;
