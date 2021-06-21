@@ -218,6 +218,7 @@ void NanoAODOutputModule::write(edm::EventForOutput const& iEvent) {
   for (unsigned int extensions = 0; extensions <= 1; ++extensions) {
     size_t iTable = 0;
     for (auto& table : tables) {
+      std::cout << "Calling fill for table " << iTable << std::endl;
       m_tables[iTable].fill(*table, *m_tree, extensions);
       ++iTable;
     }

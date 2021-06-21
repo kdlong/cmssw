@@ -39,6 +39,7 @@ void TableOutputBranches::defineBranchesFromFirstEvent(const nanoaod::FlatTable 
 
 void TableOutputBranches::branch(TTree &tree) {
   if (!m_singleton) {
+    std::cout << "Looking for base name " << m_baseName << std::endl;
     if (m_extension == IsExtension) {
       m_counterBranch = tree.FindBranch(("n" + m_baseName).c_str());
       if (!m_counterBranch) {
