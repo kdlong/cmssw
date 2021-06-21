@@ -43,6 +43,8 @@ void PFTruthParticle::setPdgId(int pdgId) { pdgId_ = pdgId; }
 
 void PFTruthParticle::setCharge(int charge) { charge_ = charge; }
 
-void PFTruthParticle::setP4(LorentzVector p4) { p4_ = p4; }
+void PFTruthParticle::setP4(LorentzVectorF p4) { p4_ = p4; }
+
+void PFTruthParticle::setVertex(LorentzVectorF vertex) { vertex_ = vertex; }
 
 void PFTruthParticle::addG4Track(const SimTrack& t) { g4Tracks_.push_back(t); }
