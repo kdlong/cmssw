@@ -11,14 +11,13 @@ from PhysicsTools.NanoAOD.extraflags_cff import *
 from PhysicsTools.NanoAOD.ttbarCategorization_cff import *
 from PhysicsTools.NanoAOD.genparticles_cff import *
 from PhysicsTools.NanoAOD.particlelevel_cff import *
-from PhysicsTools.NanoAOD.genWeightsTable_cfi import *
+from PhysicsTools.NanoAOD.genWeights_cff import *
 from PhysicsTools.NanoAOD.genVertex_cff import *
 from PhysicsTools.NanoAOD.vertices_cff import *
 from PhysicsTools.NanoAOD.met_cff import *
 from PhysicsTools.NanoAOD.triggerObjects_cff import *
 from PhysicsTools.NanoAOD.isotracks_cff import *
 from PhysicsTools.NanoAOD.NanoAODEDMEventContent_cff import *
-from PhysicsTools.NanoAOD.genWeightsTable_cfi import *
 
 from Configuration.Eras.Modifier_run2_miniAOD_80XLegacy_cff import run2_miniAOD_80XLegacy
 from Configuration.Eras.Modifier_run2_nanoAOD_92X_cff import run2_nanoAOD_92X
@@ -123,7 +122,7 @@ nanoSequenceOnlyFullSim = cms.Sequence(triggerObjectTables + l1bits)
 
 nanoSequence = cms.Sequence(nanoSequenceCommon + nanoSequenceOnlyFullSim)
 
-nanoSequenceFS = cms.Sequence(genParticleSequence + genVertexTables + particleLevelSequence + nanoSequenceCommon + jetMC + muonMC + electronMC + photonMC + tauMC + metMC + ttbarCatMCProducers +  globalTablesMC + btagWeightTable + genWeightsTable + genVertexTable + genParticleTables + particleLevelTables + lheInfoTable  + ttbarCategoryTable )
+nanoSequenceFS = cms.Sequence(genParticleSequence + genVertexTables + particleLevelSequence + nanoSequenceCommon + jetMC + muonMC + electronMC + photonMC + tauMC + metMC + ttbarCatMCProducers +  globalTablesMC + btagWeightTable + genWeightsTables + genVertexTable + genParticleTables + particleLevelTables + lheInfoTable  + ttbarCategoryTable )
 
 (run2_nanoAOD_92X | run2_miniAOD_80XLegacy | run2_nanoAOD_94X2016 | run2_nanoAOD_94X2016 | \
     run2_nanoAOD_94XMiniAODv1 | run2_nanoAOD_94XMiniAODv2 | \
@@ -415,10 +414,16 @@ def nanoGenWmassCustomize(process):
     process.genParticleTable.variables.pt.precision=cms.string(etaPrecision)
     
     process.lheInfoTable.storeAllLHEInfo = True
+
+    massWeights = cms.EDProducer("LHEWeightProductProducer",
+        lheSourceLabels = cms.vstring("correctMassWeights"),
+    )
     
     process.massWeightsTable = process.genWeightsTable.clone(
-        lheInfo = cms.VInputTag(cms.InputTag("correctMassWeights")),
-        postfix = 'CorrectMass',
+        lheWeights = cms.InputTag("massWeights"),
+        postfix = cms.untracked.string('CorrectMass'),
+        weightgroups = cms.vstring(['matrix element']),
+        maxGroupsPerType = cms.vint32([-1]),
     )
     process.nanoSequenceMC.insert(-1, process.massWeightsTable)
     

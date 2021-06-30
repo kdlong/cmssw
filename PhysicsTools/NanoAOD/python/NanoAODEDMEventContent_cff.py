@@ -4,6 +4,7 @@ NanoAODEDMEventContent = cms.PSet(
     outputCommands = cms.untracked.vstring(
         'drop *',
         "keep nanoaodFlatTable_*Table_*_*",     # event data
+        "keep nanoaodFlatTables_*Table_*_*",     # event data
         "keep edmTriggerResults_*_*_*",  # event data
         "keep String_*_genModel_*",  # generator model data
         "keep nanoaodMergeableCounterTable_*Table_*_*", # accumulated per/run or per/lumi data
