@@ -8,14 +8,51 @@
   <class name="CaloParticleRefVector"/>
   <class name="CaloParticleRefProd"/>
   <class name="CaloParticleContainer"/>
-  <class name="SimCluster"  ClassVersion="4">
-    <version ClassVersion="4" checksum="3868743425"/>
-    <version ClassVersion="3" checksum="1773780587"/>
+  <class name="SimCluster"  ClassVersion="6">
+   <version ClassVersion="6" checksum="1356980487"/>
+   <version ClassVersion="5" checksum="2292289445"/>
+   <version ClassVersion="4" checksum="3868743425"/>
+   <version ClassVersion="3" checksum="1773780587"/>
   </class>
+  <class name="edm::Association<std::vector<SimCluster>>"/>
+  <class name="edm::Wrapper<edm::Association<std::vector<SimCluster>>>"/>
+  <class name="edm::Association<std::vector<CaloParticle>>"/>
+  <class name="edm::Wrapper<edm::Association<std::vector<CaloParticle>>>"/>
   <class name="SimClusterCollection"/>
   <class name="edm::Wrapper<SimClusterCollection>"/>
   <class name="SimClusterRef"/>
   <class name="SimClusterRefVector"/>
   <class name="SimClusterRefProd"/>
   <class name="SimClusterContainer"/>
+  <class name="edm::Wrapper<SimClusterHistory>"/>
+  <class name="SimClusterHistory"/>
+  <class name="edm::Wrapper<std::vector<SimClusterHistory>>"/>
+  <class name="std::vector<SimClusterHistory>"/>
+  <class name="edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,float,unsigned int> >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQuality<std::vector<TrackingParticle>,std::vector<SimCluster>,float,unsigned int> >>"/>
+  <class name="edm::AssociationMap<edm::OneToMany<std::vector<TrackingParticle>,std::vector<SimCluster>,unsigned int> >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToMany<std::vector<TrackingParticle>,std::vector<SimCluster>,unsigned int> >>"/>
+  <class name="edm::helpers::KeyVal<edm::RefProd<vector<TrackingParticle> >,edm::RefProd<vector<SimCluster> > >"/>
+
+  <class name="edm::helpers::KeyVal<edm::RefProd<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> > >,edm::RefProd<vector<SimCluster> > >"/>
+  <class name="edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<SimCluster>,float,unsigned int> >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<SimCluster>,float,unsigned int> > >"/>
+
+  <class name="edm::helpers::KeyVal<edm::RefProd<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> > >,edm::RefProd<vector<reco::CaloCluster> > >"/>
+  <class name="edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<reco::CaloCluster>,float,unsigned int> >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit> >,std::vector<reco::CaloCluster>,float,unsigned int> > >"/>
+
+  <class name="edm::helpers::KeyVal<edm::RefProd<vector<SimCluster>>,edm::RefProd<vector<SimCluster> > >"/>
+  <class name="edm::AssociationMap<edm::OneToManyWithQualityGeneric<std::vector<SimCluster>,std::vector<SimCluster>,float,unsigned int,edm::RefProd<std::vector<SimCluster> >,edm::RefProd<std::vector<SimCluster> >,edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> > > >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQualityGeneric<std::vector<SimCluster>,std::vector<SimCluster>,float,unsigned int,edm::RefProd<std::vector<SimCluster> >,edm::RefProd<std::vector<SimCluster> >,edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> >,edm::Ref<std::vector<SimCluster>,SimCluster,edm::refhelper::FindUsingAdvance<std::vector<SimCluster>,SimCluster> > > >>"/>
 </lcgdict>

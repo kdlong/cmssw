@@ -52,6 +52,8 @@
   <class name="map<unsigned int,vector<pair<unsigned int,pair<float,float> > > >" />
   <class name="vector<pair<unsigned int,pair<float,float> > >" />
 
+  <class name="edm::Wrapper<std::unordered_map<int,float>>"/>
+  <class name="std::unordered_map<int,float>"/>
 
   <class name="hgcal::SimToRecoCollectionWithSimClusters" >
    <field name="transientMap_" transient="true"/>
@@ -138,4 +140,6 @@
 
   <class name="edm::Ref<std::vector<TTTrackTruthPair<edm::Ref<edm::DetSetVector<Phase2TrackerDigi>,Phase2TrackerDigi,edm::refhelper::FindForDetSetVector<Phase2TrackerDigi> > > > >" />
   <class name="edm::Wrapper<std::vector<TTTrackTruthPair<edm::Ref<edm::DetSetVector<Phase2TrackerDigi>,Phase2TrackerDigi,edm::refhelper::FindForDetSetVector<Phase2TrackerDigi> > > > >" />
+  <class name="edm::Association<std::vector<reco::CaloCluster> >"/>
+  <class name="edm::Wrapper<edm::Association<std::vector<reco::CaloCluster> > >"/>
 </lcgdict>
