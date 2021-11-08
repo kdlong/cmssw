@@ -15,6 +15,8 @@ namespace gen {
     std::string fullHeader = boost::algorithm::join(headerLines_, "");
     if (debug_)
       std::cout << "Full header is \n" << fullHeader << std::endl;
+    if (fullHeader.empty())
+        throw cms::Exception("LHEWeightHelper", "Empty LHE header! Cannot parse weight information");
     int xmlError = xmlDoc.Parse(fullHeader.c_str());
 
     while (!isConsistent() || xmlError != 0) {
@@ -164,7 +166,9 @@ namespace gen {
   tinyxml2::XMLError LHEWeightHelper::tryRemoveTrailings(tinyxml2::XMLDocument& xmlDoc, std::string& fullHeader) {
     // delete extra strings after the last </weightgroup> (occasionally contain '<' or '>')
     std::size_t theLastKet = fullHeader.rfind(weightgroupKet_) + weightgroupKet_.length();
+    std::cout << "Here we are, the header is" << fullHeader << std::endl;
     fullHeader = fullHeader.substr(0, theLastKet);
+    std::cout << "Got out\n";
 
     return xmlDoc.Parse(fullHeader.c_str());
   }
@@ -175,8 +179,10 @@ namespace gen {
     if (fullHeader.find("&lt;") != std::string::npos || fullHeader.find("&gt;") != std::string::npos)
       return LHEWeightHelper::ErrorType::HTMLSTYLE;
 
+    std::cout << "Here we are in findErrorType, the header is" << fullHeader << std::endl;
     std::string trailingCand =
         fullHeader.substr(fullHeader.rfind(weightgroupKet_) + std::string(weightgroupKet_).length());
+    std::cout << "Got out\n";
     if (trailingCand.find('<') != std::string::npos || trailingCand.find('>') != std::string::npos)
       return LHEWeightHelper::ErrorType::TRAILINGSTR;
 
