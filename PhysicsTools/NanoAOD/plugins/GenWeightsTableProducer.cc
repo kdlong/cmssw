@@ -269,14 +269,12 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
     if (weightType == gen::WeightType::kScaleWeights) {
       if (groupInfo.group->isWellFormed()) {
         const auto scaleGroup = *static_cast<const gen::ScaleWeightGroupInfo*>(groupInfo.group.get());
-        std::cout << "They're well formed, will be ordered as expected\n";
         weights = orderedScaleWeights(weights, scaleGroup);
         label.append(
             "[1] is mur=0.5 muf=1; [2] is mur=0.5 muf=2; [3] is mur=1 muf=0.5 ;"
             " [4] is mur=1 muf=1; [5] is mur=1 muf=2; [6] is mur=2 muf=0.5;"
             " [7] is mur=2 muf=1 ; [8] is mur=2 muf=2)");
       } else {
-        std::cout << "NOT WELL FORMED!\n";
         size_t nstore = std::min<size_t>(gen::ScaleWeightGroupInfo::MIN_SCALE_VARIATIONS, weights.size());
         //auto endit = std::begin(weights)+nstore;
         weights = std::vector<double>(begin(weights), std::begin(weights)+nstore);
