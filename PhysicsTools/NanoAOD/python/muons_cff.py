@@ -125,7 +125,7 @@ from RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff import *
 tracksfrommuons = cms.EDProducer("TrackProducerFromPatMuons",
                               src = cms.InputTag("linkedObjects", "muons"),
                               innerTrackOnly = cms.bool(False),
-                              ptMin = cms.double(15.),
+                              ptMin = cms.double(8.),
                               )
 
 trackrefit = cms.EDProducer('ResidualGlobalCorrectionMakerG4e',

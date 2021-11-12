@@ -761,7 +761,7 @@ ResidualGlobalCorrectionMakerBase::beginRun(edm::Run const& run, edm::EventSetup
 //       printf("in beginRun, detid = %u, parmdetid = %u, oldp = %p, newp = %p\n", det->geographicalId().rawId(), parmdetid.rawId(), &det->surface(), &(*plane));
 //       std::cout << "oldxi = " << det->surface().mediumProperties().xi() << " newxi = " << plane->mediumProperties().xi() << " dxi = " << dxi << " xifraction = " << xifraction << std::endl;
       
-      surfacemap_[det->geographicalId()] = plane;
+//       surfacemap_[det->geographicalId()] = plane;
       
       surfacemapD_[det->geographicalId()] = surfaceD;
       

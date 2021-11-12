@@ -1629,6 +1629,8 @@ void ResidualGlobalCorrectionMakerG4e::produce(edm::Event &iEvent, const edm::Ev
       if (debugprintout_) {
         std::cout<< "iter " << iiter << std::endl;
       }
+
+//       std::cout<< "iter " << iiter << std::endl;
       
       hitidxv.clear();
       hitidxv.reserve(nvalid);
@@ -2009,7 +2011,7 @@ void ResidualGlobalCorrectionMakerG4e::produce(edm::Event &iEvent, const edm::Ev
         
         const Matrix<BSScalar, 3, 1> dbs = dbs0 + jacpos*du;
         const BSScalar chisq = dbs.transpose()*covBSinv*dbs;
-        
+
         chisq0val += chisq.value().value();
         
         auto const& gradlocal = chisq.value().derivatives();
@@ -3509,7 +3511,7 @@ void ResidualGlobalCorrectionMakerG4e::produce(edm::Event &iEvent, const edm::Ev
       niter = iiter + 1;
       edmval = -deltachisq[0];
       
-      if (std::isnan(edmval) || std::isinf(edmval)) {
+      if (std::isnan(edmval) || std::isinf(edmval) || std::abs(lamupd) > M_PI_2 || (iiter>0 && edmval > 1e4) ) {
         std::cout << "WARNING: invalid parameter update!!!" << std::endl;
         valid = false;
         break;
@@ -3520,7 +3522,9 @@ void ResidualGlobalCorrectionMakerG4e::produce(edm::Event &iEvent, const edm::Ev
 //       const double nll0val = 0.5*chisq0val - 0.5*logdetH;
 //       const double nllval = nll0val + deltachisq[0];
       
-//       std::cout << "iiter = " << iiter << " edmval = " << edmval << " chisqval = " << chisqval << " chisq0val = " << chisq0val << std::endl;
+      const double ptupd = (1./std::abs(qbpupd))*std::cos(lamupd);
+
+//       std::cout << "iiter = " << iiter << " edmval = " << edmval << " chisqval = " << chisqval << " chisq0val = " << chisq0val << " qbpupd = " << qbpupd << " lamupd = " << lamupd << " phiupd = " << phiupd << " ptupd = " << ptupd << std::endl;
       
       
 //       std::cout << "iiter = " << iiter << " edmval = " << edmval << " chisqval = " << chisqval << " chisq0val = " << chisq0val << " logdetH = " << logdetH << " nll0val = " << nll0val << " nllval = " << nllval << std::endl;
