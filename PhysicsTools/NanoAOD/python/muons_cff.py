@@ -247,6 +247,8 @@ muonExternalVecVarsTable = cms.EDProducer("FlattenedCandValueMapVectorTableProdu
 for modifier in  run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016, run2_nanoAOD_94XMiniAODv1, run2_nanoAOD_94XMiniAODv2, run2_nanoAOD_LowPU:
     modifier.toModify(muonTable.variables, puppiIsoId = None, softMva = None)
 
+run2_nanoAOD_LowPU.toModify(muonTable, externalVariables = cms.PSet())
+
 run2_nanoAOD_102Xv1.toModify(muonTable.variables, puppiIsoId = None)
 
 
@@ -274,4 +276,6 @@ muonMCTable = cms.EDProducer("CandMCMatchTableProducer",
 muonSequence = cms.Sequence(slimmedMuonsUpdated+isoForMu + ptRatioRelForMu + slimmedMuonsWithUserData + finalMuons + finalLooseMuons )
 muonMC = cms.Sequence(muonsMCMatchForTable + muonMCTable)
 muonTables = cms.Sequence(muonFSRphotons + muonFSRassociation + muonMVATTH + muonMVALowPt + geopro + tracksfrommuons + trackrefit + trackrefitbs + muonTable + muonExternalVecVarsTable + fsrTable)
+
+run2_nanoAOD_LowPU.toReplaceWith(muonTables, muonTables.copyAndExclude([geopro, tracksfrommuons, trackrefit, trackrefitbs, muonExternalVecVarsTable]))
 

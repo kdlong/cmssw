@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from Configuration.Eras.Modifier_run2_nanoAOD_LowPU_cff import run2_nanoAOD_LowPU
 from PhysicsTools.NanoAOD.common_cff import *
 
 # Bad/clone muon filters - tagging mode to keep the event
@@ -40,8 +41,10 @@ extraFlagsTable = cms.EDProducer("GlobalVariablesTableProducer",
 extraFlagsProducers = cms.Sequence(badGlobalMuonTagger + cloneGlobalMuonTagger + BadPFMuonTagger + BadChargedCandidateTagger)
 
 from RecoMET.METFilters.ecalBadCalibFilter_cfi import *
+run2_nanoAOD_LowPU.toModify(ecalBadCalibFilter, EcalRecHitSource = 'reducedEgamma:reducedEERecHits')
+
 ecalBadCalibFilterNanoTagger = ecalBadCalibFilter.clone(
-    taggingMode = cms.bool(True)
+    taggingMode = cms.bool(True),
 )
 
 extraFlagsProducers102x = cms.Sequence(ecalBadCalibFilterNanoTagger)
