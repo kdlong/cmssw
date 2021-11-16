@@ -2,6 +2,7 @@ import FWCore.ParameterSet.Config as cms
 from Configuration.Eras.Modifier_run2_HLTconditions_2016_cff import run2_HLTconditions_2016
 from Configuration.Eras.Modifier_run2_HLTconditions_2017_cff import run2_HLTconditions_2017
 from Configuration.Eras.Modifier_run2_miniAOD_80XLegacy_cff import run2_miniAOD_80XLegacy
+from Configuration.Eras.Modifier_run2_nanoAOD_LowPU_cff import run2_nanoAOD_LowPU
 from PhysicsTools.NanoAOD.common_cff import ExtVar
 import copy
 
@@ -217,6 +218,37 @@ run2_HLTconditions_2016.toModify(
   triggerObjectTable,
   selections = selections2016
 )
+
+# trigger bits for lowPU dataset
+selections_lowPU = cms.VPSet(
+    cms.PSet(
+        name = cms.string("Electron (PixelMatched e/gamma)"), # this selects also photons for the moment!
+        id = cms.int32(11),
+        sel = cms.string("type(92) && pt > 7 && coll('hltEgammaCandidates') && filter('*PixelMatchFilter')"),
+        l1seed = cms.string("type(-98)"),  l1deltaR = cms.double(0.3),
+        #l2seed = cms.string("type(92) && coll('')"),  l2deltaR = cms.double(0.5),
+        skipObjectsNotPassingQualityBits = cms.bool(True),
+        # change electron trigger bits for lowPU
+        qualityBits = cms.string("filter('hltEle20WPLoose1GsfTrackIsoFilter*') + 2*filter('hltEle17WPLoose1GsfTrackIsoFilterForHI')"),
+        qualityBitsDoc = cms.string('1 = Ele20, 2 = Ele17HI'),
+    ),
+    cms.PSet(
+        name = cms.string("Muon"),
+        id = cms.int32(13),
+        sel = cms.string("type(83) && pt > 5 && (coll('hltIterL3MuonCandidates') || (pt > 45 && coll('hltHighPtTkMuonCands')) || (pt > 95 && coll('hltOldL3MuonCandidates')))"),
+        l1seed = cms.string("type(-81)"), l1deltaR = cms.double(0.5),
+        l2seed = cms.string("type(83) && coll('hltL2MuonCandidates')"),  l2deltaR = cms.double(0.3),
+        skipObjectsNotPassingQualityBits = cms.bool(True),
+        qualityBits = cms.string("filter('hltL3fL1sMu10lqL1f0L2f10L3Filtered17')"),
+        qualityBitsDoc = cms.string("1 = Mu17"),
+    ),
+)
+
+run2_nanoAOD_LowPU.toModify(
+    triggerObjectTable,
+    selections = selections_lowPU
+)
+
 
 from PhysicsTools.PatUtils.L1ECALPrefiringWeightProducer_cff import prefiringweight
 run2_HLTconditions_2016.toModify(prefiringweight, DataEra = cms.string("2016BtoH"))
