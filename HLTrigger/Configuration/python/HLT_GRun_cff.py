@@ -1,13 +1,13 @@
-# hltGetConfiguration --cff --data /dev/CMSSW_12_2_0/GRun --type GRun
+# hltGetConfiguration --cff --data /dev/CMSSW_12_3_0/GRun --type GRun
 
-# /dev/CMSSW_12_2_0/GRun/V7 (CMSSW_12_2_0_pre3)
+# /dev/CMSSW_12_3_0/GRun/V1 (CMSSW_12_3_0_pre1)
 
 import FWCore.ParameterSet.Config as cms
 
 fragment = cms.ProcessFragment( "HLT" )
 
 fragment.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/dev/CMSSW_12_2_0/GRun/V7')
+  tableName = cms.string('/dev/CMSSW_12_3_0/GRun/V1')
 )
 
 fragment.transferSystem = cms.PSet( 
@@ -3738,6 +3738,7 @@ fragment.streams = cms.PSet(
   ALCALumiPixelCountsPrompt = cms.vstring( 'AlCaLumiPixelCountsPrompt' ),
   ALCAP0 = cms.vstring( 'AlCaP0' ),
   ALCAPHISYM = cms.vstring( 'AlCaPhiSym' ),
+  ALCAPPS = cms.vstring( 'AlCaPPS' ),
   Calibration = cms.vstring( 'TestEnablesEcalHcal' ),
   DQM = cms.vstring( 'OnlineMonitor' ),
   DQMCalibration = cms.vstring( 'TestEnablesEcalHcalDQM' ),
@@ -3808,6 +3809,8 @@ fragment.datasets = cms.PSet(
     'AlCa_EcalEtaEEonly_v13',
     'AlCa_EcalPi0EBonly_v13',
     'AlCa_EcalPi0EEonly_v13' ),
+  AlCaPPS = cms.vstring( 'HLT_PPSMaxTracksPerArm1_v1',
+    'HLT_PPSMaxTracksPerRP4_v1' ),
   AlCaPhiSym = cms.vstring( 'AlCa_EcalPhiSym_v9' ),
   BTagMu = cms.vstring( 'HLT_BTagMu_AK4DiJet110_Mu5_noalgo_v13',
     'HLT_BTagMu_AK4DiJet110_Mu5_v13',

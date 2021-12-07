@@ -1,13 +1,13 @@
-# hltGetConfiguration --full --data /dev/CMSSW_12_2_0/HLT --type FULL --unprescale --process HLTFULL --globaltag auto:run3_hlt_FULL --input file:RelVal_Raw_FULL_DATA.root
+# hltGetConfiguration --full --data /dev/CMSSW_12_3_0/HLT --type FULL --unprescale --process HLTFULL --globaltag auto:run3_hlt_FULL --input file:RelVal_Raw_FULL_DATA.root
 
-# /dev/CMSSW_12_2_0/HLT/V9 (CMSSW_12_2_0_pre3)
+# /dev/CMSSW_12_3_0/HLT/V2 (CMSSW_12_3_0_pre1)
 
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process( "HLTFULL" )
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/dev/CMSSW_12_2_0/HLT/V9')
+  tableName = cms.string('/dev/CMSSW_12_3_0/HLT/V2')
 )
 
 process.transferSystem = cms.PSet( 
