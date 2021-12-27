@@ -39,6 +39,7 @@ void TableOutputBranches::defineBranchesFromFirstEvent(const nanoaod::FlatTable 
 
 void TableOutputBranches::branch(TTree &tree) {
   if (!m_singleton) {
+    std::cout << "Looking for base name " << m_baseName << std::endl;
     if (m_extension == IsExtension) {
       m_counterBranch = tree.FindBranch(("n" + m_baseName).c_str());
       if (!m_counterBranch) {
@@ -66,15 +67,12 @@ void TableOutputBranches::branch(TTree &tree) {
   }
 }
 
-void TableOutputBranches::fill(const edm::OccurrenceForOutput &iWhatever, TTree &tree, bool extensions) {
+void TableOutputBranches::fill(const nanoaod::FlatTable &tab, TTree &tree, bool extensions) {
   if (m_extension != DontKnowYetIfMainOrExtension) {
     if (extensions != m_extension)
       return;  // do nothing, wait to be called with the proper flag
   }
 
-  edm::Handle<nanoaod::FlatTable> handle;
-  iWhatever.getByToken(m_token, handle);
-  const nanoaod::FlatTable &tab = *handle;
   m_counter = tab.size();
   m_singleton = tab.singleton();
   if (!m_branchesBooked) {
