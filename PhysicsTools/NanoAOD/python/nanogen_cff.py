@@ -4,7 +4,6 @@ from PhysicsTools.NanoAOD.globals_cff import genTable
 from PhysicsTools.NanoAOD.met_cff import metMCTable
 from PhysicsTools.NanoAOD.genparticles_cff import *
 from PhysicsTools.NanoAOD.particlelevel_cff import *
-from PhysicsTools.NanoAOD.lheInfoTable_cfi import *
 from PhysicsTools.NanoAOD.genWeights_cff import *
 from PhysicsTools.NanoAOD.genVertex_cff import *
 from PhysicsTools.NanoAOD.common_cff import Var,CandVars
