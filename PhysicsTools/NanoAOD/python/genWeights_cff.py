@@ -1,24 +1,23 @@
 import FWCore.ParameterSet.Config as cms
+from GeneratorInterface.Core.genWeights_cfi import genWeights
 
-genWeights = cms.EDProducer("GenWeightProductProducer",
-    genInfo = cms.InputTag("generator"),
-    genLumiInfoHeader = cms.InputTag("generator"),
-    debug = cms.untracked.bool(False),
-    fillEmptyIfWeightFails = cms.untracked.bool(True),
-)
+genWeightsNano = genWeights.clone()
+genWeightsNano.weightProductLabels = ["genWeights"]
 
 lheWeights = cms.EDProducer("LHEWeightProductProducer",
     lheSourceLabels = cms.vstring(["externalLHEProducer", "source"]),
+    # Places to look for an existing weight product. IF found, don't create a new one
+    weightProductLabels = cms.vstring(["externalLHEProducer", "source"]),
     failIfInvalidXML = cms.untracked.bool(False),
-    debug = cms.untracked.bool(False),
+    debug = cms.untracked.bool(True),
     fillEmptyIfWeightFails = cms.untracked.bool(False),
 )
 
-genWeightsTable = cms.EDProducer(
-    "GenWeightsTableProducer",
+genWeightsTable = cms.EDProducer("GenWeightsTableProducer",
     lheWeights = cms.VInputTag(["externalLHEProducer", "source", "lheWeights"]),
     lheWeightPrecision = cms.int32(14),
-    genWeights = cms.InputTag("genWeights"),
+    genWeights = cms.VInputTag(["genWeights", "genWeightsNano"]),
+    genLumiInfoHeader = cms.InputTag("generator"),
     # Warning: you can use a full string, but only the first character is read.                                           
     # Note also that the capitalization is important! For example, 'parton shower'                                        
     # must be lower case and 'PDF' must be capital                                                                        
@@ -34,4 +33,5 @@ genWeightsTable = cms.EDProducer(
     #storeUngrouped = cms.int32(100),
 )
 
-genWeightsTableTask = cms.Task(lheWeights, genWeights, genWeightsTable)
+#genWeightsTableTask = cms.Task(lheWeights, genWeights, genWeightsTable)
+genWeightsTableTask = cms.Task(lheWeights, genWeightsNano, genWeightsTable)

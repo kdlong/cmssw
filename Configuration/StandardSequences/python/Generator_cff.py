@@ -5,6 +5,7 @@ import FWCore.ParameterSet.Config as cms
 #
 from PhysicsTools.HepMCCandAlgos.genParticles_cfi import *
 from GeneratorInterface.Core.generatorSmeared_cfi import *
+from GeneratorInterface.Core.genWeights_cfi import *
 from RecoJets.Configuration.RecoGenJets_cff import *
 from RecoMET.Configuration.RecoGenMET_cff import *
 from RecoJets.Configuration.GenJetParticles_cff import *
@@ -53,10 +54,11 @@ genJetMETTask = cms.Task(genJetParticlesTask, recoGenJetsTask, genMETParticlesTa
 VertexSmearing = cms.Sequence(cms.SequencePlaceholder("VtxSmeared"))
 GenSmeared = cms.Sequence(generatorSmeared)
 GeneInfo = cms.Sequence(GeneInfoTask)
+genWeightsSeq = cms.Sequence(genWeights)
 genJetMET = cms.Sequence(genJetMETTask)
 
 from SimPPS.Configuration.GenPPS_cff import *
-pgen = cms.Sequence(cms.SequencePlaceholder("randomEngineStateProducer")+VertexSmearing+GenSmeared+GeneInfo+genJetMET, PPSTransportTask)
+pgen = cms.Sequence(cms.SequencePlaceholder("randomEngineStateProducer")+VertexSmearing+GenSmeared+GeneInfo+genWeightsSeq+genJetMET, PPSTransportTask)
 
 # sequence for bare generator result only, without vertex smearing and analysis objects added
 

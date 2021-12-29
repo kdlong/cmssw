@@ -69,9 +69,14 @@ public:
         break;
       }
     }
-    edm::Handle<GenWeightInfoProduct> genWeightInfoHandle;
-    iLumi.getByToken(genWeightInfoToken_, genWeightInfoHandle);
 
+    edm::Handle<GenWeightInfoProduct> genWeightInfoHandle;
+    for (auto& token : genWeightInfoTokens_) {
+      iLumi.getByToken(token, genWeightInfoHandle);
+      if (genWeightInfoHandle.isValid()) {
+        break;
+      }
+    }
     auto tostore = groupsToStore(foundLheWeights, genWeightInfoHandle, lheWeightInfoHandle);
     return std::make_shared<WeightGroupsToStore>(tostore);
   }
@@ -117,8 +122,8 @@ public:
 protected:
   const std::vector<edm::EDGetTokenT<GenWeightProduct>> lheWeightTokens_;
   const std::vector<edm::EDGetTokenT<GenWeightInfoProduct>> lheWeightInfoTokens_;
-  const edm::EDGetTokenT<GenWeightProduct> genWeightToken_;
-  const edm::EDGetTokenT<GenWeightInfoProduct> genWeightInfoToken_;
+  const std::vector<edm::EDGetTokenT<GenWeightProduct>> genWeightTokens_;
+  const std::vector<edm::EDGetTokenT<GenWeightInfoProduct>> genWeightInfoTokens_;
   const edm::EDGetTokenT<GenEventInfoProduct> genEventInfoToken_;
   const edm::EDGetTokenT<GenLumiInfoHeader> genLumiInfoHeadTag_;
   const std::vector<gen::WeightType> weightgroups_;
@@ -143,13 +148,16 @@ protected:
 GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params)
     : lheWeightTokens_(
           edm::vector_transform(params.getParameter<std::vector<edm::InputTag>>("lheWeights"),
-                                [this](const edm::InputTag& tag) { return mayConsume<GenWeightProduct>(tag); })),
+            [this](const edm::InputTag& tag) { return mayConsume<GenWeightProduct>(tag); })),
       lheWeightInfoTokens_(edm::vector_transform(
           params.getParameter<std::vector<edm::InputTag>>("lheWeights"),
-          [this](const edm::InputTag& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })),
-      genWeightToken_(consumes<GenWeightProduct>(params.getParameter<edm::InputTag>("genWeights"))),
-      genWeightInfoToken_(
-          consumes<GenWeightInfoProduct, edm::InLumi>(params.getParameter<edm::InputTag>("genWeights"))),
+            [this](const edm::InputTag& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })),
+      genWeightTokens_(
+          edm::vector_transform(params.getParameter<std::vector<edm::InputTag>>("genWeights"),
+            [this](const edm::InputTag& tag) { return mayConsume<GenWeightProduct>(tag); })),
+      genWeightInfoTokens_(
+          edm::vector_transform(params.getParameter<std::vector<edm::InputTag>>("genWeights"),
+            [this](const edm::InputTag& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })),
       genEventInfoToken_(consumes<GenEventInfoProduct>(params.getParameter<edm::InputTag>("genEvent"))),
       genLumiInfoHeadTag_(
           mayConsume<GenLumiInfoHeader, edm::InLumi>(params.getParameter<edm::InputTag>("genLumiInfoHeader"))),
@@ -179,8 +187,7 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
       break;
     }
   }
-  //Taken from genweight producer 
-  // generator information (always available)
+
   auto const& genInfo = iEvent.get(genEventInfoToken_);
   const double genWeight = genInfo.weight();
   // table for gen info, always available
@@ -202,7 +209,12 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
   }
 
   edm::Handle<GenWeightProduct> genWeightHandle;
-  iEvent.getByToken(genWeightToken_, genWeightHandle);
+  for (auto& token : genWeightTokens_) {
+    iEvent.getByToken(token, genWeightHandle);
+    if (genWeightHandle.isValid()) {
+      break;
+    }
+  }
   const GenWeightProduct* genWeightProduct = genWeightHandle.product();
   WeightsContainer genWeights = genWeightProduct->weights();
 
@@ -410,8 +422,7 @@ void GenWeightsTableProducer::fillDescriptions(edm::ConfigurationDescriptions& d
   desc.add<std::vector<edm::InputTag>>("lheWeights");
   desc.add<std::vector<edm::InputTag>>("lheInfo", std::vector<edm::InputTag>{{"externalLHEProducer"}, {"source"}})
       ->setComment("tag(s) for the LHE information (LHEEventProduct and LHERunInfoProduct)");
-  //desc.add<std::vector<edm::InputTag>>("genWeights");
-  desc.add<edm::InputTag>("genWeights");
+  desc.add<std::vector<edm::InputTag>>("genWeights", std::vector<edm::InputTag>{{"genWeights"}});
   desc.add<edm::InputTag>("genEvent", edm::InputTag("generator"))
       ->setComment("tag for the GenEventInfoProduct, to get the main weight");
   desc.add<edm::InputTag>("genLumiInfoHeader", edm::InputTag("generator"))

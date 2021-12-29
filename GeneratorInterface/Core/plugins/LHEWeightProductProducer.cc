@@ -36,7 +36,7 @@ private:
   std::vector<std::string> lheLabels_;
   std::vector<edm::EDGetTokenT<LHEEventProduct>> lheEventTokens_;
   std::vector<edm::EDGetTokenT<LHERunInfoProduct>> lheRunInfoTokens_;
-  std::vector<edm::EDGetTokenT<GenWeightInfoProduct>> lheWeightInfoTokens_;
+  std::vector<edm::EDGetTokenT<GenWeightInfoProduct>> weightInfoTokens_;
   bool foundWeightProduct_ = false;
   bool hasLhe_ = false;
 
@@ -53,8 +53,8 @@ LHEWeightProductProducer::LHEWeightProductProducer(const edm::ParameterSet& iCon
           lheLabels_, [this](const std::string& tag) { return mayConsume<LHEEventProduct>(tag); })),
       lheRunInfoTokens_(edm::vector_transform(
           lheLabels_, [this](const std::string& tag) { return mayConsume<LHERunInfoProduct, edm::InRun>(tag); })),
-      lheWeightInfoTokens_(edm::vector_transform(
-          lheLabels_, [this](const std::string& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })) {
+      weightInfoTokens_(edm::vector_transform(iConfig.getParameter<std::vector<std::string>>("weightProductLabels"), 
+          [this](const std::string& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })) {
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
   weightHelper_.setFailIfInvalidXML(iConfig.getUntrackedParameter<bool>("failIfInvalidXML", false));
@@ -109,11 +109,11 @@ void LHEWeightProductProducer::beginRun(edm::Run const& run, edm::EventSetup con
 void LHEWeightProductProducer::endRun(edm::Run const& run, edm::EventSetup const& es) {}
 
 void LHEWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) {
-  edm::Handle<GenWeightInfoProduct> lheWeightInfoHandle;
+  edm::Handle<GenWeightInfoProduct> weightInfoHandle;
 
-  for (auto& token : lheWeightInfoTokens_) {
-    lumi.getByToken(token, lheWeightInfoHandle);
-    if (lheWeightInfoHandle.isValid()) {
+  for (auto& token : weightInfoTokens_) {
+    lumi.getByToken(token, weightInfoHandle);
+    if (weightInfoHandle.isValid()) {
       foundWeightProduct_ = true;
       return;
     }
