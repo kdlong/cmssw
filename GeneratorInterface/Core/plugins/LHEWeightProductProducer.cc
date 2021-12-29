@@ -58,6 +58,7 @@ LHEWeightProductProducer::LHEWeightProductProducer(const edm::ParameterSet& iCon
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
   weightHelper_.setFailIfInvalidXML(iConfig.getUntrackedParameter<bool>("failIfInvalidXML", false));
+  weightHelper_.setfillEmptyIfWeightFails(iConfig.getUntrackedParameter<bool>("fillEmptyIfWeightFails", false));
   weightHelper_.setDebug(iConfig.getUntrackedParameter<bool>("debug", false));
   weightHelper_.setGuessPSWeightIdx(iConfig.getUntrackedParameter<bool>("guessPSWeightIdx", false));
 }

@@ -53,6 +53,7 @@ GenWeightProductProducer::GenWeightProductProducer(const edm::ParameterSet& iCon
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
   weightHelper_.setGuessPSWeightIdx(iConfig.getUntrackedParameter<bool>("guessPSWeightIdx", false));
+  weightHelper_.setfillEmptyIfWeightFails(iConfig.getUntrackedParameter<bool>("fillEmptyIfWeightFails", false));
 }
 
 GenWeightProductProducer::~GenWeightProductProducer() {}
@@ -70,24 +71,31 @@ void GenWeightProductProducer::produce(edm::Event& iEvent, const edm::EventSetup
 void GenWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock& iLumi, edm::EventSetup const& iSetup) {
   edm::Handle<GenLumiInfoHeader> genLumiInfoHead;
   iLumi.getByToken(genLumiInfoHeadTag_, genLumiInfoHead);
+
   if (genLumiInfoHead.isValid()) {
     std::string label = genLumiInfoHead->configDescription();
     boost::replace_all(label, "-", "_");
     weightHelper_.setModel(label);
   }
 
+  auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();
   edm::Handle<GenLumiInfoHeader> genLumiInfoHandle;
   iLumi.getByToken(genLumiInfoToken_, genLumiInfoHandle);
+  if (genLumiInfoHandle.isValid()) {
+    weightNames_ = genLumiInfoHandle->weightNames();
+    weightHelper_.parseWeightGroupsFromNames(weightNames_);
+    if (weightHelper_.weightGroups().empty())
+      weightHelper_.addUnassociatedGroup();
 
-  weightNames_ = genLumiInfoHandle->weightNames();
-  weightHelper_.parseWeightGroupsFromNames(weightNames_);
-
-  auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();
-  if (weightHelper_.weightGroups().empty())
-    weightHelper_.addUnassociatedGroup();
-
-  for (auto& weightGroup : weightHelper_.weightGroups()) {
-    weightInfoProduct->addWeightGroupInfo(weightGroup);
+    for (auto& weightGroup : weightHelper_.weightGroups()) {
+      weightInfoProduct->addWeightGroupInfo(weightGroup);
+    }
+  } else if (weightHelper_.fillEmptyIfWeightFails()) {
+    std::cerr << "genLumiInfoHeader not found, but fillEmptyIfWeightFails is True" << std::endl;
+  } else {
+    throw cms::Exception("GenWeightProductProducer")
+        << "genLumiInfoHeader not found, code is exiting." << std::endl
+        << "If this is expect and want to continue, set fillEmptyIfWeightFails to True";
   }
   iLumi.put(std::move(weightInfoProduct));
 }
