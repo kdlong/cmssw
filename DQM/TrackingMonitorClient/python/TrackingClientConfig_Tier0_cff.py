@@ -79,16 +79,32 @@ from DQM.TrackingMonitorClient.V0MonitoringClient_cff import *
 from DQM.TrackingMonitorClient.primaryVertexResolutionClient_cfi import *
 # Sequence
 
-#import DQM.TrackingMonitor.TrackEfficiencyMonitor_cfi
-#TrackEffMon_ckf = DQM.TrackingMonitor.TrackEfficiencyMonitor_cfi.TrackEffMon.clone()
-#TrackEffMon_ckf.TKTrackCollection                  = 'ctfWithMaterialTracksP5'
-#TrackEffMon_ckf.AlgoName                           = 'CKFTk'
-#TrackEffMon_ckf.FolderName                         = 'Tracking/TrackParameters/TrackEfficiency'
+# from DQM.TrackingMonitor.TrackEfficiencyMonitor_cfi import *
+# TrackEffMon_ckf = TrackEffMon.clone(
+#     TKTrackCollection = 'ctfWithMaterialTracksP5',
+#     AlgoName = 'CKFTk',
+#     FolderName = 'Tracking/TrackParameters/TrackEfficiency'
+# )
 
 from DQM.TrackingMonitor.TrackEfficiencyClient_cfi import *
 TrackEffClient.FolderName = 'Tracking/TrackParameters/TrackEfficiency'
 TrackEffClient.AlgoName   = 'CKFTk'
 
-TrackingOfflineDQMClient = cms.Sequence(trackingQTester*trackingOfflineAnalyser*trackingEffFromHitPattern*voMonitoringClientSequence*primaryVertexResolutionClient*TrackEffClient)
+from DQM.TrackingMonitor.TrackFoldedOccupancyClient_cfi import *
 
-TrackingOfflineDQMClientZeroBias = cms.Sequence(trackingQTester*trackingOfflineAnalyser*trackingEffFromHitPatternZeroBias*voMonitoringClientSequence*primaryVertexResolutionClient*TrackEffClient)
+TrackingOfflineDQMClient = cms.Sequence(trackingQTester*trackingOfflineAnalyser*trackingEffFromHitPattern*voMonitoringClientSequence*primaryVertexResolutionClient*TrackEffClient*foldedMapClientSeq)
+
+TrackingOfflineDQMClientZeroBias = cms.Sequence(trackingQTester*trackingOfflineAnalyser*trackingEffFromHitPatternZeroBias*voMonitoringClientSequence*primaryVertexResolutionClient*TrackEffClient*foldedMapClientSeq)
+
+# fastsim customs
+_TrackingOfflineDQMClient_fastsim = TrackingOfflineDQMClient.copy()
+_TrackingOfflineDQMClient_fastsim.remove(foldedMapClientSeq)
+
+_TrackingOfflineDQMClientZeroBias_fastsim = TrackingOfflineDQMClientZeroBias.copy()
+_TrackingOfflineDQMClientZeroBias_fastsim.remove(foldedMapClientSeq)
+
+from Configuration.Eras.Modifier_fastSim_cff import fastSim
+fastSim.toReplaceWith(TrackingOfflineDQMClient,_TrackingOfflineDQMClient_fastsim)
+
+from Configuration.Eras.Modifier_fastSim_cff import fastSim
+fastSim.toReplaceWith(TrackingOfflineDQMClientZeroBias,_TrackingOfflineDQMClientZeroBias_fastsim)

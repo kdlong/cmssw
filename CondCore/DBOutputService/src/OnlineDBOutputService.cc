@@ -69,8 +69,8 @@ namespace cond {
     if (!std::getline(sinfo, slumi, ',')) {
       throw Exception("Can't get lumi id from OMS Service.");
     }
-    unsigned int run = boost::lexical_cast<unsigned int>(srun);
-    unsigned int lumi = boost::lexical_cast<unsigned int>(slumi);
+    unsigned int run = std::stoul(srun);
+    unsigned int lumi = std::stoul(slumi);
     lastLumiProcessed = cond::time::lumiTime(run, lumi);
     return lastLumiProcessed;
   }
@@ -84,6 +84,7 @@ cond::service::OnlineDBOutputService::OnlineDBOutputService(const edm::Parameter
       m_latencyInLumisections(iConfig.getUntrackedParameter<unsigned int>("latency", 1)),
       m_omsServiceUrl(iConfig.getUntrackedParameter<std::string>("omsServiceUrl", "")),
       m_preLoadConnectionString(iConfig.getUntrackedParameter<std::string>("preLoadConnectionString", "")),
+      m_frontierKey(iConfig.getUntrackedParameter<std::string>("frontierKey", "")),
       m_debug(iConfig.getUntrackedParameter<bool>("debugLogging", false)) {
   if (m_omsServiceUrl.empty()) {
     m_lastLumiFile = iConfig.getUntrackedParameter<std::string>("lastLumiFile", "");
@@ -124,5 +125,10 @@ cond::Iov_t cond::service::OnlineDBOutputService::preLoadIov(const std::string& 
 }
 
 cond::persistency::Session cond::service::OnlineDBOutputService::getReadOnlyCache(cond::Time_t targetTime) {
-  return PoolDBOutputService::newReadOnlySession(m_preLoadConnectionString, std::to_string(targetTime));
+  std::stringstream transId;
+  transId << targetTime;
+  if (!m_frontierKey.empty()) {
+    transId << "_" << m_frontierKey;
+  }
+  return PoolDBOutputService::newReadOnlySession(m_preLoadConnectionString, transId.str());
 }

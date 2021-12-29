@@ -1,5 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
+# modifiers
+from Configuration.ProcessModifiers.gpu_cff import gpu
+
 # helper fuctions
 from HLTrigger.Configuration.common import *
 
@@ -121,31 +124,34 @@ def customisePixelGainForRun2Input(process):
 
     return process
 
+def customisePixelL1ClusterThresholdForRun2Input(process):
+    # revert the pixel Layer 1 cluster threshold to be compatible with Run2:
+    for producer in producers_by_type(process, "SiPixelClusterProducer"):
+        if hasattr(producer,"ClusterThreshold_L1"):
+            producer.ClusterThreshold_L1 = 2000
+    for producer in producers_by_type(process, "SiPixelRawToClusterCUDA"):
+        if hasattr(producer,"clusterThreshold_layer1"):
+            producer.clusterThreshold_layer1 = 2000
+
+    return process
 
 def customiseFor2018Input(process):
     """Customise the HLT to run on Run 2 data/MC"""
     process = customisePixelGainForRun2Input(process)
+    process = customisePixelL1ClusterThresholdForRun2Input(process)
     process = customiseHCALFor2018Input(process)
 
     return process
 
-def customiseFor33104(process):
-    """Customise the HLT menu to remove the unused use_vdt parameters"""
-    for producer in producers_by_type(process, "PrimaryVertexProducer"):
-        if hasattr(producer, "TkClusParameters"):
-            pset = getattr(producer, "TkClusParameters")
-            if hasattr(pset, "TkDAClusParameters"):
-                if hasattr(getattr(pset, "TkDAClusParameters"),"use_vdt"):
-                    del producer.TkClusParameters.TkDAClusParameters.use_vdt
-
-    return process
 
 # CMSSW version specific customizations
 def customizeHLTforCMSSW(process, menuType="GRun"):
+    
+    # if the gpu modifier is enabled, make the Pixel, ECAL and HCAL reconstruction offloadable to a GPU
+    from HLTrigger.Configuration.customizeHLTforPatatrack import customizeHLTforPatatrack
+    gpu.makeProcessModifier(customizeHLTforPatatrack).apply(process)
 
     # add call to action function in proper order: newest last!
     # process = customiseFor12718(process)
-
-    process = customiseFor33104(process)
 
     return process

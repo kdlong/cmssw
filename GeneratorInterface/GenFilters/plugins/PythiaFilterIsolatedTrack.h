@@ -33,6 +33,8 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
 
+#include "SimGeneral/HepPDTRecord/interface/ParticleDataTable.h"
+
 namespace PythiaFilterIsoTracks {
   struct Counters {
     Counters() : nAll_(0), nGood_(0) {}
@@ -46,7 +48,7 @@ public:
   ~PythiaFilterIsolatedTrack() override;
 
   static std::unique_ptr<PythiaFilterIsoTracks::Counters> initializeGlobalCache(edm::ParameterSet const&) {
-    return std::unique_ptr<PythiaFilterIsoTracks::Counters>(new PythiaFilterIsoTracks::Counters());
+    return std::make_unique<PythiaFilterIsoTracks::Counters>();
   }
 
   bool filter(edm::Event&, edm::EventSetup const&) override;
@@ -70,5 +72,7 @@ private:
   unsigned int nAll_, nGood_;
   double ecDist_;  //distance to ECAL andcap from IP (cm)
   double ecRad_;   //radius of ECAL barrel (cm)
+
+  edm::ESGetToken<HepPDT::ParticleDataTable, PDTRecord> pdt_;
 };
 #endif

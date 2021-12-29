@@ -30,7 +30,10 @@ commonParam = cms.PSet(
 
     # comparator-code algorithm to improve
     # CLCT position and bending resolution
-    runCCLUT = cms.bool(False),
+    # CCLUT for TMB is NOT planned for startup Run-3
+    runCCLUT_TMB = cms.bool(False),
+    # CCLUT for OTMB is planned for startup Run-3
+    runCCLUT_OTMB = cms.bool(False),
 
     ## Phase-2 version is not needed for Run-3
     enableAlctPhase2 = cms.bool(False)
@@ -52,20 +55,8 @@ mpcParamRun2 = mpcParamRun1.clone(
     maxStubs = 18,
 )
 
-# GEM coincidence pad processors
-copadParamGE11 = cms.PSet(
-    verbosity = cms.uint32(0),
-    maxDeltaPad = cms.uint32(4),
-    maxDeltaRoll = cms.uint32(1),
-    maxDeltaBX = cms.uint32(0)
-)
-
-copadParamGE21 = copadParamGE11.clone()
-
 auxPSets = cms.PSet(
     commonParam = commonParam.clone(),
     mpcParamRun1 = mpcParamRun1.clone(),
     mpcParamRun2 = mpcParamRun2.clone(),
-    copadParamGE11 = copadParamGE11.clone(),
-    copadParamGE21 = copadParamGE21.clone()
 )

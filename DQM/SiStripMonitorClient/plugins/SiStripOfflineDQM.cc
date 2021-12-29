@@ -37,6 +37,7 @@
 
 //Run Info
 #include "CondFormats/RunInfo/interface/RunInfo.h"
+#include "DQMServices/Core/interface/LegacyIOHelper.h"
 
 #include <iostream>
 #include <iomanip>
@@ -82,9 +83,7 @@ SiStripOfflineDQM::SiStripOfflineDQM(edm::ParameterSet const& pSet)
   }
 
   if (createTkInfoFile_) {
-    tkinfoTree_ = edm::Service<TFileService> {}
-    ->make<TTree>("TkDetIdInfo", "");
-  }
+    tkinfoTree_ = edm::Service<TFileService> { } -> make<TTree>("TkDetIdInfo", ""); }
 
   // explicit dependency to make sure the QTest reults needed here are present
   // already in endRun.
@@ -201,11 +200,13 @@ void SiStripOfflineDQM::endJob() {
 }
 
 bool SiStripOfflineDQM::openInputFile(DQMStore& dqm_store) {
-  if (inputFileName_.empty())
+  if (inputFileName_.empty()) {
     return false;
+  }
   edm::LogInfo("OpenFile") << "SiStripOfflineDQM::openInputFile: Accessing root File" << inputFileName_;
-  dqm_store.open(inputFileName_, false);
-  return true;
+  dqm::harvesting::DQMStore* temp = dynamic_cast<dqm::harvesting::DQMStore*>(&dqm_store);
+  LegacyIOHelper leo(temp);
+  return leo.open(inputFileName_);
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"

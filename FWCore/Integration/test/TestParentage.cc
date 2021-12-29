@@ -3,11 +3,11 @@
 #include "DataFormats/Provenance/interface/BranchID.h"
 #include "DataFormats/Provenance/interface/Parentage.h"
 #include "DataFormats/Provenance/interface/ProductProvenance.h"
-#include "DataFormats/Provenance/interface/ProductProvenanceRetriever.h"
+#include "DataFormats/Provenance/interface/ProductProvenanceLookup.h"
 #include "DataFormats/Provenance/interface/Provenance.h"
 #include "DataFormats/TestObjects/interface/ToyProducts.h"
 #include "FWCore/Framework/interface/ConstProductRegistry.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/global/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -37,7 +37,7 @@ namespace {
   // ProductsResolver which for SubProcesses could lead to a different
   // retriever. In SubProcesses, the following function follows the
   // links in the retrievers themselves. Both should give the same answer.
-  void getAncestorsFromRetriever(edm::ProductProvenanceRetriever const* retriever,
+  void getAncestorsFromRetriever(edm::ProductProvenanceLookup const* retriever,
                                  edm::BranchID const& branchID,
                                  std::set<edm::BranchID>& ancestors) {
     edm::ProductProvenance const* productProvenance = retriever->branchIDToProvenance(branchID);
@@ -52,30 +52,25 @@ namespace {
 
 namespace edmtest {
 
-  class TestParentage : public edm::EDAnalyzer {
+  class TestParentage : public edm::global::EDAnalyzer<> {
   public:
     explicit TestParentage(edm::ParameterSet const& pset);
-    virtual ~TestParentage();
+    ~TestParentage() override = default;
 
-    virtual void analyze(edm::Event const& e, edm::EventSetup const& es) override;
+    void analyze(edm::StreamID, edm::Event const& e, edm::EventSetup const& es) const override;
 
   private:
-    edm::InputTag inputTag_;
     edm::EDGetTokenT<IntProduct> token_;
     std::vector<std::string> expectedAncestors_;
     bool callGetProvenance_;
   };
 
   TestParentage::TestParentage(edm::ParameterSet const& pset)
-      : inputTag_(pset.getParameter<edm::InputTag>("inputTag")),
+      : token_(consumes(pset.getParameter<edm::InputTag>("inputTag"))),
         expectedAncestors_(pset.getParameter<std::vector<std::string> >("expectedAncestors")),
-        callGetProvenance_(pset.getUntrackedParameter<bool>("callGetProvenance", true)) {
-    token_ = consumes<IntProduct>(inputTag_);
-  }
+        callGetProvenance_(pset.getUntrackedParameter<bool>("callGetProvenance", true)) {}
 
-  TestParentage::~TestParentage() {}
-
-  void TestParentage::analyze(edm::Event const& e, edm::EventSetup const&) {
+  void TestParentage::analyze(edm::StreamID, edm::Event const& e, edm::EventSetup const&) const {
     edm::Handle<IntProduct> h = e.getHandle(token_);
 
     edm::Provenance const* prov = h.provenance();
@@ -110,7 +105,7 @@ namespace edmtest {
       }
     }
 
-    edm::ProductProvenanceRetriever const* retriever = prov->store();
+    auto const* retriever = prov->store();
     std::set<edm::BranchID> ancestorsFromRetriever;
     getAncestorsFromRetriever(retriever, prov->originalBranchID(), ancestorsFromRetriever);
 

@@ -22,7 +22,7 @@ options.parseArguments()
 ####################################################################
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run3_data_promptlike', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run3_data_prompt', '')
 #process.GlobalTag.DumpStat = cms.untracked.bool(True)  # optional if you want it to be verbose
 
 # import of standard configurations
@@ -63,27 +63,6 @@ if options.unitTest:
                                               verbose = cms.untracked.bool(True)
                                               )
 
-
-# process.ReferenceRetrieval = cms.ESSource("PoolDBESSource",
-#                                   CondDBSetup,
-#                                   connect = cms.string('sqlite_file:DQMReferenceHistogramTest.db'),
-#                                   BlobStreamerName = cms.untracked.string('TBufferBlobStreamingService'),
-#                                   messageLevel = cms.untracked.int32(1), #3 for high verbosity
-#                                   timetype = cms.string('runnumber'),
-#                                   toGet = cms.VPSet(cms.PSet(record = cms.string('DQMReferenceHistogramRootFileRcd'),
-#                                                              tag = cms.string('ROOTFILE_DQM')
-#                                                              )
-#                                                     )
-#                                   )
-#
-
-# process.RecordDataGetter = cms.EDAnalyzer("EventSetupRecordDataGetter",
-#                                   toGet = cms.VPSet(cms.PSet(record = cms.string('DQMReferenceHistogramRootFileRcd'),
-#                                                          data = cms.vstring('ROOTFILE_DQM_Test10')
-#                                                          )
-#                                                 ),
-#                                   verbose = cms.untracked.bool(False)
-#                                   )
                                       
 process.load('CondTools.DQM.DQMXMLFileEventSetupAnalyzer_cfi')
 if(options.unitTest):

@@ -65,16 +65,42 @@ class MatrixInjector(object):
         if(opt.batchName):
             self.batchName = '__'+opt.batchName+'-'+self.batchTime
 
-        #wagemt stuff
+        ####################################
+        # Checking and setting up GPU attributes
+        ####################################
+        # Mendatory
+        self.RequiresGPU = opt.gpu
+        self.GPUMemoryMB = opt.GPUMemoryMB
+        self.CUDACapabilities = opt.CUDACapabilities
+        self.CUDARuntime = opt.CUDARuntime
+        # optional
+        self.GPUName = opt.GPUName
+        self.CUDADriverVersion = opt.CUDADriverVersion
+        self.CUDARuntimeVersion = opt.CUDARuntimeVersion
+
+        # WMagent url
         if not self.wmagent:
-            self.wmagent=os.getenv('WMAGENT_REQMGR')
+            # Overwrite with env variable
+            self.wmagent = os.getenv('WMAGENT_REQMGR')
+
         if not self.wmagent:
-            if not opt.testbed :
+            # Default values
+            if not opt.testbed:
                 self.wmagent = 'cmsweb.cern.ch'
-                self.DbsUrl = "https://"+self.wmagent+"/dbs/prod/global/DBSReader"
-            else :
+            else:
                 self.wmagent = 'cmsweb-testbed.cern.ch'
-                self.DbsUrl = "https://"+self.wmagent+"/dbs/int/global/DBSReader"
+
+        # DBSReader url
+        if opt.dbsUrl is not None:
+            self.DbsUrl = opt.dbsUrl
+        elif os.getenv('CMS_DBSREADER_URL') is not None:
+            self.DbsUrl = os.getenv('CMS_DBSREADER_URL')
+        else:
+            # Default values
+            if not opt.testbed:
+                self.DbsUrl = "https://cmsweb-prod.cern.ch/dbs/prod/global/DBSReader"
+            else:
+                self.DbsUrl = "https://cmsweb-testbed.cern.ch/dbs/int/global/DBSReader"
 
         if not self.dqmgui:
             self.dqmgui="https://cmsweb.cern.ch/dqm/relval"
@@ -167,8 +193,18 @@ class MatrixInjector(object):
             "nowmIO": {},
             "Multicore" : opt.nThreads,                       # this is the per-taskchain Multicore; it's the default assigned to a task if it has no value specified 
             "EventStreams": self.numberOfStreams,
-            "KeepOutput" : False
+            "KeepOutput" : False,
+            "RequiresGPU" : None,
+            "GPUParams": None
             }
+        self.defaultGPUParams={
+            "GPUMemoryMB": self.GPUMemoryMB,
+            "CUDACapabilities": self.CUDACapabilities,
+            "CUDARuntime": self.CUDARuntime
+            }
+        if self.GPUName: self.defaultGPUParams.update({"GPUName": self.GPUName})
+        if self.CUDADriverVersion: self.defaultGPUParams.update({"CUDADriverVersion": self.CUDADriverVersion})
+        if self.CUDARuntimeVersion: self.defaultGPUParams.update({"CUDARuntimeVersion": self.CUDARuntimeVersion})
 
         self.chainDicts={}
 
@@ -395,6 +431,9 @@ class MatrixInjector(object):
                                     if setPrimaryDs:
                                         chainDict['nowmTasklist'][-1]['PrimaryDataset']=setPrimaryDs
                                 nextHasDSInput=None
+                                if 'GPU' in step and self.RequiresGPU != 'forbidden':
+                                    chainDict['nowmTasklist'][-1]['RequiresGPU'] = self.RequiresGPU
+                                    chainDict['nowmTasklist'][-1]['GPUParams']=json.dumps(self.defaultGPUParams)
                             else:
                                 #not first step and no inputDS
                                 chainDict['nowmTasklist'].append(copy.deepcopy(self.defaultTask))
@@ -407,6 +446,9 @@ class MatrixInjector(object):
                                     chainDict['nowmTasklist'][-1]['LumisPerJob']=splitForThisWf
                                 if step in wmsplit:
                                     chainDict['nowmTasklist'][-1]['LumisPerJob']=wmsplit[step]
+                                if 'GPU' in step and self.RequiresGPU != 'forbidden':
+                                    chainDict['nowmTasklist'][-1]['RequiresGPU'] = self.RequiresGPU
+                                    chainDict['nowmTasklist'][-1]['GPUParams']=json.dumps(self.defaultGPUParams)
 
                             # change LumisPerJob for Hadronizer steps. 
                             if 'Hadronizer' in step: 
@@ -426,11 +468,14 @@ class MatrixInjector(object):
                             if 'pileup' in chainDict['nowmTasklist'][-1]['nowmIO']:
                                 chainDict['nowmTasklist'][-1]['MCPileup']=chainDict['nowmTasklist'][-1]['nowmIO']['pileup']
                             if '--pileup ' in s[2][index]:      # catch --pileup (scenarion) and not --pileup_ (dataset to be mixed) => works also making PRE-MIXed dataset
+                                pileupString = s[2][index].split()[s[2][index].split().index('--pileup')+1]
                                 processStrPrefix='PU_'          # take care of pu overlay done with GEN-SIM mixing
-                                if (  s[2][index].split()[  s[2][index].split().index('--pileup')+1 ]  ).find('25ns')  > 0 :
+                                if pileupString.find('25ns')  > 0 :
                                     processStrPrefix='PU25ns_'
-                                elif   (  s[2][index].split()[  s[2][index].split().index('--pileup')+1 ]  ).find('50ns')  > 0 :
+                                elif pileupString.find('50ns')  > 0 :
                                     processStrPrefix='PU50ns_'
+                                elif 'nopu' in pileupString.lower():
+                                    processStrPrefix=''
                             if 'premix_stage2' in s[2][index] and '--pileup_input' in s[2][index]: # take care of pu overlay done with DIGI mixing of premixed events
                                 if s[2][index].split()[ s[2][index].split().index('--pileup_input')+1  ].find('25ns')  > 0 :
                                     processStrPrefix='PUpmx25ns_'

@@ -1,5 +1,6 @@
 #include "RecoBTag/FeatureTools/interface/deep_helpers.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "FWCore/Utilities/interface/isFinite.h"
 
 namespace btagbtvdeep {
 
@@ -18,14 +19,11 @@ namespace btagbtvdeep {
 
   // remove infs and NaNs with value  (adapted from DeepNTuples)
   const float catch_infs(const float in, const float replace_value) {
-    if (in == in) {  // check if NaN
-      if (std::isinf(in))
-        return replace_value;
-      else if (in < -1e32 || in > 1e32)
-        return replace_value;
-      return in;
-    }
-    return replace_value;
+    if (edm::isNotFinite(in))
+      return replace_value;
+    if (in < -1e32 || in > 1e32)
+      return replace_value;
+    return in;
   }
 
   // remove infs/NaN and bound (adapted from DeepNTuples)
@@ -121,4 +119,28 @@ namespace btagbtvdeep {
     return int16_t((qualityFlags & lostInnerHitsMask) >> lostInnerHitsShift) - 1;
   }
 
+  std::pair<float, float> getDRSubjetFeatures(const reco::Jet &jet, const reco::Candidate *cand) {
+    const auto *patJet = dynamic_cast<const pat::Jet *>(&jet);
+    std::pair<float, float> features;
+    // Do Subjets
+    if (patJet) {
+      if (patJet->nSubjetCollections() > 0) {
+        auto subjets = patJet->subjets();
+        std::nth_element(
+            subjets.begin(),
+            subjets.begin() + 1,
+            subjets.end(),
+            [](const edm::Ptr<pat::Jet> &p1, const edm::Ptr<pat::Jet> &p2) { return p1->pt() > p2->pt(); });
+        features.first = !subjets.empty() ? reco::deltaR(*cand, *subjets[0]) : -1;
+        features.second = subjets.size() > 1 ? reco::deltaR(*cand, *subjets[1]) : -1;
+      } else {
+        features.first = -1;
+        features.second = -1;
+      }
+    } else {
+      features.first = -1;
+      features.second = -1;
+    }
+    return features;
+  }
 }  // namespace btagbtvdeep

@@ -1,17 +1,16 @@
 /*----------------------------------------------------------------------
 ----------------------------------------------------------------------*/
 #include "ProductResolvers.h"
-#include "Worker.h"
-#include "UnscheduledAuxiliary.h"
+#include "FWCore/Framework/interface/maker/Worker.h"
+#include "FWCore/Framework/interface/UnscheduledAuxiliary.h"
 #include "UnscheduledConfigurator.h"
 #include "FWCore/Framework/interface/EventPrincipal.h"
 #include "FWCore/Framework/interface/MergeableRunProductMetadata.h"
-#include "FWCore/Framework/interface/Principal.h"
 #include "FWCore/Framework/src/ProductDeletedException.h"
 #include "FWCore/Framework/interface/SharedResourcesAcquirer.h"
 #include "FWCore/Framework/interface/DelayedReader.h"
-#include "FWCore/Framework/src/TransitionInfoTypes.h"
-#include "DataFormats/Provenance/interface/ProductProvenanceRetriever.h"
+#include "FWCore/Framework/interface/TransitionInfoTypes.h"
+#include "FWCore/Framework/interface/ProductProvenanceRetriever.h"
 #include "DataFormats/Provenance/interface/BranchKey.h"
 #include "DataFormats/Provenance/interface/ParentageRegistry.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -77,8 +76,8 @@ namespace edm {
     return Resolution(nullptr);
   }
 
-  void DataManagingProductResolver::mergeProduct(std::unique_ptr<WrapperBase> iFrom,
-                                                 MergeableRunProductMetadata const* mergeableRunProductMetadata) const {
+  void MergeableInputProductResolver::mergeProduct(
+      std::shared_ptr<WrapperBase> iFrom, MergeableRunProductMetadata const* mergeableRunProductMetadata) const {
     // if its not mergeable and the previous read failed, go ahead and use this one
     if (status() == ProductStatus::ResolveFailed) {
       setProduct(std::move(iFrom));
@@ -104,7 +103,7 @@ namespace edm {
             << "that need to be merged in the first place.\n";
       }
       if (original->isPresent()) {
-        BranchDescription const& desc = branchDescription_();
+        BranchDescription const& desc = branchDescription();
         if (mergeableRunProductMetadata == nullptr || desc.branchType() != InRun) {
           original->mergeProduct(iFrom.get());
         } else {
@@ -159,10 +158,8 @@ namespace edm {
     }
   }
 
-  ProductResolverBase::Resolution InputProductResolver::resolveProduct_(Principal const& principal,
-                                                                        bool,
-                                                                        SharedResourcesAcquirer*,
-                                                                        ModuleCallingContext const* mcc) const {
+  ProductResolverBase::Resolution DelayedReaderInputProductResolver::resolveProduct_(
+      Principal const& principal, bool, SharedResourcesAcquirer*, ModuleCallingContext const* mcc) const {
     return resolveProductImpl<true>([this, &principal, mcc]() {
       auto branchType = principal.branchType();
       if (branchType == InLumi || branchType == InRun) {
@@ -170,12 +167,12 @@ namespace edm {
         // The file may already be closed so the reader is invalid
         return;
       }
-      if (mcc and (branchType == InEvent || branchType == InProcess) and aux_) {
+      if (mcc and branchType == InEvent and aux_) {
         aux_->preModuleDelayedGetSignal_.emit(*(mcc->getStreamContext()), *mcc);
       }
 
       auto sentry(make_sentry(mcc, [this, branchType](ModuleCallingContext const* iContext) {
-        if ((branchType == InEvent || branchType == InProcess) and aux_) {
+        if (branchType == InEvent and aux_) {
           aux_->postModuleDelayedGetSignal_.emit(*(iContext->getStreamContext()), *iContext);
         }
       }));
@@ -187,14 +184,14 @@ namespace edm {
         }
         if (not productResolved()) {
           //another thread could have beaten us here
-          putProduct(reader->getProduct(branchDescription().branchID(), &principal, mcc));
+          setProduct(reader->getProduct(branchDescription().branchID(), &principal, mcc));
         }
       }
     });
   }
 
-  void InputProductResolver::retrieveAndMerge_(Principal const& principal,
-                                               MergeableRunProductMetadata const* mergeableRunProductMetadata) const {
+  void DelayedReaderInputProductResolver::retrieveAndMerge_(
+      Principal const& principal, MergeableRunProductMetadata const* mergeableRunProductMetadata) const {
     if (auto reader = principal.reader()) {
       std::unique_lock<std::recursive_mutex> guard;
       if (auto sr = reader->sharedResources().second) {
@@ -203,7 +200,7 @@ namespace edm {
 
       //Can't use resolveProductImpl since it first checks to see
       // if the product was already retrieved and then returns if it is
-      std::unique_ptr<WrapperBase> edp(reader->getProduct(branchDescription().branchID(), &principal));
+      auto edp(reader->getProduct(branchDescription().branchID(), &principal));
 
       if (edp.get() != nullptr) {
         if (edp->isMergeable() && branchDescription().branchType() == InRun && !edp->hasSwap()) {
@@ -215,7 +212,7 @@ namespace edm {
         }
         if (status() == defaultStatus() || status() == ProductStatus::ProductSet ||
             (status() == ProductStatus::ResolveFailed && !branchDescription().isMergeable())) {
-          putOrMergeProduct(std::move(edp), mergeableRunProductMetadata);
+          setOrMergeProduct(std::move(edp), mergeableRunProductMetadata);
         } else {  // status() == ResolveFailed && branchDescription().isMergeable()
           throw Exception(errors::MismatchedInputFiles)
               << "Merge of Run or Lumi product failed for branch " << branchDescription().branchName() << "\n"
@@ -239,29 +236,40 @@ namespace edm {
     }
   }
 
-  void InputProductResolver::setMergeableRunProductMetadata_(MergeableRunProductMetadata const* mrpm) {
+  void MergeableInputProductResolver::setOrMergeProduct(
+      std::shared_ptr<WrapperBase> prod, MergeableRunProductMetadata const* mergeableRunProductMetadata) const {
+    if (status() == defaultStatus()) {
+      //resolveProduct has not been called or it failed
+      setProduct(std::move(prod));
+    } else {
+      mergeProduct(std::move(prod), mergeableRunProductMetadata);
+    }
+  }
+
+  void DelayedReaderInputProductResolver::setMergeableRunProductMetadata_(MergeableRunProductMetadata const* mrpm) {
     setMergeableRunProductMetadataInProductData(mrpm);
   }
 
-  void InputProductResolver::prefetchAsync_(WaitingTaskHolder waitTask,
-                                            Principal const& principal,
-                                            bool skipCurrentProcess,
-                                            ServiceToken const& token,
-                                            SharedResourcesAcquirer* sra,
-                                            ModuleCallingContext const* mcc) const {
+  void DelayedReaderInputProductResolver::prefetchAsync_(WaitingTaskHolder waitTask,
+                                                         Principal const& principal,
+                                                         bool skipCurrentProcess,
+                                                         ServiceToken const& token,
+                                                         SharedResourcesAcquirer* sra,
+                                                         ModuleCallingContext const* mcc) const {
     //need to try changing m_prefetchRequested before adding to m_waitingTasks
     bool expected = false;
     bool prefetchRequested = m_prefetchRequested.compare_exchange_strong(expected, true);
     m_waitingTasks.add(waitTask);
 
     if (prefetchRequested) {
-      auto workToDo = [this, mcc, &principal, token]() {
+      ServiceWeakToken weakToken = token;
+      auto workToDo = [this, mcc, &principal, weakToken]() {
         //need to make sure Service system is activated on the reading thread
-        ServiceRegistry::Operate operate(token);
+        ServiceRegistry::Operate operate(weakToken.lock());
         // Caught exception is propagated via WaitingTaskList
         CMS_SA_ALLOW try {
           resolveProductImpl<true>([this, &principal, mcc]() {
-            if (principal.branchType() != InEvent) {
+            if (principal.branchType() != InEvent && principal.branchType() != InProcess) {
               return;
             }
             if (auto reader = principal.reader()) {
@@ -271,7 +279,7 @@ namespace edm {
               }
               if (not productResolved()) {
                 //another thread could have finished this while we were waiting
-                putProduct(reader->getProduct(branchDescription().branchID(), &principal, mcc));
+                setProduct(reader->getProduct(branchDescription().branchID(), &principal, mcc));
               }
             }
           });
@@ -301,7 +309,7 @@ namespace edm {
     }
   }
 
-  void InputProductResolver::resetProductData_(bool deleteEarly) {
+  void DelayedReaderInputProductResolver::resetProductData_(bool deleteEarly) {
     if (not deleteEarly) {
       m_prefetchRequested = false;
       m_waitingTasks.reset();
@@ -309,11 +317,40 @@ namespace edm {
     DataManagingProductResolver::resetProductData_(deleteEarly);
   }
 
-  void InputProductResolver::setupUnscheduled(UnscheduledConfigurator const& iConfigure) {
+  void DelayedReaderInputProductResolver::setupUnscheduled(UnscheduledConfigurator const& iConfigure) {
     aux_ = iConfigure.auxiliary();
   }
 
-  bool InputProductResolver::isFromCurrentProcess() const { return false; }
+  bool DelayedReaderInputProductResolver::isFromCurrentProcess() const { return false; }
+
+  void PutOnReadInputProductResolver::putProduct(std::unique_ptr<WrapperBase> edp) const {
+    if (status() != defaultStatus()) {
+      throw Exception(errors::InsertFailure)
+          << "Attempt to insert more than one product on branch " << branchDescription().branchName() << "\n";
+    }
+
+    setProduct(std::move(edp));  // ProductResolver takes ownership
+  }
+
+  bool PutOnReadInputProductResolver::isFromCurrentProcess() const { return false; }
+
+  ProductResolverBase::Resolution PutOnReadInputProductResolver::resolveProduct_(Principal const&,
+                                                                                 bool skipCurrentProcess,
+                                                                                 SharedResourcesAcquirer*,
+                                                                                 ModuleCallingContext const*) const {
+    return resolveProductImpl<false>([]() { return; });
+  }
+
+  void PutOnReadInputProductResolver::prefetchAsync_(WaitingTaskHolder waitTask,
+                                                     Principal const& principal,
+                                                     bool skipCurrentProcess,
+                                                     ServiceToken const& token,
+                                                     SharedResourcesAcquirer* sra,
+                                                     ModuleCallingContext const* mcc) const {}
+
+  void PutOnReadInputProductResolver::putOrMergeProduct(std::unique_ptr<WrapperBase> edp) const {
+    setOrMergeProduct(std::move(edp), nullptr);
+  }
 
   ProductResolverBase::Resolution PuttableProductResolver::resolveProduct_(Principal const&,
                                                                            bool skipCurrentProcess,
@@ -333,11 +370,19 @@ namespace edm {
                                                SharedResourcesAcquirer* sra,
                                                ModuleCallingContext const* mcc) const {
     if (not skipCurrentProcess) {
+      if (branchDescription().branchType() == InProcess &&
+          mcc->parent().globalContext()->transition() == GlobalContext::Transition::kAccessInputProcessBlock) {
+        // This is an accessInputProcessBlock transition
+        // We cannot access produced products in those transitions
+        // except for in SubProcesses where they should have already run.
+        return;
+      }
       if (branchDescription().availableOnlyAtEndTransition() and mcc) {
         if (not mcc->parent().isAtEndTransition()) {
           return;
         }
       }
+
       //Need to try modifying prefetchRequested_ before adding to m_waitingTasks
       bool expected = false;
       bool prefetchRequested = prefetchRequested_.compare_exchange_strong(expected, true);
@@ -361,8 +406,8 @@ namespace edm {
     }
   }
 
-  void PuttableProductResolver::putProduct_(std::unique_ptr<WrapperBase> edp) const {
-    ProducedProductResolver::putProduct_(std::move(edp));
+  void PuttableProductResolver::putProduct(std::unique_ptr<WrapperBase> edp) const {
+    ProducedProductResolver::putProduct(std::move(edp));
     bool expected = false;
     if (prefetchRequested_.compare_exchange_strong(expected, true)) {
       m_waitingTasks.doneWaiting(std::exception_ptr());
@@ -461,7 +506,7 @@ namespace edm {
     DataManagingProductResolver::resetProductData_(deleteEarly);
   }
 
-  void ProducedProductResolver::putProduct_(std::unique_ptr<WrapperBase> edp) const {
+  void ProducedProductResolver::putProduct(std::unique_ptr<WrapperBase> edp) const {
     if (status() != defaultStatus()) {
       throw Exception(errors::InsertFailure)
           << "Attempt to insert more than one product on branch " << branchDescription().branchName() << "\n";
@@ -470,29 +515,9 @@ namespace edm {
     setProduct(std::move(edp));  // ProductResolver takes ownership
   }
 
-  void InputProductResolver::putProduct_(std::unique_ptr<WrapperBase> edp) const {
-    if (not productResolved()) {
-      //Another thread could have set this
-      setProduct(std::move(edp));
-    }
-  }
-
   bool ProducedProductResolver::isFromCurrentProcess() const { return true; }
 
   void DataManagingProductResolver::connectTo(ProductResolverBase const& iOther, Principal const*) { assert(false); }
-
-  void DataManagingProductResolver::putOrMergeProduct_(
-      std::unique_ptr<WrapperBase> prod, MergeableRunProductMetadata const* mergeableRunProductMetadata) const {
-    if (not prod) {
-      return;
-    }
-    if (status() == defaultStatus()) {
-      //resolveProduct has not been called or it failed
-      putProduct(std::move(prod));
-    } else {
-      mergeProduct(std::move(prod), mergeableRunProductMetadata);
-    }
-  }
 
   void DataManagingProductResolver::checkType(WrapperBase const& prod) const {
     // Check if the types match.
@@ -515,6 +540,16 @@ namespace edm {
       setFailedStatus();
     }
   }
+  void DataManagingProductResolver::setProduct(std::shared_ptr<WrapperBase> edp) const {
+    if (edp) {
+      checkType(*edp);
+      productData_.unsafe_setWrapper(std::move(edp));
+      theStatus_ = ProductStatus::ProductSet;
+    } else {
+      setFailedStatus();
+    }
+  }
+
   // This routine returns true if it is known that currently there is no real product.
   // If there is a real product, it returns false.
   // If it is not known if there is a real product, it returns false.
@@ -588,20 +623,6 @@ namespace edm {
 
   bool AliasProductResolver::singleProduct_() const { return true; }
 
-  void AliasProductResolver::putProduct_(std::unique_ptr<WrapperBase>) const {
-    throw Exception(errors::LogicError)
-        << "AliasProductResolver::putProduct_() not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
-  }
-
-  void AliasProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp,
-                                                MergeableRunProductMetadata const*) const {
-    throw Exception(errors::LogicError)
-        << "AliasProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp, MergeableRunProductMetadata "
-           "const*) not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
-  }
-
   SwitchBaseProductResolver::SwitchBaseProductResolver(std::shared_ptr<BranchDescription const> bd,
                                                        DataManagingOrAliasProductResolver& realProduct)
       : realProduct_(realProduct), productData_(std::move(bd)), prefetchRequested_(false) {
@@ -634,14 +655,6 @@ namespace edm {
     // null unique_ptr<WrapperBase> to signal that the produce() was
     // run.
     return false;
-  }
-
-  void SwitchBaseProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp,
-                                                     MergeableRunProductMetadata const*) const {
-    throw Exception(errors::LogicError)
-        << "SwitchBaseProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp, "
-           "MergeableRunProductMetadata const*) not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
   }
 
   void SwitchBaseProductResolver::setProductProvenanceRetriever_(ProductProvenanceRetriever const* provRetriever) {
@@ -718,7 +731,7 @@ namespace edm {
     }
   }
 
-  void SwitchProducerProductResolver::putProduct_(std::unique_ptr<WrapperBase> edp) const {
+  void SwitchProducerProductResolver::putProduct(std::unique_ptr<WrapperBase> edp) const {
     if (status_ != defaultStatus_) {
       throw Exception(errors::InsertFailure)
           << "Attempt to insert more than one product for a branch " << branchDescription().branchName()
@@ -789,12 +802,6 @@ namespace edm {
     }
   }
 
-  void SwitchAliasProductResolver::putProduct_(std::unique_ptr<WrapperBase> edp) const {
-    throw Exception(errors::LogicError)
-        << "SwitchAliasProductResolver::putProduct() not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
-  }
-
   void ParentProcessProductResolver::setProductProvenanceRetriever_(ProductProvenanceRetriever const* provRetriever) {
     provRetriever_ = provRetriever;
   }
@@ -808,20 +815,6 @@ namespace edm {
   void ParentProcessProductResolver::resetProductData_(bool deleteEarly) {}
 
   bool ParentProcessProductResolver::singleProduct_() const { return true; }
-
-  void ParentProcessProductResolver::putProduct_(std::unique_ptr<WrapperBase>) const {
-    throw Exception(errors::LogicError)
-        << "ParentProcessProductResolver::putProduct_() not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
-  }
-
-  void ParentProcessProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp,
-                                                        MergeableRunProductMetadata const*) const {
-    throw Exception(errors::LogicError)
-        << "ParentProcessProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp, "
-           "MergeableRunProductMetadata const*) not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
-  }
 
   void ParentProcessProductResolver::throwNullRealProduct() const {
     // In principle, this ought to be fixed. I noticed one hits this error
@@ -984,7 +977,7 @@ namespace edm {
         } else {
           if (not resolver_->dataValidFromResolver(index_, *principal_, skipCurrentProcess_)) {
             resolver_->tryPrefetchResolverAsync(
-                index_ + 1, *principal_, skipCurrentProcess_, sra_, mcc_, serviceToken_, group_);
+                index_ + 1, *principal_, skipCurrentProcess_, sra_, mcc_, serviceToken_.lock(), group_);
           }
         }
       }
@@ -995,7 +988,7 @@ namespace edm {
       SharedResourcesAcquirer* sra_;
       ModuleCallingContext const* mcc_;
       tbb::task_group* group_;
-      ServiceToken serviceToken_;
+      ServiceWeakToken serviceToken_;
       unsigned int index_;
       bool skipCurrentProcess_;
     };
@@ -1119,20 +1112,6 @@ namespace edm {
         << "Contact a Framework developer\n";
   }
 
-  void NoProcessProductResolver::putProduct_(std::unique_ptr<WrapperBase>) const {
-    throw Exception(errors::LogicError)
-        << "NoProcessProductResolver::putProduct_() not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
-  }
-
-  void NoProcessProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp,
-                                                    MergeableRunProductMetadata const*) const {
-    throw Exception(errors::LogicError)
-        << "NoProcessProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp, MergeableRunProductMetadata "
-           "const*) not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
-  }
-
   BranchDescription const& NoProcessProductResolver::branchDescription_() const {
     throw Exception(errors::LogicError)
         << "NoProcessProductResolver::branchDescription_() not implemented and should never be called.\n"
@@ -1217,20 +1196,6 @@ namespace edm {
     throw Exception(errors::LogicError) << "SingleChoiceNoProcessProductResolver::productWasFetchedAndIsValid_() not "
                                            "implemented and should never be called.\n"
                                         << "Contact a Framework developer\n";
-  }
-
-  void SingleChoiceNoProcessProductResolver::putProduct_(std::unique_ptr<WrapperBase>) const {
-    throw Exception(errors::LogicError)
-        << "SingleChoiceNoProcessProductResolver::putProduct_() not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
-  }
-
-  void SingleChoiceNoProcessProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp,
-                                                                MergeableRunProductMetadata const*) const {
-    throw Exception(errors::LogicError)
-        << "SingleChoiceNoProcessProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp, "
-           "MergeableRunProductMetadata const*) not implemented and should never be called.\n"
-        << "Contact a Framework developer\n";
   }
 
   BranchDescription const& SingleChoiceNoProcessProductResolver::branchDescription_() const {

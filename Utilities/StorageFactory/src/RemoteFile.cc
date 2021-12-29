@@ -14,6 +14,8 @@
 #define environ (*_NSGetEnviron())
 #endif
 
+using namespace edm::storage;
+
 static std::string join(char **cmd) {
   size_t size = 0;
   for (char **p = cmd; p && p[0]; ++p)
@@ -110,10 +112,12 @@ std::unique_ptr<Storage> RemoteFile::get(int localfd, const std::string &name, c
     unlink(name.c_str());
     cms::Exception ex("RemoteFile");
     ex << "'" << join(cmd) << "'"
-       << (WIFEXITED(rc)
-               ? " exited with exit code "
-               : WIFSIGNALED(rc) ? " died from signal " : " died for an obscure unknown reason with exit status ")
-       << (WIFEXITED(rc) ? WEXITSTATUS(rc) : WIFSIGNALED(rc) ? WTERMSIG(rc) : rc);
+       << (WIFEXITED(rc)     ? " exited with exit code "
+           : WIFSIGNALED(rc) ? " died from signal "
+                             : " died for an obscure unknown reason with exit status ")
+       << (WIFEXITED(rc)     ? WEXITSTATUS(rc)
+           : WIFSIGNALED(rc) ? WTERMSIG(rc)
+                             : rc);
     ex.addContext("Calling RemoteFile::get()");
     throw ex;
   }

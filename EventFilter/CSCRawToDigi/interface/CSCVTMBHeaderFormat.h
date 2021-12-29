@@ -4,7 +4,9 @@
 #include "DataFormats/CSCDigi/interface/CSCCLCTDigi.h"
 #include "DataFormats/CSCDigi/interface/CSCALCTDigi.h"
 #include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigi.h"
+#include "DataFormats/CSCDigi/interface/CSCShowerDigi.h"
 #include "DataFormats/MuonDetId/interface/CSCDetId.h"
+#include "DataFormats/CSCDigi/interface/CSCConstants.h"
 #include <vector>
 #include <iosfwd>
 #include <strings.h>
@@ -27,6 +29,22 @@ public:
   virtual uint16_t syncErrorCLCT() const = 0;
   virtual uint16_t syncErrorMPC0() const = 0;
   virtual uint16_t syncErrorMPC1() const = 0;
+
+  /// == Run 3 CSC-GEM Trigger Format
+  virtual uint16_t clct0_ComparatorCode() const = 0;
+  virtual uint16_t clct1_ComparatorCode() const = 0;
+  virtual uint16_t clct0_xky() const = 0;
+  virtual uint16_t clct1_xky() const = 0;
+  virtual uint16_t hmt_nhits() const = 0;
+  virtual uint16_t hmt_ALCTMatchTime() const = 0;
+  virtual uint16_t gem_enabled_fibers() const = 0;
+  virtual uint16_t gem_fifo_tbins() const = 0;
+  virtual uint16_t gem_fifo_pretrig() const = 0;
+  virtual uint16_t gem_zero_suppress() const = 0;
+  virtual uint16_t gem_sync_dataword() const = 0;
+  virtual uint16_t gem_timing_dataword() const = 0;
+  virtual uint16_t run3_CLCT_patternID() const = 0;
+
   uint16_t sizeInBytes() const { return sizeInWords() * 2; }
   virtual uint16_t NTBins() const = 0;
   virtual uint16_t NCFEBs() const = 0;
@@ -36,6 +54,8 @@ public:
   virtual std::vector<CSCCLCTDigi> CLCTDigis(uint32_t idlayer) = 0;
   ///returns CorrelatedLCT digis
   virtual std::vector<CSCCorrelatedLCTDigi> CorrelatedLCTDigis(uint32_t idlayer) const = 0;
+  ///returns Run3 HMT Shower digi
+  virtual CSCShowerDigi showerDigi(uint32_t idlayer) const = 0;
 
   /// in 16-bit words.  Add olne because we include beginning(b0c) and
   /// end (e0c) flags
@@ -45,9 +65,6 @@ public:
   virtual unsigned short* data() = 0;
   virtual bool check() const = 0;
 
-  /// Needed before data packing
-  //void setChamberId(const CSCDetId & detId) {theChamberId = detId;}
-
   /// for data packing
   virtual void addCLCT0(const CSCCLCTDigi& digi) = 0;
   virtual void addCLCT1(const CSCCLCTDigi& digi) = 0;
@@ -55,6 +72,7 @@ public:
   virtual void addALCT1(const CSCALCTDigi& digi) = 0;
   virtual void addCorrelatedLCT0(const CSCCorrelatedLCTDigi& digi) = 0;
   virtual void addCorrelatedLCT1(const CSCCorrelatedLCTDigi& digi) = 0;
+  virtual void addShower(const CSCShowerDigi& digi) = 0;
 
   virtual void print(std::ostream& os) const = 0;
 

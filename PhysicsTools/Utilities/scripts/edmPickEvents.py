@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Anzar Afaq         June 17, 2008
 # Oleksiy Atramentov June 21, 2008
@@ -11,7 +11,7 @@ import os
 import sys
 import optparse
 import re
-import commands
+
 from FWCore.PythonUtilities.LumiList   import LumiList
 import json
 from pprint import pprint
@@ -151,8 +151,8 @@ def fullCPMpath():
     raise RuntimeError("Could not find copyPickMerge_cfg.py")
 
 def guessEmail():
-    return '%s@%s' % (commands.getoutput ('whoami'),
-                      '.'.join(commands.getoutput('hostname').split('.')[-2:]))
+    return '%s@%s' % (subprocess.getoutput ('whoami'),
+                      '.'.join(subprocess.getoutput('hostname').split('.')[-2:]))
 
 def setupCrabDict (options):
     date = datetime.now().strftime('%Y%m%d_%H%M%S')

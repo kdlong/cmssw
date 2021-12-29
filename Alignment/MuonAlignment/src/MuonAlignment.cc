@@ -9,9 +9,6 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
 
-// Muon geom
-#include "Geometry/Records/interface/MuonGeometryRecord.h"
-
 // Alignment
 #include "CondFormats/Alignment/interface/Alignments.h"
 #include "CondFormats/Alignment/interface/AlignmentErrorsExtended.h"
@@ -33,6 +30,8 @@ void MuonAlignment::init() {
   theDTErrorRecordName = "DTAlignmentErrorExtendedRcd";
   theCSCAlignRecordName = "CSCAlignmentRcd";
   theCSCErrorRecordName = "CSCAlignmentErrorExtendedRcd";
+  theGEMAlignRecordName = "GEMAlignmentRcd";
+  theGEMErrorRecordName = "GEMAlignmentErrorExtendedRcd";
   theDTSurveyRecordName = "DTSurveyRcd";
   theDTSurveyErrorRecordName = "DTSurveyErrorExtendedRcd";
   theCSCSurveyRecordName = "CSCSurveyRcd";
@@ -41,22 +40,20 @@ void MuonAlignment::init() {
   theAlignableNavigator = nullptr;
 }
 
-MuonAlignment::MuonAlignment(const edm::EventSetup& iSetup) {
+MuonAlignment::MuonAlignment(const DTGeometry* dtGeometry,
+                             const CSCGeometry* cscGeometry,
+                             const GEMGeometry* gemGeometry)
+    : dtGeometry_(dtGeometry), cscGeometry_(cscGeometry), gemGeometry_(gemGeometry) {
   init();
 
-  edm::ESHandle<DTGeometry> dtGeometry;
-  edm::ESHandle<CSCGeometry> cscGeometry;
-  iSetup.get<MuonGeometryRecord>().get(dtGeometry);
-  iSetup.get<MuonGeometryRecord>().get(cscGeometry);
-
-  theAlignableMuon = new AlignableMuon(&(*dtGeometry), &(*cscGeometry));
+  theAlignableMuon = new AlignableMuon(&*dtGeometry_, &*cscGeometry_, &*gemGeometry_);
   theAlignableNavigator = new AlignableNavigator(theAlignableMuon);
 }
 
 MuonAlignment::MuonAlignment(const edm::EventSetup& iSetup, const MuonAlignmentInputMethod& input) {
   init();
 
-  theAlignableMuon = input.newAlignableMuon(iSetup);
+  theAlignableMuon = input.newAlignableMuon();
   theAlignableNavigator = new AlignableNavigator(theAlignableMuon);
 }
 
@@ -135,16 +132,21 @@ void MuonAlignment::copyAlignmentToSurvey(double shiftErr, double angleErr) {
   std::map<align::ID, Alignable*> alignableMap;
   recursiveMap(theAlignableMuon->DTBarrel(), alignableMap);
   recursiveMap(theAlignableMuon->CSCEndcaps(), alignableMap);
+  recursiveMap(theAlignableMuon->GEMEndcaps(), alignableMap);
 
   // Set the survey error to the alignable error, expanding the matrix as needed
   AlignmentErrorsExtended* dtAlignmentErrorsExtended = theAlignableMuon->dtAlignmentErrorsExtended();
   AlignmentErrorsExtended* cscAlignmentErrorsExtended = theAlignableMuon->cscAlignmentErrorsExtended();
+  AlignmentErrorsExtended* gemAlignmentErrorsExtended = theAlignableMuon->gemAlignmentErrorsExtended();
   std::vector<AlignTransformErrorExtended> alignmentErrors;
   std::copy(dtAlignmentErrorsExtended->m_alignError.begin(),
             dtAlignmentErrorsExtended->m_alignError.end(),
             std::back_inserter(alignmentErrors));
   std::copy(cscAlignmentErrorsExtended->m_alignError.begin(),
             cscAlignmentErrorsExtended->m_alignError.end(),
+            std::back_inserter(alignmentErrors));
+  std::copy(gemAlignmentErrorsExtended->m_alignError.begin(),
+            gemAlignmentErrorsExtended->m_alignError.end(),
             std::back_inserter(alignmentErrors));
 
   for (std::vector<AlignTransformErrorExtended>::const_iterator alignmentError = alignmentErrors.begin();
@@ -235,8 +237,11 @@ void MuonAlignment::copySurveyToAlignment() { recursiveCopySurveyToAlignment(the
 //____________________________________________________________________________________
 // Code needed to store alignments to DB
 
-void MuonAlignment::writeXML(const edm::ParameterSet& iConfig, const edm::EventSetup& iSetup) {
-  MuonAlignmentOutputXML(iConfig).write(theAlignableMuon, iSetup);
+void MuonAlignment::writeXML(const edm::ParameterSet& iConfig,
+                             const DTGeometry* dtGeometryXML,
+                             const CSCGeometry* cscGeometryXML,
+                             const GEMGeometry* gemGeometryXML) {
+  MuonAlignmentOutputXML(iConfig, dtGeometryXML, cscGeometryXML, gemGeometryXML).write(theAlignableMuon);
 }
 
 void MuonAlignment::saveDTSurveyToDB(void) {
@@ -246,8 +251,8 @@ void MuonAlignment::saveDTSurveyToDB(void) {
     throw cms::Exception("NotAvailable") << "PoolDBOutputService not available";
 
   // Get alignments and errors
-  Alignments* dtAlignments = new Alignments();
-  SurveyErrors* dtSurveyErrors = new SurveyErrors();
+  Alignments dtAlignments{};
+  SurveyErrors dtSurveyErrors{};
 
   align::Alignables alignableList;
   recursiveList(theAlignableMuon->DTBarrel(), alignableList);
@@ -263,13 +268,13 @@ void MuonAlignment::saveDTSurveyToDB(void) {
                          (*alignable)->id());
     SurveyError error((*alignable)->alignableObjectId(), (*alignable)->id(), (*alignable)->survey()->errors());
 
-    dtAlignments->m_align.push_back(value);
-    dtSurveyErrors->m_surveyErrors.push_back(error);
+    dtAlignments.m_align.push_back(value);
+    dtSurveyErrors.m_surveyErrors.push_back(error);
   }
 
   // Store DT alignments and errors
-  poolDbService->writeOne<Alignments>(&(*dtAlignments), poolDbService->currentTime(), theDTSurveyRecordName);
-  poolDbService->writeOne<SurveyErrors>(&(*dtSurveyErrors), poolDbService->currentTime(), theDTSurveyErrorRecordName);
+  poolDbService->writeOneIOV<Alignments>(dtAlignments, poolDbService->currentTime(), theDTSurveyRecordName);
+  poolDbService->writeOneIOV<SurveyErrors>(dtSurveyErrors, poolDbService->currentTime(), theDTSurveyErrorRecordName);
 }
 
 void MuonAlignment::saveCSCSurveyToDB(void) {
@@ -279,8 +284,8 @@ void MuonAlignment::saveCSCSurveyToDB(void) {
     throw cms::Exception("NotAvailable") << "PoolDBOutputService not available";
 
   // Get alignments and errors
-  Alignments* cscAlignments = new Alignments();
-  SurveyErrors* cscSurveyErrors = new SurveyErrors();
+  Alignments cscAlignments{};
+  SurveyErrors cscSurveyErrors{};
 
   align::Alignables alignableList;
   recursiveList(theAlignableMuon->CSCEndcaps(), alignableList);
@@ -296,13 +301,13 @@ void MuonAlignment::saveCSCSurveyToDB(void) {
                          (*alignable)->id());
     SurveyError error((*alignable)->alignableObjectId(), (*alignable)->id(), (*alignable)->survey()->errors());
 
-    cscAlignments->m_align.push_back(value);
-    cscSurveyErrors->m_surveyErrors.push_back(error);
+    cscAlignments.m_align.push_back(value);
+    cscSurveyErrors.m_surveyErrors.push_back(error);
   }
 
   // Store CSC alignments and errors
-  poolDbService->writeOne<Alignments>(&(*cscAlignments), poolDbService->currentTime(), theCSCSurveyRecordName);
-  poolDbService->writeOne<SurveyErrors>(&(*cscSurveyErrors), poolDbService->currentTime(), theCSCSurveyErrorRecordName);
+  poolDbService->writeOneIOV<Alignments>(cscAlignments, poolDbService->currentTime(), theCSCSurveyRecordName);
+  poolDbService->writeOneIOV<SurveyErrors>(cscSurveyErrors, poolDbService->currentTime(), theCSCSurveyErrorRecordName);
 }
 
 void MuonAlignment::saveSurveyToDB(void) {
@@ -317,13 +322,13 @@ void MuonAlignment::saveDTtoDB(void) {
     throw cms::Exception("NotAvailable") << "PoolDBOutputService not available";
 
   // Get alignments and errors
-  Alignments* dt_Alignments = theAlignableMuon->dtAlignments();
-  AlignmentErrorsExtended* dt_AlignmentErrorsExtended = theAlignableMuon->dtAlignmentErrorsExtended();
+  Alignments dt_Alignments = *(theAlignableMuon->dtAlignments());
+  AlignmentErrorsExtended dt_AlignmentErrorsExtended = *(theAlignableMuon->dtAlignmentErrorsExtended());
 
   // Store DT alignments and errors
-  poolDbService->writeOne<Alignments>(&(*dt_Alignments), poolDbService->currentTime(), theDTAlignRecordName);
-  poolDbService->writeOne<AlignmentErrorsExtended>(
-      &(*dt_AlignmentErrorsExtended), poolDbService->currentTime(), theDTErrorRecordName);
+  poolDbService->writeOneIOV<Alignments>(dt_Alignments, poolDbService->currentTime(), theDTAlignRecordName);
+  poolDbService->writeOneIOV<AlignmentErrorsExtended>(
+      dt_AlignmentErrorsExtended, poolDbService->currentTime(), theDTErrorRecordName);
 }
 
 void MuonAlignment::saveCSCtoDB(void) {
@@ -333,16 +338,33 @@ void MuonAlignment::saveCSCtoDB(void) {
     throw cms::Exception("NotAvailable") << "PoolDBOutputService not available";
 
   // Get alignments and errors
-  Alignments* csc_Alignments = theAlignableMuon->cscAlignments();
-  AlignmentErrorsExtended* csc_AlignmentErrorsExtended = theAlignableMuon->cscAlignmentErrorsExtended();
+  Alignments csc_Alignments = *(theAlignableMuon->cscAlignments());
+  AlignmentErrorsExtended csc_AlignmentErrorsExtended = *(theAlignableMuon->cscAlignmentErrorsExtended());
 
   // Store CSC alignments and errors
-  poolDbService->writeOne<Alignments>(&(*csc_Alignments), poolDbService->currentTime(), theCSCAlignRecordName);
-  poolDbService->writeOne<AlignmentErrorsExtended>(
-      &(*csc_AlignmentErrorsExtended), poolDbService->currentTime(), theCSCErrorRecordName);
+  poolDbService->writeOneIOV<Alignments>(csc_Alignments, poolDbService->currentTime(), theCSCAlignRecordName);
+  poolDbService->writeOneIOV<AlignmentErrorsExtended>(
+      csc_AlignmentErrorsExtended, poolDbService->currentTime(), theCSCErrorRecordName);
+}
+
+void MuonAlignment::saveGEMtoDB(void) {
+  // Call service
+  edm::Service<cond::service::PoolDBOutputService> poolDbService;
+  if (!poolDbService.isAvailable())  // Die if not available
+    throw cms::Exception("NotAvailable") << "PoolDBOutputService not available";
+
+  // Get alignments and errors
+  Alignments gem_Alignments = *(theAlignableMuon->gemAlignments());
+  AlignmentErrorsExtended gem_AlignmentErrorsExtended = *(theAlignableMuon->gemAlignmentErrorsExtended());
+
+  // Store CSC alignments and errors
+  poolDbService->writeOneIOV<Alignments>(gem_Alignments, poolDbService->currentTime(), theGEMAlignRecordName);
+  poolDbService->writeOneIOV<AlignmentErrorsExtended>(
+      gem_AlignmentErrorsExtended, poolDbService->currentTime(), theGEMErrorRecordName);
 }
 
 void MuonAlignment::saveToDB(void) {
   saveDTtoDB();
   saveCSCtoDB();
+  saveGEMtoDB();
 }

@@ -22,8 +22,8 @@ lowPtGsfElectronSeeds = cms.EDProducer(
             'ptbiased',
             ]),
     ModelWeights = cms.vstring([
-            'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_unbiased.xml.gz',
-            'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_displaced_pt_eta_biased.xml.gz',
+            'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_unbiased.root',
+            'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_displaced_pt_eta_biased.root',
             ]),
     ModelThresholds = thresholds("T"),
     PassThrough = cms.bool(False),
@@ -48,5 +48,4 @@ fastSim.toReplaceWith(lowPtGsfElectronSeeds,_fastSim_lowPtGsfElectronSeeds)
 from Configuration.Eras.Modifier_bParking_cff import bParking
 bParking.toModify(lowPtGsfElectronSeeds, 
     ModelThresholds = thresholds("VL"), 
-    MinPtThreshold = 0.5
 )

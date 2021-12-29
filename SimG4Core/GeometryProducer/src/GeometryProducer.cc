@@ -2,8 +2,7 @@
 
 #include "SimG4Core/GeometryProducer/interface/GeometryProducer.h"
 
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/ESTransientHandle.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
@@ -16,14 +15,8 @@
 #include "SimG4Core/Notification/interface/SimTrackManager.h"
 #include "SimG4Core/Watcher/interface/SimProducer.h"
 #include "SimG4Core/Watcher/interface/SimWatcherFactory.h"
-
-#include "MagneticField/Engine/interface/MagneticField.h"
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
-
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
-
-#include "DetectorDescription/Core/interface/DDCompactView.h"
-#include "DetectorDescription/DDCMS/interface/DDCompactView.h"
+#include "SimG4Core/SensitiveDetector/interface/sensitiveDetectorMakers.h"
+#include "SimG4Core/SensitiveDetector/interface/AttachSD.h"
 
 #include "G4RunManagerKernel.hh"
 #include "G4TransportationManager.hh"
@@ -62,7 +55,6 @@ static void createWatchers(const edm::ParameterSet &iP,
 GeometryProducer::GeometryProducer(edm::ParameterSet const &p)
     : m_kernel(nullptr),
       m_pField(p.getParameter<edm::ParameterSet>("MagneticField")),
-      m_attach(nullptr),
       m_p(p),
       m_pDD(nullptr),
       m_pDD4hep(nullptr),
@@ -76,23 +68,27 @@ GeometryProducer::GeometryProducer(edm::ParameterSet const &p)
   if (otherRegistry)
     m_registry.connect(*otherRegistry);
   createWatchers(m_p, m_registry, m_watchers, m_producers);
+
+  m_sdMakers = sim::sensitiveDetectorMakers(m_p, consumesCollector(), std::vector<std::string>());
+  tokMF_ = esConsumes<MagneticField, IdealMagneticFieldRecord, edm::Transition::BeginRun>();
+  if (m_pGeoFromDD4hep) {
+    tokDD4hep_ = esConsumes<cms::DDCompactView, IdealGeometryRecord, edm::Transition::BeginRun>();
+  } else {
+    tokDDD_ = esConsumes<DDCompactView, IdealGeometryRecord, edm::Transition::BeginRun>();
+  }
   produces<int>();
 }
 
-GeometryProducer::~GeometryProducer() {
-  delete m_attach;
-  delete m_kernel;
-}
+GeometryProducer::~GeometryProducer() { delete m_kernel; }
 
 void GeometryProducer::updateMagneticField(edm::EventSetup const &es) {
   if (m_pUseMagneticField) {
     // setup the magnetic field
-    edm::ESHandle<MagneticField> pMF;
-    es.get<IdealMagneticFieldRecord>().get(pMF);
+    auto const &pMF = &es.getData(tokMF_);
     const GlobalPoint g(0., 0., 0.);
     edm::LogInfo("GeometryProducer") << "B-field(T) at (0,0,0)(cm): " << pMF->inTesla(g);
 
-    sim::FieldBuilder fieldBuilder(pMF.product(), m_pField);
+    sim::FieldBuilder fieldBuilder(pMF, m_pField);
     CMSFieldManager *fieldManager = new CMSFieldManager();
     G4TransportationManager *tM = G4TransportationManager::GetTransportationManager();
     tM->SetFieldManager(fieldManager);
@@ -106,7 +102,12 @@ void GeometryProducer::beginLuminosityBlock(edm::LuminosityBlock &, edm::EventSe
   //     updateMagneticField( es );
 }
 
-void GeometryProducer::beginRun(const edm::Run &run, const edm::EventSetup &es) { updateMagneticField(es); }
+void GeometryProducer::beginRun(const edm::Run &run, const edm::EventSetup &es) {
+  updateMagneticField(es);
+  for (auto &maker : m_sdMakers) {
+    maker.second->beginRun(es);
+  }
+}
 
 void GeometryProducer::endRun(const edm::Run &, const edm::EventSetup &) {}
 
@@ -123,13 +124,9 @@ void GeometryProducer::produce(edm::Event &e, const edm::EventSetup &es) {
   edm::LogVerbatim("GeometryProducer") << " GeometryProducer initializing ";
   // DDDWorld: get the DDCV from the ES and use it to build the World
   if (m_pGeoFromDD4hep) {
-    edm::ESTransientHandle<cms::DDCompactView> pDD;
-    es.get<IdealGeometryRecord>().get(pDD);
-    m_pDD4hep = pDD.product();
+    m_pDD4hep = &es.getData(tokDD4hep_);
   } else {
-    edm::ESTransientHandle<DDCompactView> pDD;
-    es.get<IdealGeometryRecord>().get(pDD);
-    m_pDD = pDD.product();
+    m_pDD = &es.getData(tokDDD_);
   }
 
   SensitiveDetectorCatalog catalog;
@@ -148,11 +145,9 @@ void GeometryProducer::produce(edm::Event &e, const edm::EventSetup &es) {
     edm::LogInfo("GeometryProducer") << " instantiating sensitive detectors ";
     // instantiate and attach the sensitive detectors
     m_trackManager = std::make_unique<SimTrackManager>();
-    if (m_attach == nullptr)
-      m_attach = new AttachSD;
     {
       std::pair<std::vector<SensitiveTkDetector *>, std::vector<SensitiveCaloDetector *>> sensDets =
-          m_attach->create(es, catalog, m_p, m_trackManager.get(), m_registry);
+          sim::attachSD(m_sdMakers, es, catalog, m_p, m_trackManager.get(), m_registry);
 
       m_sensTkDets.swap(sensDets.first);
       m_sensCaloDets.swap(sensDets.second);

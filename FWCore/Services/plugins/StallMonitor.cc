@@ -24,7 +24,7 @@
 #include "FWCore/Utilities/interface/Algorithms.h"
 #include "FWCore/Utilities/interface/OStreamColumn.h"
 #include "FWCore/Utilities/interface/Exception.h"
-
+#include "FWCore/Utilities/interface/StdPairHasher.h"
 #include "tbb/concurrent_unordered_map.h"
 
 #include <atomic>
@@ -227,7 +227,9 @@ namespace edm {
       // for this purpose.
       using StreamID_value = decltype(std::declval<StreamID>().value());
       using ModuleID = decltype(std::declval<ModuleDescription>().id());
-      tbb::concurrent_unordered_map<std::pair<StreamID_value, ModuleID>, std::pair<decltype(beginTime_), bool>>
+      tbb::concurrent_unordered_map<std::pair<StreamID_value, ModuleID>,
+                                    std::pair<decltype(beginTime_), bool>,
+                                    edm::StdPairHasher>
           stallStart_{};
 
       std::vector<std::string> moduleLabels_{};
@@ -240,7 +242,7 @@ namespace edm {
 }  // namespace edm
 
 namespace {
-  constexpr char const* filename_default{""};
+  constexpr char const* const filename_default{""};
   constexpr double threshold_default{0.1};  //default threashold in seconds
   std::string const space{"  "};
 }  // namespace

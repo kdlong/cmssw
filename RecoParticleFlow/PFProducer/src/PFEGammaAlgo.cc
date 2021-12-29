@@ -11,7 +11,7 @@
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
 #include "RecoParticleFlow/PFClusterTools/interface/PFEnergyCalibration.h"
 #include "RecoParticleFlow/PFClusterTools/interface/PFEnergyResolution.h"
-#include "RecoParticleFlow/PFClusterTools/interface/PFClusterWidthAlgo.h"
+#include "CommonTools/ParticleFlow/interface/PFClusterWidthAlgo.h"
 #include "RecoParticleFlow/PFTracking/interface/PFTrackAlgoTools.h"
 #include "DataFormats/Common/interface/RefToPtr.h"
 #include "RecoEcal/EgammaCoreTools/interface/Mustache.h"
@@ -1068,7 +1068,9 @@ void PFEGammaAlgo::removeOrLinkECALClustersToKFTracks() {
             }
           }  // loop over tracks in primary vertex
              // if associated to good non-GSF matched track remove this cluster
-          if (PFTrackAlgoTools::isGoodForEGMPrimary(trackref->algo()) && nexhits == 0 && fromprimaryvertex) {
+          if ((PFTrackAlgoTools::isGoodForEGMPrimary(trackref->algo()) ||
+               PFTrackAlgoTools::isGoodForEGMPrimary(trackref->originalAlgo())) &&
+              nexhits == 0 && fromprimaryvertex) {
             closestECAL.setFlag(false);
           }
         }

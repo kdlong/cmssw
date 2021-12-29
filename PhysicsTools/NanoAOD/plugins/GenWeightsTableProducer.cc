@@ -19,9 +19,7 @@
 #include "SimDataFormats/GeneratorProducts/interface/PartonShowerWeightGroupInfo.h"
 #include "FWCore/Utilities/interface/transform.h"
 #include "PhysicsTools/NanoAOD/interface/GenWeightCounters.h"
-#include <optional>
 #include <iostream>
-#include <tinyxml2.h>
 
 namespace {
   typedef std::vector<gen::SharedWeightGroupData> WeightGroupDataContainer;
@@ -38,11 +36,8 @@ public:
   GenWeightsTableProducer(edm::ParameterSet const& params);
 
   void produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
-  //func changed//sroychow
-  void addWeightGroupToTable(std::map<gen::WeightType, std::vector<double>>& lheWeightTables,
-                             std::map<gen::WeightType, std::vector<int>>& weightVecsizes,
-                             std::map<gen::WeightType, std::string>& weightlabels,
-                             const char* typeName,
+  void addWeightGroupToTable(
+			     std::unique_ptr<std::vector<nanoaod::FlatTable>>& lheWeightTablevec,
                              const WeightGroupDataContainer& weightInfos,
                              WeightsContainer& allWeights,
                              Counter& counter,
@@ -51,10 +46,10 @@ public:
                                              gen::WeightType weightType,
                                              int& maxStore) const;
 
-  std::vector<double> orderedScaleWeights(const std::vector<double>& scaleWeights,
+  std::pair<std::string, std::vector<double>> orderedScaleWeights(const std::vector<double>& scaleWeights,
                                           const gen::ScaleWeightGroupInfo& scaleGroup) const;
 
-  std::vector<double> preferredPSweights(const std::vector<double>& psWeights,
+  std::pair<std::string, std::vector<double>> preferredPSweights(const std::vector<double>& psWeights,
                                          const gen::PartonShowerWeightGroupInfo& pswV) const;
 
   //Lumiblock
@@ -148,7 +143,6 @@ protected:
       {gen::WeightType::kPartonShowerWeights, "PSWeight"},
       {gen::WeightType::kUnknownWeights, "UnknownWeight"},
   };
-  //std::unordered_map<std::string, int> weightGroupIndices_;
   int lheWeightPrecision_;
   bool keepAllPSWeights_;
 
@@ -176,13 +170,10 @@ GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params
       keepAllPSWeights_(params.getParameter<bool>("keepAllPSWeights")) {
   if (weightgroups_.size() != maxGroupsPerType_.size())
     throw std::invalid_argument("Inputs 'weightgroups' and 'weightgroupNums' must have equal size");
-  for (auto& wg : weightTypeNames_) {
-    produces<nanoaod::FlatTable>(wg.second);
-    produces<nanoaod::FlatTable>(wg.second + "sizes");
-  }
   produces<nanoaod::FlatTable>("GENWeight");
   produces<nanoaod::MergeableCounterTable, edm::Transition::EndRun>();
   produces<std::string>("genModel");
+  produces<std::vector<nanoaod::FlatTable>>("LHEWeightTableVec");
 }
 
 void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
@@ -197,7 +188,7 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
       break;
     }
   }
-  //Taken from genweight producer //Added sroychow
+  //Taken from genweight producer 
   // generator information (always available)
   auto const& genInfo = iEvent.get(genEventInfoToken_);
   const double genWeight = genInfo.weight();
@@ -227,46 +218,23 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
   auto const& weightInfos = *luminosityBlockCache(iEvent.getLuminosityBlock().index());
 
   //create a container with dummy weight vector
-  std::map<gen::WeightType, std::vector<double>> lheWeightTables;
-  std::map<gen::WeightType, std::vector<int>> weightVecsizes;
-  std::map<gen::WeightType, std::string> weightlabels;
-  for (auto& wg : weightTypeNames_) {
-    lheWeightTables.insert(std::make_pair(wg.first, std::vector<double>()));
-    weightVecsizes.insert(std::make_pair(wg.first, std::vector<int>()));
-    weightlabels.insert(std::make_pair(wg.first, ""));
-  }
+  auto lheWeightTablevec = std::make_unique<std::vector<nanoaod::FlatTable>>();
   if (foundLheWeights) {
     addWeightGroupToTable(
-        lheWeightTables, weightVecsizes, weightlabels, "LHE", weightInfos.at(inLHE), lheWeights, counter, genWeight);
+        lheWeightTablevec, weightInfos.at(inLHE), lheWeights, counter, genWeight);
   }
 
   addWeightGroupToTable(
-      lheWeightTables, weightVecsizes, weightlabels, "Gen", weightInfos.at(inGen), genWeights, counter, genWeight);
+	lheWeightTablevec, weightInfos.at(inGen), genWeights, counter, genWeight);
 
-  for (auto& wg : weightTypeNames_) {
-    std::string wname = wg.second;
-    auto& weightVec = lheWeightTables[wg.first];
-    counter.incLHE(genWeight, weightVec, wname);
-    auto outTable = std::make_unique<nanoaod::FlatTable>(weightVec.size(), wname, false);
-    outTable->addColumn<float>("", weightVec, weightlabels[wg.first], lheWeightPrecision_);
-
-    //now add the vector containing the sizes of alt sets
-    auto outTableSizes =
-        std::make_unique<nanoaod::FlatTable>(weightVecsizes[wg.first].size(), wname + "_AltSetSizes", false);
-    outTableSizes->addColumn<float>(
-        "", weightVecsizes[wg.first], "Sizes of weight arrays for weight type:" + wname, lheWeightPrecision_);
-    iEvent.put(std::move(outTable), wname);
-    iEvent.put(std::move(outTableSizes), wname + "sizes");
-  }
+  iEvent.put(std::move(lheWeightTablevec),"LHEWeightTableVec");
 }
 
 /*
 
 */
-void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, std::vector<double>>& lheWeightTables,
-                                                    std::map<gen::WeightType, std::vector<int>>& weightVecsizes,
-                                                    std::map<gen::WeightType, std::string>& weightlabels,
-                                                    const char* typeName,
+void GenWeightsTableProducer::addWeightGroupToTable(
+						    std::unique_ptr<std::vector<nanoaod::FlatTable>>& lheWeightTablevec,
                                                     const WeightGroupDataContainer& weightInfos,
                                                     WeightsContainer& allWeights,
                                                     Counter& counter,
@@ -275,50 +243,33 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
   for (auto& type : gen::allWeightTypes)
     typeCount[type] = 0;
 
+  // TODO: Handle keepAllWeights 
   for (const auto& groupInfo : weightInfos) {
-    //std::string entryName = typeName;
     gen::WeightType weightType = groupInfo.group->weightType();
-    std::string name = weightTypeNames_.at(weightType);
-    std::string label = "[" + std::to_string(typeCount[weightType]) + "] " + groupInfo.group->description();
-    label.append("[");
-    label.append(std::to_string(lheWeightTables[weightType].size()));  //to append the start index of this set
-    label.append("]; ");
+    std::string entryName = weightTypeNames_.at(weightType);
+    std::string label = groupInfo.group->description();
     auto& weights = allWeights.at(groupInfo.index);
-    //std::cout << "Group name is " << groupInfo.group->name() << " is it wellFormed? " << groupInfo.group->isWellFormed() << std::endl;
     if (weightType == gen::WeightType::kScaleWeights) {
-      if (groupInfo.group->isWellFormed()) {
-        const auto scaleGroup = *static_cast<const gen::ScaleWeightGroupInfo*>(groupInfo.group.get());
-        std::cout << "They're well formed, will be ordered as expected\n";
-        weights = orderedScaleWeights(weights, scaleGroup);
-        label.append(
-            "[1] is mur=0.5 muf=1; [2] is mur=0.5 muf=2; [3] is mur=1 muf=0.5 ;"
-            " [4] is mur=1 muf=1; [5] is mur=1 muf=2; [6] is mur=2 muf=0.5;"
-            " [7] is mur=2 muf=1 ; [8] is mur=2 muf=2)");
-      } else {
-        std::cout << "NOT WELL FORMED!\n";
-        size_t nstore = std::min<size_t>(gen::ScaleWeightGroupInfo::MIN_SCALE_VARIATIONS, weights.size());
-        weights = std::vector<double>(begin(weights), std::begin(weights)+nstore);
-        label.append("WARNING: Unexpected format found. Contains first " + std::to_string(nstore) +
-                     " elements of weights vector, unordered");
-      }
-      // TODO: Handle storeAllWeights and !isWellFormed
-    } else if (!keepAllPSWeights_ && weightType == gen::WeightType::kPartonShowerWeights &&
-               groupInfo.group->isWellFormed()) {
-      const auto psGroup = *static_cast<const gen::PartonShowerWeightGroupInfo*>(groupInfo.group.get());
-      weights = preferredPSweights(weights, psGroup);
-      label.append(
-          "PS weights (w_var / w_nominal); [0] is ISR=0.5 FSR=1; [1] is ISR=1 FSR=0.5; [2] is ISR=2 FSR=1; [3] is "
-          "ISR=1 FSR=2");
+        const auto& scaleGroup = *std::static_pointer_cast<const gen::ScaleWeightGroupInfo>(groupInfo.group);
+        auto weightsAndLabel = orderedScaleWeights(weights, scaleGroup);
+        label.append(weightsAndLabel.first);
+        weights = weightsAndLabel.second;
+    } else if (weightType == gen::WeightType::kPartonShowerWeights) {
+      const auto& psGroup = *std::static_pointer_cast<const gen::PartonShowerWeightGroupInfo>(groupInfo.group);
+      auto weightsAndLabel = preferredPSweights(weights, psGroup);
+      label.append(weightsAndLabel.first);
+      weights = weightsAndLabel.second;
     }
-    //else
-    //  label.append(groupInfo.group->description());
-    lheWeightTables[weightType].insert(lheWeightTables[weightType].end(), weights.begin(), weights.end());
-    weightVecsizes[weightType].emplace_back(weights.size());
+    else
+      label.append(groupInfo.group->description());
 
-    if (weightlabels[weightType].empty())
-      weightlabels[weightType].append("[idx in AltSetSizes array] Name [start idx in weight array];\n");
+    if(typeCount[weightType] > 0) {
+      entryName.append("AltSet");
+      entryName.append(std::to_string(typeCount[weightType]));
+    }
+    lheWeightTablevec->emplace_back(weights.size(), entryName, false);
+    lheWeightTablevec->back().addColumn<float>("", weights, label, lheWeightPrecision_);
 
-    weightlabels[weightType].append(label);
     typeCount[weightType]++;
   }
 }
@@ -348,32 +299,59 @@ WeightGroupDataContainer GenWeightsTableProducer::weightDataPerType(edm::Handle<
   return out;
 }
 
-std::vector<double> GenWeightsTableProducer::orderedScaleWeights(const std::vector<double>& scaleWeights,
-                                                                 const gen::ScaleWeightGroupInfo& scaleGroup) const {
+std::pair<std::string, std::vector<double>> 
+GenWeightsTableProducer::orderedScaleWeights(const std::vector<double>& scaleWeights,
+                                                const gen::ScaleWeightGroupInfo& scaleGroup) const {
   std::vector<double> weights;
-  weights.emplace_back(scaleWeights.at(scaleGroup.muR05muF05Index()));
-  weights.emplace_back(scaleWeights.at(scaleGroup.muR05muF1Index()));
-  weights.emplace_back(scaleWeights.at(scaleGroup.muR05muF2Index()));
-  weights.emplace_back(scaleWeights.at(scaleGroup.muR1muF05Index()));
-  weights.emplace_back(scaleWeights.at(scaleGroup.centralIndex()));
-  weights.emplace_back(scaleWeights.at(scaleGroup.muR1muF2Index()));
-  weights.emplace_back(scaleWeights.at(scaleGroup.muR2muF05Index()));
-  weights.emplace_back(scaleWeights.at(scaleGroup.muR2muF1Index()));
-  weights.emplace_back(scaleWeights.at(scaleGroup.muR2muF2Index()));
+  std::string labels = "LHE scale variation weights (w_var / w_nominal); ";
+  if (scaleGroup.isWellFormed()) {
+    weights.emplace_back(scaleWeights.at(scaleGroup.muR05muF05Index()));
+    labels += "[0] is muR=0.5 muF=0.5; ";
+    weights.emplace_back(scaleWeights.at(scaleGroup.muR05muF1Index()));
+    labels += "[1] is muR=0.5 muF=1; ";
+    weights.emplace_back(scaleWeights.at(scaleGroup.muR05muF2Index()));
+    labels += "[2] is muR=0.5 muF=2; ";
+    weights.emplace_back(scaleWeights.at(scaleGroup.muR1muF05Index()));
+    labels += "[3] is muR=1 muF=0.5; ";
+    weights.emplace_back(scaleWeights.at(scaleGroup.centralIndex()));
+    labels += "[4] is muR=1 muF=1; ";
+    weights.emplace_back(scaleWeights.at(scaleGroup.muR1muF2Index()));
+    labels += "[5] is muR=1 muF=2; ";
+    weights.emplace_back(scaleWeights.at(scaleGroup.muR2muF05Index()));
+    labels += "[6] is muR=2 muF=0.5; ";
+    weights.emplace_back(scaleWeights.at(scaleGroup.muR2muF1Index()));
+    labels += "[7] is muR=2 muF=1; ";
+    weights.emplace_back(scaleWeights.at(scaleGroup.muR2muF2Index()));
+    labels += "[8] is muR=2 muF=2";
+  }
+  else {
+    size_t nstore = std::min<size_t>(gen::ScaleWeightGroupInfo::MIN_SCALE_VARIATIONS, weights.size());
+    weights = std::vector<double>(begin(weights), std::begin(weights)+nstore);
+    labels.append("WARNING: Unexpected format found. Contains first " + std::to_string(nstore) +
+                 " elements of weights vector, unordered");
+  }
 
-  return weights;
+  return std::make_pair(labels, weights);
 }
 
-std::vector<double> GenWeightsTableProducer::preferredPSweights(const std::vector<double>& psWeights,
+std::pair<std::string, std::vector<double>> GenWeightsTableProducer::preferredPSweights(const std::vector<double>& psWeights,
                                                                 const gen::PartonShowerWeightGroupInfo& pswV) const {
   std::vector<double> psTosave;
 
-  double baseline = psWeights.at(pswV.weightIndexFromLabel("Baseline"));
-  psTosave.emplace_back(psWeights.at(pswV.variationIndex(true, true, gen::PSVarType::def)) / baseline);
-  psTosave.emplace_back(psWeights.at(pswV.variationIndex(false, true, gen::PSVarType::def)) / baseline);
-  psTosave.emplace_back(psWeights.at(pswV.variationIndex(true, false, gen::PSVarType::def)) / baseline);
-  psTosave.emplace_back(psWeights.at(pswV.variationIndex(false, false, gen::PSVarType::def)) / baseline);
-  return psTosave;
+  std::string labels = "PS weights (w_var / w_nominal); ";
+  // TODO: Probably just drop them if they aren't well formed...
+  if (pswV.isWellFormed()) {
+    double baseline = psWeights.at(pswV.weightIndexFromLabel("Baseline"));
+    psTosave.emplace_back(psWeights.at(pswV.variationIndex(true, false, gen::PSVarType::def)) / baseline);
+    labels += "[0] is ISR=2 FSR=1; ";
+    psTosave.emplace_back(psWeights.at(pswV.variationIndex(false, false, gen::PSVarType::def)) / baseline);
+    labels += "[1] is ISR=1 FSR=2; ";
+    psTosave.emplace_back(psWeights.at(pswV.isrCombinedDownIndex(gen::PSVarType::def)) / baseline);
+    labels += "[2] is ISR=0.5 FSR=1; ";
+    psTosave.emplace_back(psWeights.at(pswV.fsrCombinedDownIndex(gen::PSVarType::def)) / baseline);
+    labels += "[3] is ISR=1 FSR=0.5; ";
+  }
+  return std::make_pair(labels, psTosave);
 }
 
 void GenWeightsTableProducer::streamEndRunSummary(edm::StreamID id,

@@ -1,4 +1,5 @@
 #include "RecoLocalTracker/SiPixelRecHits/interface/PixelCPEGeneric.h"
+#include "RecoLocalTracker/SiPixelRecHits/interface/PixelCPEGenericForBricked.h"
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
@@ -36,18 +37,19 @@ private:
   edm::ParameterSet pset_;
   bool useLAWidthFromDB_;
   bool UseErrorsFromTemplates_;
+  std::string CPEgenericMode_;  // user's choice of CPE generic
 };
 
 using namespace edm;
 
 PixelCPEGenericESProducer::PixelCPEGenericESProducer(const edm::ParameterSet& p) {
-  std::string myname = p.getParameter<std::string>("ComponentName");
+  CPEgenericMode_ = p.getParameter<std::string>("ComponentName");
   // Use LA-width from DB. If both (upper and this) are false LA-width is calcuated from LA-offset
   useLAWidthFromDB_ = p.getParameter<bool>("useLAWidthFromDB");
   // Use Alignment LA-offset
-  const bool useLAAlignmentOffsets = p.getParameter<bool>("useLAAlignmentOffsets");
+  const bool doLorentzFromAlignment = p.getParameter<bool>("doLorentzFromAlignment");
   char const* laLabel = "";  // standard LA, from calibration, label=""
-  if (useLAAlignmentOffsets) {
+  if (doLorentzFromAlignment) {
     laLabel = "fromAlignment";
   }
 
@@ -55,7 +57,7 @@ PixelCPEGenericESProducer::PixelCPEGenericESProducer(const edm::ParameterSet& p)
   UseErrorsFromTemplates_ = p.getParameter<bool>("UseErrorsFromTemplates");
 
   pset_ = p;
-  auto c = setWhatProduced(this, myname);
+  auto c = setWhatProduced(this, CPEgenericMode_);
   magfieldToken_ = c.consumes(magname);
   pDDToken_ = c.consumes();
   hTTToken_ = c.consumes();
@@ -66,9 +68,6 @@ PixelCPEGenericESProducer::PixelCPEGenericESProducer(const edm::ParameterSet& p)
   if (UseErrorsFromTemplates_) {
     genErrorDBObjectToken_ = c.consumes();
   }
-
-  //std::cout<<" ESProducer "<<myname<<" "<<useLAWidthFromDB_<<" "<<useLAAlignmentOffsets_<<" "
-  //	   <<UseErrorsFromTemplates_<<std::endl; //dk
 }
 
 std::unique_ptr<PixelClusterParameterEstimator> PixelCPEGenericESProducer::produce(const TkPixelCPERecord& iRecord) {
@@ -87,13 +86,22 @@ std::unique_ptr<PixelClusterParameterEstimator> PixelCPEGenericESProducer::produ
     //} else {
     //std::cout<<" pass an empty GenError pointer"<<std::endl;
   }
-  return std::make_unique<PixelCPEGeneric>(pset_,
-                                           &iRecord.get(magfieldToken_),
-                                           iRecord.get(pDDToken_),
-                                           iRecord.get(hTTToken_),
-                                           &iRecord.get(lorentzAngleToken_),
-                                           genErrorDBObjectProduct,
-                                           lorentzAngleWidthProduct);
+
+  return (CPEgenericMode_ == "PixelCPEGenericForBricked")
+             ? std::make_unique<PixelCPEGenericForBricked>(pset_,
+                                                           &iRecord.get(magfieldToken_),
+                                                           iRecord.get(pDDToken_),
+                                                           iRecord.get(hTTToken_),
+                                                           &iRecord.get(lorentzAngleToken_),
+                                                           genErrorDBObjectProduct,
+                                                           lorentzAngleWidthProduct)
+             : std::make_unique<PixelCPEGeneric>(pset_,
+                                                 &iRecord.get(magfieldToken_),
+                                                 iRecord.get(pDDToken_),
+                                                 iRecord.get(hTTToken_),
+                                                 &iRecord.get(lorentzAngleToken_),
+                                                 genErrorDBObjectProduct,
+                                                 lorentzAngleWidthProduct);
 }
 
 void PixelCPEGenericESProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -108,8 +116,6 @@ void PixelCPEGenericESProducer::fillDescriptions(edm::ConfigurationDescriptions&
   // specific to PixelCPEGenericESProducer
   desc.add<std::string>("ComponentName", "PixelCPEGeneric");
   desc.add<edm::ESInputTag>("MagneticFieldRecord", edm::ESInputTag(""));
-  desc.add<bool>("useLAAlignmentOffsets", false);
-  desc.add<bool>("DoLorentz", false);
   descriptions.add("_generic_default", desc);
 }
 

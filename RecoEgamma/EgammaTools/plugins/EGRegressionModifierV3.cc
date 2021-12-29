@@ -63,6 +63,7 @@ private:
   bool useClosestToCentreSeedCrysDef_;
   float maxRawEnergyForLowPtEBSigma_;
   float maxRawEnergyForLowPtEESigma_;
+  edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
   edm::ESHandle<CaloGeometry> caloGeomHandle_;
 };
 
@@ -81,6 +82,9 @@ EGRegressionModifierV3::EGRegressionModifierV3(const edm::ParameterSet& conf, ed
   if (conf.exists("phoRegs")) {
     phoRegs_ = std::make_unique<PhoRegs>(conf.getParameterSet("phoRegs"), cc);
   }
+  if (useClosestToCentreSeedCrysDef_) {
+    caloGeomToken_ = cc.esConsumes();
+  }
 }
 
 EGRegressionModifierV3::~EGRegressionModifierV3() {}
@@ -92,8 +96,9 @@ void EGRegressionModifierV3::setEventContent(const edm::EventSetup& iSetup) {
     eleRegs_->setEventContent(iSetup);
   if (phoRegs_)
     phoRegs_->setEventContent(iSetup);
-  if (useClosestToCentreSeedCrysDef_)
-    iSetup.get<CaloGeometryRecord>().get(caloGeomHandle_);
+  if (useClosestToCentreSeedCrysDef_) {
+    caloGeomHandle_ = iSetup.getHandle(caloGeomToken_);
+  }
 }
 
 void EGRegressionModifierV3::modifyObject(reco::GsfElectron& ele) const {
@@ -109,8 +114,7 @@ void EGRegressionModifierV3::modifyObject(reco::GsfElectron& ele) const {
     return;
 
   // do not apply corrections in case of missing info (slimmed MiniAOD electrons)
-  if (!superClus->clusters().isAvailable())
-    return;
+  bool rescaleDependentValues = superClus->clusters().isAvailable();
 
   //check if fbrem is filled as its needed for E/p combination so abort if its set to the default value
   //this will be the case for <5 (or current cuts) for miniAOD electrons
@@ -141,7 +145,7 @@ void EGRegressionModifierV3::modifyObject(reco::GsfElectron& ele) const {
   const float corrEnergy = (rawEnergy + rawESEnergy) * ecalMeanCorr;
   const float corrEnergyErr = corrEnergy * ecalSigma;
 
-  ele.setCorrectedEcalEnergy(corrEnergy);
+  ele.setCorrectedEcalEnergy(corrEnergy, rescaleDependentValues);
   ele.setCorrectedEcalEnergyError(corrEnergyErr);
 
   std::pair<float, float> combEnergyAndErr = eleRegs_->epComb.combine(ele);

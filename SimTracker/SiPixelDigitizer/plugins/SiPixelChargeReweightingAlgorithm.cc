@@ -14,61 +14,22 @@
 #include "SimTracker/Common/interface/SiG4UniversalFluctuation.h"
 #include "SimTracker/SiPixelDigitizer/plugins/SiPixelChargeReweightingAlgorithm.h"
 
-#include <gsl/gsl_sf_erf.h>
-#include "FWCore/Utilities/interface/RandomNumberGenerator.h"
-#include "CLHEP/Random/RandGaussQ.h"
-#include "CLHEP/Random/RandFlat.h"
-#include "CLHEP/Random/RandGeneral.h"
-
 //#include "PixelIndices.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
-#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
 
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "FWCore/Utilities/interface/Exception.h"
-#include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationOfflineSimService.h"
 
 // Accessing dead pixel modules from the DB:
 #include "DataFormats/DetId/interface/DetId.h"
 
 #include "CondFormats/SiPixelObjects/interface/GlobalPixel.h"
 
-#include "CondFormats/DataRecord/interface/SiPixelQualityRcd.h"
-#include "CondFormats/DataRecord/interface/SiPixelFedCablingMapRcd.h"
-#include "CondFormats/DataRecord/interface/SiPixelLorentzAngleSimRcd.h"
-#include "CondFormats/DataRecord/interface/SiPixelDynamicInefficiencyRcd.h"
-#include "CondFormats/DataRecord/interface/SiPixelStatusScenarioProbabilityRcd.h"
-#include "CondFormats/DataRecord/interface/SiPixelStatusScenariosRcd.h"
-#include "CondFormats/DataRecord/interface/SiPixel2DTemplateDBObjectRcd.h"
-
-#include "CondFormats/SiPixelObjects/interface/SiPixelFedCablingMap.h"
-#include "CondFormats/SiPixelObjects/interface/SiPixelFedCablingTree.h"
-#include "CondFormats/SiPixelObjects/interface/SiPixelFedCabling.h"
 #include "CondFormats/SiPixelObjects/interface/PixelIndices.h"
-#include "CondFormats/SiPixelObjects/interface/SiPixelLorentzAngle.h"
-#include "CondFormats/SiPixelObjects/interface/SiPixelQuality.h"
 #include "CondFormats/SiPixelObjects/interface/PixelROC.h"
 #include "CondFormats/SiPixelObjects/interface/LocalPixel.h"
-#include "CondFormats/SiPixelObjects/interface/CablingPathToDetUnit.h"
-#include "CondFormats/SiPixelObjects/interface/SiPixelDynamicInefficiency.h"
-#include "CondFormats/SiPixelObjects/interface/SiPixelFEDChannelContainer.h"
-#include "CondFormats/SiPixelObjects/interface/SiPixelQualityProbabilities.h"
 #include "CondFormats/SiPixelObjects/interface/SiPixel2DTemplateDBObject.h"
-
-#include "CondFormats/SiPixelObjects/interface/SiPixelFrameReverter.h"
-#include "CondFormats/SiPixelObjects/interface/PixelFEDCabling.h"
-#include "CondFormats/SiPixelObjects/interface/PixelFEDLink.h"
-#include "DataFormats/FEDRawData/interface/FEDNumbering.h"
-#include "SimDataFormats/PileupSummaryInfo/interface/PileupMixingContent.h"
-#include "SimDataFormats/Track/interface/SimTrack.h"
-
-// Geometry
-#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
-#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
-#include "Geometry/CommonDetUnit/interface/PixelGeomDetUnit.h"
 
 #include "CondFormats/SiPixelObjects/interface/PixelROC.h"
 
@@ -78,13 +39,8 @@ using namespace sipixelobjects;
 void SiPixelChargeReweightingAlgorithm::init(const edm::EventSetup& es) {
   // Read template files for charge reweighting
   if (UseReweighting) {
-    edm::ESHandle<SiPixel2DTemplateDBObject> SiPixel2DTemp_den;
-    es.get<SiPixel2DTemplateDBObjectRcd>().get("denominator", SiPixel2DTemp_den);
-    dbobject_den = SiPixel2DTemp_den.product();
-
-    edm::ESHandle<SiPixel2DTemplateDBObject> SiPixel2DTemp_num;
-    es.get<SiPixel2DTemplateDBObjectRcd>().get("numerator", SiPixel2DTemp_num);
-    dbobject_num = SiPixel2DTemp_num.product();
+    dbobject_den = &es.getData(SiPixel2DTemp_den_token_);
+    dbobject_num = &es.getData(SiPixel2DTemp_num_token_);
 
     int numOfTemplates = dbobject_den->numOfTempl() + dbobject_num->numOfTempl();
     templateStores_.reserve(numOfTemplates);
@@ -97,7 +53,8 @@ void SiPixelChargeReweightingAlgorithm::init(const edm::EventSetup& es) {
 
 //=========================================================================
 
-SiPixelChargeReweightingAlgorithm::SiPixelChargeReweightingAlgorithm(const edm::ParameterSet& conf)
+SiPixelChargeReweightingAlgorithm::SiPixelChargeReweightingAlgorithm(const edm::ParameterSet& conf,
+                                                                     edm::ConsumesCollector iC)
     :
 
       templ2D(templateStores_),
@@ -109,6 +66,10 @@ SiPixelChargeReweightingAlgorithm::SiPixelChargeReweightingAlgorithm(const edm::
       UseReweighting(conf.getParameter<bool>("UseReweighting")),
       PrintClusters(conf.getParameter<bool>("PrintClusters")),
       PrintTemplates(conf.getParameter<bool>("PrintTemplates")) {
+  if (UseReweighting) {
+    SiPixel2DTemp_den_token_ = iC.esConsumes(edm::ESInputTag("", "denominator"));
+    SiPixel2DTemp_num_token_ = iC.esConsumes(edm::ESInputTag("", "numerator"));
+  }
   edm::LogVerbatim("PixelDigitizer ") << "SiPixelChargeReweightingAlgorithm constructed"
                                       << " with UseReweighting = " << UseReweighting;
 }
@@ -266,8 +227,15 @@ bool SiPixelChargeReweightingAlgorithm::hitSignalReweight(const PSimHit& hit,
     ydouble[col] = topol->isItBigPixelInY(hitPixel.second + col - THY);
   }
 
-  for (int row = 0; row < TXSIZE; ++row) {
-    for (int col = 0; col < TYSIZE; ++col) {
+  // define loop boundaries that will prevent the row and col loops
+  // from going out of physical bounds of the pixel module
+  int rowmin = std::max(0, THX - hitPixel.first);
+  int rowmax = std::min(TXSIZE, topol->nrows() + THX - hitPixel.first);
+  int colmin = std::max(0, THY - hitPixel.second);
+  int colmax = std::min(TYSIZE, topol->ncolumns() + THY - hitPixel.second);
+
+  for (int row = rowmin; row < rowmax; ++row) {
+    for (int col = colmin; col < colmax; ++col) {
       //Fill charges into 21x13 Pixel Array with hitPixel in centre
       pixrewgt[row][col] =
           hitSignal[PixelDigi::pixelToChannel(hitPixel.first + row - THX, hitPixel.second + col - THY)];
@@ -305,12 +273,10 @@ bool SiPixelChargeReweightingAlgorithm::hitSignalReweight(const PSimHit& hit,
     printCluster(pixrewgt);
   }
 
-  for (int row = 0; row < TXSIZE; ++row) {
-    for (int col = 0; col < TYSIZE; ++col) {
-      float charge = 0;
-      charge = pixrewgt[row][col];
-      if ((hitPixel.first + row - THX) >= 0 && (hitPixel.first + row - THX) < topol->nrows() &&
-          (hitPixel.second + col - THY) >= 0 && (hitPixel.second + col - THY) < topol->ncolumns() && charge > 0) {
+  for (int row = rowmin; row < rowmax; ++row) {
+    for (int col = colmin; col < colmax; ++col) {
+      float charge = pixrewgt[row][col];
+      if (charge > 0) {
         chargeAfter += charge;
         theSignal[PixelDigi::pixelToChannel(hitPixel.first + row - THX, hitPixel.second + col - THY)] +=
             (boolmakeDigiSimLinks ? SiPixelDigitizerAlgorithm::Amplitude(charge, &hit, hitIndex, tofBin, charge)

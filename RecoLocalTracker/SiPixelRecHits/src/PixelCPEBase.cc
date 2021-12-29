@@ -53,7 +53,7 @@ PixelCPEBase::PixelCPEBase(edm::ParameterSet const& conf,
       lorentzAngle_ = lorentzAngle;
   lorentzAngleWidth_ = lorentzAngleWidth;
 
-  //-- GenError Calibration Object (different from SiPixelCPEGenericErrorParm) from DB
+  //-- GenError Calibration Object from DB
   genErrorDBObject_ = genErrorDBObject;
 
   //-- Template Calibration Object from DB
@@ -106,7 +106,8 @@ PixelCPEBase::PixelCPEBase(edm::ParameterSet const& conf,
 
   // For Templates only
   // Compute the Lorentz shifts for this detector element for templates (from Alignment)
-  DoLorentz_ = conf.getParameter<bool>("DoLorentz");
+  doLorentzFromAlignment_ = conf.getParameter<bool>("doLorentzFromAlignment");
+  useLAFromDB_ = conf.getParameter<bool>("useLAFromDB");
 
   LogDebug("PixelCPEBase") << " LA constants - " << lAOffset_ << " " << lAWidthBPix_ << " " << lAWidthFPix_
                            << endl;  //dk
@@ -194,7 +195,8 @@ void PixelCPEBase::fillDetParams() {
     p.bx = Bfield.x();
 
     //---  Compute the Lorentz shifts for this detector element
-    if ((theFlag_ == 0) || DoLorentz_) {  // do always for generic and if(DOLorentz) for templates
+    if ((theFlag_ == 0) || useLAFromDB_ ||
+        doLorentzFromAlignment_) {  // do always for generic and if using LA from DB or alignment for templates
       p.driftDirection = driftDirection(p, Bfield);
       computeLorentzShifts(p);
     }
@@ -470,4 +472,6 @@ void PixelCPEBase::fillPSetDescription(edm::ParameterSetDescription& desc) {
   desc.add<double>("lAOffset", 0.0);
   desc.add<double>("lAWidthBPix", 0.0);
   desc.add<double>("lAWidthFPix", 0.0);
+  desc.add<bool>("doLorentzFromAlignment", false);
+  desc.add<bool>("useLAFromDB", true);
 }

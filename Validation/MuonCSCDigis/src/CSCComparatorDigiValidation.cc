@@ -2,6 +2,7 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "Validation/MuonCSCDigis/interface/CSCComparatorDigiValidation.h"
+#include "DataFormats/CSCDigi/interface/CSCConstants.h"
 
 CSCComparatorDigiValidation::CSCComparatorDigiValidation(const edm::ParameterSet &ps, edm::ConsumesCollector &&iC)
     : CSCBaseValidation(ps), theTimeBinPlots(), theNDigisPerLayerPlots(), theStripDigiPlots(), the3StripPlots() {
@@ -17,18 +18,47 @@ CSCComparatorDigiValidation::CSCComparatorDigiValidation(const edm::ParameterSet
 CSCComparatorDigiValidation::~CSCComparatorDigiValidation() {}
 
 void CSCComparatorDigiValidation::bookHistograms(DQMStore::IBooker &iBooker) {
-  theNDigisPerEventPlot =
-      iBooker.book1D("CSCComparatorDigisPerEvent", ";CSC Comparator Digis per event;Entries", 100, 0, 100);
+  iBooker.setCurrentFolder("MuonCSCDigisV/CSCDigiTask/Comparator/Occupancy/");
+
+  theNDigisPerEventPlot = iBooker.book1D("CSCComparatorDigisPerEvent",
+                                         "CSC Comparator Digis per event;CSC Comparator Digis per event;Entries",
+                                         100,
+                                         0,
+                                         100);
   // 10 chamber types, if you consider ME1/a and ME1/b separate
   for (int i = 1; i <= 10; ++i) {
     const std::string t1("CSCComparatorDigiTime_" + CSCDetId::chamberName(i));
     const std::string t2("CSCComparatorDigisPerLayer_" + CSCDetId::chamberName(i));
     const std::string t3("CSCComparatorStripAmplitude_" + CSCDetId::chamberName(i));
     const std::string t4("CSCComparator3StripAmplitude_" + CSCDetId::chamberName(i));
-    theTimeBinPlots[i - 1] = iBooker.book1D(t1, t1 + ";Comparator Time Bin; Entries", 16, 0, 16);
-    theNDigisPerLayerPlots[i - 1] = iBooker.book1D(t2, t2 + ";Number of Comparator Digis; Entries", 100, 0, 20);
-    theStripDigiPlots[i - 1] = iBooker.book1D(t3, t3 + ";Comparator Amplitude; Entries", 100, 0, 1000);
-    the3StripPlots[i - 1] = iBooker.book1D(t4, t4 + ";Comparator-triplet Amplitude; Entries", 100, 0, 1000);
+    theTimeBinPlots[i - 1] = iBooker.book1D(
+        t1, "Comparator Time Bin " + CSCDetId::chamberName(i) + " ;Comparator Time Bin; Entries", 16, 0, 16);
+    theNDigisPerLayerPlots[i - 1] = iBooker.book1D(
+        t2,
+        "Number of Comparator Digis " + CSCDetId::chamberName(i) + " ;Number of Comparator Digis; Entries",
+        100,
+        0,
+        20);
+    theStripDigiPlots[i - 1] = iBooker.book1D(
+        t3, "Comparator Amplitude " + CSCDetId::chamberName(i) + " ;Comparator Amplitude; Entries", 100, 0, 1000);
+    the3StripPlots[i - 1] = iBooker.book1D(
+        t4,
+        "Comparator-triplet Amplitude " + CSCDetId::chamberName(i) + " ;Comparator-triplet Amplitude; Entries",
+        100,
+        0,
+        1000);
+  }
+  if (doSim_) {
+    iBooker.setCurrentFolder("MuonCSCDigisV/CSCDigiTask/Comparator/Resolution/");
+    for (int i = 1; i <= 10; ++i) {
+      const std::string t1("CSCComparatorPosResolution_" + CSCDetId::chamberName(i));
+      theResolutionPlots[i - 1] = iBooker.book1D(t1,
+                                                 "Comparator X Position Resolution " + CSCDetId::chamberName(i) +
+                                                     ";Comparator X Position Resolution [cm]; Entries",
+                                                 100,
+                                                 -5,
+                                                 5);
+    }
   }
 }
 
@@ -54,8 +84,18 @@ void CSCComparatorDigiValidation::analyze(const edm::Event &e, const edm::EventS
     CSCDetId detId((*j).first);
     const CSCLayer *layer = findLayer(detId.rawId());
     int chamberType = layer->chamber()->specs()->chamberType();
+    int nDigis = last - digiItr;
 
     theNDigisPerLayerPlots[chamberType - 1]->Fill(last - digiItr);
+
+    // require exactly one comparator digi per layer
+    if (doSim_) {
+      const edm::PSimHitContainer &simHits = theSimHitMap->hits(detId);
+      if (nDigis == 1 && simHits.size() == 1) {
+        const int fullStrip(digiItr->getStrip() + digiItr->getCFEB() * CSCConstants::NUM_STRIPS_PER_CFEB);
+        plotResolution(simHits[0], fullStrip, layer, chamberType);
+      }
+    }
 
     for (auto stripRange = stripDigis->get(detId); digiItr != last; ++digiItr) {
       ++nDigisPerEvent;
@@ -82,4 +122,11 @@ void CSCComparatorDigiValidation::analyze(const edm::Event &e, const edm::EventS
     }
   }
   theNDigisPerEventPlot->Fill(nDigisPerEvent);
+}
+
+void CSCComparatorDigiValidation::plotResolution(const PSimHit &hit, int strip, const CSCLayer *layer, int chamberType) {
+  double hitX = hit.localPosition().x();
+  double hitY = hit.localPosition().y();
+  double digiX = layer->geometry()->xOfStrip(strip, hitY);
+  theResolutionPlots[chamberType - 1]->Fill(digiX - hitX);
 }

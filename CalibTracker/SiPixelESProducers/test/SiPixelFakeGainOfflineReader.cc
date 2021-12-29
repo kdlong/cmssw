@@ -7,7 +7,7 @@
 namespace cms {
   SiPixelFakeGainOfflineReader::SiPixelFakeGainOfflineReader(const edm::ParameterSet& conf)
       : conf_(conf),
-        SiPixelGainCalibrationOfflineService_(conf),
+        SiPixelGainCalibrationOfflineService_(conf, consumesCollector()),
         trackerGeomToken_(esConsumes<TrackerGeometry, TrackerDigiGeometryRecord>()),
         trackerGeomTokenBeginRun_(esConsumes<TrackerGeometry, TrackerDigiGeometryRecord, edm::Transition::BeginRun>()),
         filename_(conf.getParameter<std::string>("fileName")) {}
@@ -70,8 +70,7 @@ namespace cms {
     fFile->Close();
   }
 
-  // ------------ method called once each job just before starting event loop  ------------
-  void SiPixelFakeGainOfflineReader::beginJob() {}
+  void SiPixelFakeGainOfflineReader::endRun(const edm::Run& run, const edm::EventSetup& iSetup) {}
 
   // ------------ method called once each job just before starting event loop  ------------
   void SiPixelFakeGainOfflineReader::beginRun(const edm::Run& run, const edm::EventSetup& iSetup) {

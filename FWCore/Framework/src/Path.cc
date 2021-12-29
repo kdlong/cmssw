@@ -1,11 +1,11 @@
 
-#include "FWCore/Framework/src/Path.h"
+#include "FWCore/Framework/interface/Path.h"
 #include "FWCore/Framework/interface/EventPrincipal.h"
 #include "FWCore/Framework/interface/ExceptionActions.h"
 #include "FWCore/Framework/interface/OccurrenceTraits.h"
-#include "FWCore/Framework/src/EarlyDeleteHelper.h"
+#include "FWCore/Framework/interface/EarlyDeleteHelper.h"
 #include "FWCore/Framework/src/PathStatusInserter.h"
-#include "FWCore/Framework/src/TransitionInfoTypes.h"
+#include "FWCore/Framework/interface/TransitionInfoTypes.h"
 #include "FWCore/ServiceRegistry/interface/ParentContext.h"
 #include "FWCore/Utilities/interface/Algorithms.h"
 #include "FWCore/MessageLogger/interface/ExceptionMessages.h"
@@ -358,9 +358,10 @@ namespace edm {
       ++lastModuleIndex;
     }
     for (; lastModuleIndex >= firstModuleIndex; --lastModuleIndex) {
-      auto nextTask = make_waiting_task([this, lastModuleIndex, info = iInfo, iID, iContext, token = iToken, &iGroup](
+      ServiceWeakToken weakToken = iToken;
+      auto nextTask = make_waiting_task([this, lastModuleIndex, info = iInfo, iID, iContext, weakToken, &iGroup](
                                             std::exception_ptr const* iException) {
-        this->workerFinished(iException, lastModuleIndex, info, token, iID, iContext, iGroup);
+        this->workerFinished(iException, lastModuleIndex, info, weakToken.lock(), iID, iContext, iGroup);
       });
       workers_[lastModuleIndex].runWorkerAsync<OccurrenceTraits<EventPrincipal, BranchActionStreamBegin>>(
           WaitingTaskHolder(iGroup, nextTask), iInfo, iToken, iID, iContext);

@@ -10,11 +10,11 @@
 #include <map>
 #include <functional>
 #include "tbb/global_control.h"
-#include "FWCore/Framework/src/Worker.h"
-#include "FWCore/Framework/src/WorkerT.h"
-#include "FWCore/Framework/src/ModuleHolder.h"
-#include "FWCore/Framework/src/PreallocationConfiguration.h"
-#include "FWCore/Framework/src/TransitionInfoTypes.h"
+#include "FWCore/Framework/interface/maker/Worker.h"
+#include "FWCore/Framework/interface/maker/WorkerT.h"
+#include "FWCore/Framework/interface/maker/ModuleHolder.h"
+#include "FWCore/Framework/interface/PreallocationConfiguration.h"
+#include "FWCore/Framework/interface/TransitionInfoTypes.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/stream/EDProducerAdaptor.h"
 #include "FWCore/Framework/interface/OccurrenceTraits.h"
@@ -127,8 +127,8 @@ private:
   void doWork(edm::Worker* iBase, Info const& info, edm::ParentContext const& iContext) {
     edm::FinalWaitingTask task;
     tbb::task_group group;
-    iBase->doWorkAsync<Traits>(
-        edm::WaitingTaskHolder(group, &task), info, edm::ServiceToken(), s_streamID0, iContext, nullptr);
+    edm::ServiceToken token;
+    iBase->doWorkAsync<Traits>(edm::WaitingTaskHolder(group, &task), info, token, s_streamID0, iContext, nullptr);
     do {
       group.wait();
     } while (not task.done());

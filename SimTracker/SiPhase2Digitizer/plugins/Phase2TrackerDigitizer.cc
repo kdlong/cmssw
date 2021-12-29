@@ -23,6 +23,7 @@
 #include "SimTracker/SiPhase2Digitizer/plugins/PSPDigitizerAlgorithm.h"
 #include "SimTracker/SiPhase2Digitizer/plugins/PixelDigitizerAlgorithm.h"
 #include "SimTracker/SiPhase2Digitizer/plugins/Pixel3DDigitizerAlgorithm.h"
+#include "SimTracker/SiPhase2Digitizer/plugins/PixelBrickedDigitizerAlgorithm.h"
 #include "SimTracker/SiPhase2Digitizer/plugins/DigitizerUtility.h"
 
 #include "FWCore/Framework/interface/EDProducer.h"
@@ -48,10 +49,8 @@
 
 #include "Geometry/CommonDetUnit/interface/GeomDet.h"
 #include "Geometry/CommonDetUnit/interface/PixelGeomDetUnit.h"
-#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 
 #include "MagneticField/Engine/interface/MagneticField.h"
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 
 #include "SimGeneral/MixingModule/interface/PileUpEventPrincipal.h"
 
@@ -67,7 +66,9 @@ namespace cms {
       : first_(true),
         hitsProducer_(iConfig.getParameter<std::string>("hitsProducer")),
         trackerContainers_(iConfig.getParameter<std::vector<std::string> >("ROUList")),
-        geometryType_(iConfig.getParameter<std::string>("GeometryType")),
+        pDDToken_(iC.esConsumes(edm::ESInputTag("", iConfig.getParameter<std::string>("GeometryType")))),
+        pSetupToken_(iC.esConsumes()),
+        tTopoToken_(iC.esConsumes()),
         isOuterTrackerReadoutAnalog_(iConfig.getParameter<bool>("isOTreadoutAnalog")),
         premixStage1_(iConfig.getParameter<bool>("premixStage1")),
         makeDigiSimLinks_(
@@ -90,32 +91,12 @@ namespace cms {
         producesCollector.produces<edm::DetSetVector<PixelDigiSimLink> >("Tracker").setBranchAlias(alias2);
     }
     // creating algorithm objects and pushing them into the map
-    algomap_[AlgorithmType::InnerPixel] = std::make_unique<PixelDigitizerAlgorithm>(iConfig);
-    algomap_[AlgorithmType::InnerPixel3D] = std::make_unique<Pixel3DDigitizerAlgorithm>(iConfig);
-    algomap_[AlgorithmType::PixelinPS] = std::make_unique<PSPDigitizerAlgorithm>(iConfig);
-    algomap_[AlgorithmType::StripinPS] = std::make_unique<PSSDigitizerAlgorithm>(iConfig);
-    algomap_[AlgorithmType::TwoStrip] = std::make_unique<SSDigitizerAlgorithm>(iConfig);
-  }
-
-  void Phase2TrackerDigitizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& iSetup) {
-    iSetup.get<IdealMagneticFieldRecord>().get(pSetup_);
-    iSetup.get<TrackerTopologyRcd>().get(tTopoHand_);
-
-    if (theTkDigiGeomWatcher_.check(iSetup)) {
-      iSetup.get<TrackerDigiGeometryRecord>().get(geometryType_, pDD_);
-
-      // reset cache
-      ModuleTypeCache().swap(moduleTypeCache_);
-      detectorUnits_.clear();
-      for (auto const& det_u : pDD_->detUnits()) {
-        uint32_t rawId = det_u->geographicalId().rawId();
-        if (DetId(rawId).det() == DetId::Detector::Tracker) {
-          const Phase2TrackerGeomDetUnit* pixdet = dynamic_cast<const Phase2TrackerGeomDetUnit*>(det_u);
-          assert(pixdet);
-          detectorUnits_.emplace(rawId, pixdet);
-        }
-      }
-    }
+    algomap_[AlgorithmType::InnerPixel] = std::make_unique<PixelDigitizerAlgorithm>(iConfig, iC);
+    algomap_[AlgorithmType::InnerPixelBricked] = std::make_unique<PixelBrickedDigitizerAlgorithm>(iConfig, iC);
+    algomap_[AlgorithmType::InnerPixel3D] = std::make_unique<Pixel3DDigitizerAlgorithm>(iConfig, iC);
+    algomap_[AlgorithmType::PixelinPS] = std::make_unique<PSPDigitizerAlgorithm>(iConfig, iC);
+    algomap_[AlgorithmType::StripinPS] = std::make_unique<PSSDigitizerAlgorithm>(iConfig, iC);
+    algomap_[AlgorithmType::TwoStrip] = std::make_unique<SSDigitizerAlgorithm>(iConfig, iC);
   }
 
   Phase2TrackerDigitizer::~Phase2TrackerDigitizer() {}
@@ -157,6 +138,25 @@ namespace cms {
           << "Phase2TrackerDigitizer requires the RandomNumberGeneratorService\n"
              "which is not present in the configuration file.  You must add the service\n"
              "in the configuration file or remove the modules that require it.";
+    }
+
+    pSetup_ = &iSetup.getData(pSetupToken_);
+    tTopo_ = &iSetup.getData(tTopoToken_);
+
+    if (theTkDigiGeomWatcher_.check(iSetup)) {
+      pDD_ = &iSetup.getData(pDDToken_);
+
+      // reset cache
+      ModuleTypeCache().swap(moduleTypeCache_);
+      detectorUnits_.clear();
+      for (auto const& det_u : pDD_->detUnits()) {
+        uint32_t rawId = det_u->geographicalId().rawId();
+        if (DetId(rawId).det() == DetId::Detector::Tracker) {
+          const Phase2TrackerGeomDetUnit* pixdet = dynamic_cast<const Phase2TrackerGeomDetUnit*>(det_u);
+          assert(pixdet);
+          detectorUnits_.emplace(rawId, pixdet);
+        }
+      }
     }
 
     // Must initialize all the algorithms
@@ -236,6 +236,9 @@ namespace cms {
       moduleTypeCache_.emplace(detId_raw, mType);
     }
 
+    auto detUnit = detectorUnits_.find(detId_raw);
+    const Phase2TrackerGeomDetUnit* pixdet = dynamic_cast<const Phase2TrackerGeomDetUnit*>(detUnit->second);
+    const Phase2TrackerTopology* topol = &pixdet->specificTopology();
     AlgorithmType algotype = AlgorithmType::Unknown;
     switch (mType) {
       case TrackerGeometry::ModuleType::Ph1PXB:
@@ -245,10 +248,16 @@ namespace cms {
         algotype = AlgorithmType::InnerPixel;
         break;
       case TrackerGeometry::ModuleType::Ph2PXB:
-        algotype = AlgorithmType::InnerPixel;
+        if (topol->isBricked())
+          algotype = AlgorithmType::InnerPixelBricked;
+        else
+          algotype = AlgorithmType::InnerPixel;
         break;
       case TrackerGeometry::ModuleType::Ph2PXF:
-        algotype = AlgorithmType::InnerPixel;
+        if (topol->isBricked())
+          algotype = AlgorithmType::InnerPixelBricked;
+        else
+          algotype = AlgorithmType::InnerPixel;
         break;
       case TrackerGeometry::ModuleType::Ph2PXB3D:
         algotype = AlgorithmType::InnerPixel3D;
@@ -274,8 +283,6 @@ namespace cms {
   void Phase2TrackerDigitizer::addPixelCollection(edm::Event& iEvent,
                                                   const edm::EventSetup& iSetup,
                                                   const bool ot_analog) {
-    const TrackerTopology* tTopo = tTopoHand_.product();
-
     std::vector<edm::DetSet<PixelDigi> > digiVector;
     std::vector<edm::DetSet<PixelDigiSimLink> > digiLinkVector;
     for (auto const& det_u : pDD_->detUnits()) {
@@ -286,11 +293,12 @@ namespace cms {
         continue;
 
       // Decide if we want analog readout for Outer Tracker.
-      if (!ot_analog && (algotype != AlgorithmType::InnerPixel && algotype != AlgorithmType::InnerPixel3D)) {
+      if (!ot_analog && algotype != AlgorithmType::InnerPixel && algotype != AlgorithmType::InnerPixel3D &&
+          algotype != AlgorithmType::InnerPixelBricked)
         continue;
-      }
+
       std::map<int, DigitizerUtility::DigiSimInfo> digi_map;
-      fiter->second->digitize(dynamic_cast<const Phase2TrackerGeomDetUnit*>(det_u), digi_map, tTopo);
+      fiter->second->digitize(dynamic_cast<const Phase2TrackerGeomDetUnit*>(det_u), digi_map, tTopo_);
 
       edm::DetSet<PixelDigi> collector(rawId);
       edm::DetSet<PixelDigiSimLink> linkcollector(rawId);
@@ -342,8 +350,6 @@ namespace {
 namespace cms {
   template <typename DigiType>
   void Phase2TrackerDigitizer::addOuterTrackerCollection(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-    const TrackerTopology* tTopo = tTopoHand_.product();
-
     std::vector<edm::DetSet<DigiType> > digiVector;
     std::vector<edm::DetSet<PixelDigiSimLink> > digiLinkVector;
     for (auto const& det_u : pDD_->detUnits()) {
@@ -351,11 +357,12 @@ namespace cms {
       auto algotype = getAlgoType(rawId);
 
       auto fiter = algomap_.find(algotype);
-      if (fiter == algomap_.end() || algotype == AlgorithmType::InnerPixel || algotype == AlgorithmType::InnerPixel3D) {
+      if (fiter == algomap_.end() || algotype == AlgorithmType::InnerPixel || algotype == AlgorithmType::InnerPixel3D ||
+          algotype == AlgorithmType::InnerPixelBricked)
         continue;
-      }
+
       std::map<int, DigitizerUtility::DigiSimInfo> digi_map;
-      fiter->second->digitize(dynamic_cast<const Phase2TrackerGeomDetUnit*>(det_u), digi_map, tTopo);
+      fiter->second->digitize(dynamic_cast<const Phase2TrackerGeomDetUnit*>(det_u), digi_map, tTopo_);
 
       edm::DetSet<DigiType> collector(rawId);
       edm::DetSet<PixelDigiSimLink> linkcollector(rawId);

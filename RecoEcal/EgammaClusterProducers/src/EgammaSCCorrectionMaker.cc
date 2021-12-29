@@ -1,29 +1,95 @@
-#include "RecoEcal/EgammaClusterProducers/interface/EgammaSCCorrectionMaker.h"
-#include "DataFormats/EgammaReco/interface/SuperCluster.h"
-#include "DataFormats/EcalRecHit/interface/EcalRecHit.h"
+// -*- C++ -*-
+//
+// Package:    EgammaSCCorrectionMaker
+// Class:      EgammaSCCorrectionMaker
+//
+/**\class EgammaSCCorrectionMaker EgammaSCCorrectionMaker.cc EgammaSCCorrectionMaker/EgammaSCCorrectionMaker/src/EgammaSCCorrectionMaker.cc
 
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "FWCore/Utilities/interface/Exception.h"
+ Description: Producer of corrected SuperClusters
+
+*/
+//
+// Original Author:  Dave Evans
+//         Created:  Thu Apr 13 15:50:17 CEST 2006
+//
+//
+
+#include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include "DataFormats/Common/interface/Handle.h"
-
-#include "Geometry/Records/interface/CaloGeometryRecord.h"
-#include "Geometry/CaloGeometry/interface/CaloSubdetectorGeometry.h"
+#include "DataFormats/EcalRecHit/interface/EcalRecHit.h"
+#include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
+#include "DataFormats/EgammaReco/interface/BasicCluster.h"
+#include "DataFormats/EgammaReco/interface/SuperCluster.h"
+#include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "Geometry/CaloGeometry/interface/CaloCellGeometry.h"
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
+#include "Geometry/CaloGeometry/interface/CaloSubdetectorGeometry.h"
 #include "Geometry/CaloTopology/interface/EcalBarrelTopology.h"
 #include "Geometry/CaloTopology/interface/EcalEndcapTopology.h"
 #include "Geometry/CaloTopology/interface/EcalPreshowerTopology.h"
-
+#include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "RecoEcal/EgammaClusterAlgos/interface/EgammaSCEnergyCorrectionAlgo.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterFunctionBaseClass.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterFunctionFactory.h"
 
+#include "EcalBasicClusterLocalContCorrection.h"
+
+#include <memory>
 #include <string>
+
+class EgammaSCCorrectionMaker : public edm::stream::EDProducer<> {
+public:
+  explicit EgammaSCCorrectionMaker(const edm::ParameterSet&);
+  void produce(edm::Event&, const edm::EventSetup&) override;
+
+private:
+  std::unique_ptr<EcalClusterFunctionBaseClass> energyCorrectionFunction_;
+  std::unique_ptr<EcalClusterFunctionBaseClass> crackCorrectionFunction_;
+  std::unique_ptr<EcalBasicClusterLocalContCorrection> localContCorrectionFunction_;
+
+  // pointer to the correction algo object
+  std::unique_ptr<EgammaSCEnergyCorrectionAlgo> energyCorrector_;
+
+  // vars for the correction algo
+  bool applyEnergyCorrection_;
+  bool applyCrackCorrection_;
+  bool applyLocalContCorrection_;
+
+  std::string energyCorrectorName_;
+  std::string crackCorrectorName_;
+
+  int modeEB_;
+  int modeEE_;
+
+  //     bool oldEnergyScaleCorrection_;
+  double sigmaElectronicNoise_;
+  double etThresh_;
+
+  // vars to get products
+  edm::EDGetTokenT<EcalRecHitCollection> rHInputProducer_;
+  edm::EDGetTokenT<reco::SuperClusterCollection> sCInputProducer_;
+  edm::InputTag rHTag_;
+  edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
+
+  reco::CaloCluster::AlgoId sCAlgo_;
+  std::string outputCollection_;
+};
+
+#include "FWCore/Framework/interface/MakerMacros.h"
+DEFINE_FWK_MODULE(EgammaSCCorrectionMaker);
 
 EgammaSCCorrectionMaker::EgammaSCCorrectionMaker(const edm::ParameterSet& ps) {
   // the input producers
   rHTag_ = ps.getParameter<edm::InputTag>("recHitProducer");
   rHInputProducer_ = consumes<EcalRecHitCollection>(rHTag_);
   sCInputProducer_ = consumes<reco::SuperClusterCollection>(ps.getParameter<edm::InputTag>("rawSuperClusterProducer"));
+  caloGeomToken_ = esConsumes();
   std::string sCAlgo_str = ps.getParameter<std::string>("superClusterAlgo");
 
   // determine which BasicCluster algo we are correcting for
@@ -75,11 +141,12 @@ EgammaSCCorrectionMaker::EgammaSCCorrectionMaker(const edm::ParameterSet& ps) {
 
   // energy correction class
   if (applyEnergyCorrection_)
-    energyCorrectionFunction_ = EcalClusterFunctionFactory::get()->create(energyCorrectorName_, ps);
+    energyCorrectionFunction_ =
+        EcalClusterFunctionFactory::get()->create(energyCorrectorName_, ps, consumesCollector());
   //energyCorrectionFunction_ = EcalClusterFunctionFactory::get()->create("EcalClusterEnergyCorrection", ps);
 
   if (applyCrackCorrection_)
-    crackCorrectionFunction_ = EcalClusterFunctionFactory::get()->create(crackCorrectorName_, ps);
+    crackCorrectionFunction_ = EcalClusterFunctionFactory::get()->create(crackCorrectorName_, ps, consumesCollector());
 
   if (applyLocalContCorrection_)
     localContCorrectionFunction_ = std::make_unique<EcalBasicClusterLocalContCorrection>(consumesCollector());
@@ -101,9 +168,7 @@ void EgammaSCCorrectionMaker::produce(edm::Event& evt, const edm::EventSetup& es
     localContCorrectionFunction_->init(es);
 
   // get the collection geometry:
-  edm::ESHandle<CaloGeometry> geoHandle;
-  es.get<CaloGeometryRecord>().get(geoHandle);
-  const CaloGeometry& geometry = *geoHandle;
+  const CaloGeometry& geometry = es.getData(caloGeomToken_);
   const CaloSubdetectorGeometry* geometry_p;
 
   std::string rHInputCollection = rHTag_.instance();

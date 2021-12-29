@@ -14,6 +14,7 @@
 // Our own stuff
 #include "SiPixelClusterProducer.h"
 #include "PixelThresholdClusterizer.h"
+#include "PixelThresholdClusterizerForBricked.h"
 
 // Geometry
 #include "Geometry/CommonDetUnit/interface/PixelGeomDetUnit.h"
@@ -59,11 +60,11 @@ SiPixelClusterProducer::SiPixelClusterProducer(edm::ParameterSet const& conf)
 
   const auto& payloadType = conf.getParameter<std::string>("payloadType");
   if (payloadType == "HLT")
-    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationForHLTService>(conf);
+    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationForHLTService>(conf, consumesCollector());
   else if (payloadType == "Offline")
-    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationOfflineService>(conf);
+    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationOfflineService>(conf, consumesCollector());
   else if (payloadType == "Full")
-    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationService>(conf);
+    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationService>(conf, consumesCollector());
 
   //--- Make the algorithm(s) according to what the user specified
   //--- in the ParameterSet.
@@ -141,6 +142,9 @@ void SiPixelClusterProducer::produce(edm::Event& e, const edm::EventSetup& es) {
 void SiPixelClusterProducer::setupClusterizer(const edm::ParameterSet& conf) {
   if (clusterMode_ == "PixelThresholdReclusterizer" || clusterMode_ == "PixelThresholdClusterizer") {
     clusterizer_ = std::make_unique<PixelThresholdClusterizer>(conf);
+    clusterizer_->setSiPixelGainCalibrationService(theSiPixelGainCalibration_.get());
+  } else if (clusterMode_ == "PixelThresholdClusterizerForBricked") {
+    clusterizer_ = std::make_unique<PixelThresholdClusterizerForBricked>(conf);
     clusterizer_->setSiPixelGainCalibrationService(theSiPixelGainCalibration_.get());
   } else {
     throw cms::Exception("Configuration") << "[SiPixelClusterProducer]:"

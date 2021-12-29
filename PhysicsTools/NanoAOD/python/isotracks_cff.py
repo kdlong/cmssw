@@ -1,9 +1,10 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import *
+from PhysicsTools.NanoAOD.nano_eras_cff import *
 
 finalIsolatedTracks = cms.EDProducer("IsolatedTrackCleaner",
     tracks = cms.InputTag("isolatedTracks"),
-    cut = cms.string("((pt>5 && (abs(pdgId) == 11 || abs(pdgId) == 13)) || pt > 10) && (abs(pdgId) < 15 || abs(eta) < 2.5) && abs(dxy) < 0.2 && abs(dz) < 0.1 && ((pfIsolationDR03().chargedHadronIso < 5 && pt < 25) || pfIsolationDR03().chargedHadronIso/pt < 0.2)"), 
+    cut = cms.string("((pt>5 && (abs(pdgId) == 11 || abs(pdgId) == 13)) || pt > 10) && (abs(pdgId) < 15 || abs(eta) < 2.5) && ((abs(dxy) < 0.2 && abs(dz) < 0.1) || pt>15) && ((pfIsolationDR03().chargedHadronIso < 5 && pt < 25) || pfIsolationDR03().chargedHadronIso/pt < 0.2)"),
     finalLeptons = cms.VInputTag(
         cms.InputTag("finalElectrons"),
         cms.InputTag("finalLooseMuons"),
@@ -48,6 +49,8 @@ isoTrackTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
     ),
 )
 
-isoTrackSequence = cms.Sequence(finalIsolatedTracks + isoForIsoTk + isFromLostTrackForIsoTk)
-isoTrackTables = cms.Sequence(isoTrackTable)
+isoTrackTask = cms.Task(finalIsolatedTracks,isoForIsoTk,isFromLostTrackForIsoTk)
+isoTrackTablesTask = cms.Task(isoTrackTable)
 
+run2_miniAOD_80XLegacy.toReplaceWith(isoTrackTask, cms.Task())
+run2_miniAOD_80XLegacy.toReplaceWith(isoTrackTablesTask,cms.Task())

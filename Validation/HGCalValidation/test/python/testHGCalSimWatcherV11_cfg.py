@@ -40,7 +40,12 @@ if hasattr(process,'MessageLogger'):
 process.source = cms.Source("EmptySource")
 
 process.options = cms.untracked.PSet(
-    wantSummary = cms.untracked.bool(True)
+    wantSummary = cms.untracked.bool(True),
+    numberOfConcurrentRuns = cms.untracked.uint32(1),
+    numberOfStreams = cms.untracked.uint32(0),
+    numberOfThreads = cms.untracked.uint32(1),
+    printDependencies = cms.untracked.bool(False),
+    sizeOfStackForThreadsInKB = cms.optional.untracked.uint32,
 )
 
 # Production Info
@@ -90,7 +95,7 @@ process.g4SimHits.Watchers = cms.VPSet(cms.PSet(
 # Other statements
 process.genstepfilter.triggerConditions=cms.vstring("generation_step")
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic_T15', '')
 
 process.generator = cms.EDProducer("FlatRandomPtGunProducer",
     PGunParameters = cms.PSet(

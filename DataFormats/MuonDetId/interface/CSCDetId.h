@@ -111,6 +111,21 @@ public:
       return istrip;
   }
 
+  /**
+   * Simple accessors
+   */
+  bool isME1a() const;
+  bool isME1b() const;
+  bool isME11() const;
+  bool isME12() const;
+  bool isME13() const;
+  bool isME21() const;
+  bool isME22() const;
+  bool isME31() const;
+  bool isME32() const;
+  bool isME41() const;
+  bool isME42() const;
+
   // static methods
   // Used when we need information about subdetector labels.
 
@@ -234,6 +249,12 @@ public:
   static std::string chamberName(int endcap, int station, int ring, int chamber);
   static std::string chamberName(int iChamberType);
   std::string chamberName() const;
+  /**
+    * Returns the layer name in the format
+    * ME$sign$station/$ring/$chamber/$layer. Example: ME+1/1/9/1
+    */
+  static std::string layerName(int endcap, int station, int ring, int chamber, int layer);
+  std::string layerName() const;
 
 private:
   /**

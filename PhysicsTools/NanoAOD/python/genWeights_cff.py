@@ -32,4 +32,4 @@ genWeightsTable = cms.EDProducer(
     keepAllPSWeights = cms.bool(False)
 )
 
-genWeightsTables = cms.Sequence(lheWeights*genWeights*genWeightsTable)
+genWeightsTableTask = cms.Task(lheWeights, genWeights, genWeightsTable)

@@ -59,6 +59,20 @@ from DQM.TrackingMonitor.TrackEfficiencyClient_cfi import *
 TrackEffClient.FolderName = 'Tracking/TrackParameters/TrackEfficiency'
 TrackEffClient.AlgoName   = 'CKFTk'
 
+from DQM.TrackingMonitor.TrackFoldedOccupancyClient_cfi import TrackerMapFoldedClient 
+
+TrackerMapFoldedClient_CKFTk=TrackerMapFoldedClient.clone(
+    AlgoName = 'CKFTk',
+    MeasurementState = 'default',
+    TrackQuality = ''
+)
+
+TrackerMapFoldedClient_CosmicTk=TrackerMapFoldedClient.clone(
+    AlgoName = 'CosmicTk',
+    MeasurementState = 'default',
+    TrackQuality = ''
+)
+
 # Sequence
-TrackingCosmicDQMClient = cms.Sequence(trackingQTester*trackingOfflineAnalyser*TrackEffClient)
+TrackingCosmicDQMClient = cms.Sequence(trackingQTester*trackingOfflineAnalyser*TrackEffClient*TrackerMapFoldedClient_CKFTk*TrackerMapFoldedClient_CosmicTk)
 

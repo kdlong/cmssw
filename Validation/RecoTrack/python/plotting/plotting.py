@@ -9,7 +9,6 @@ import array
 import difflib
 import collections
 
-import six
 import ROOT
 ROOT.gROOT.SetBatch(True)
 ROOT.PyConfig.IgnoreCommandLineOptions = True
@@ -447,12 +446,12 @@ def _getYminMaxAroundMedian(obj, coverage, coverageRange=None):
     if nvals < 2:
         # Take median and +- 1 values
         if len(yvals) % 2 == 0:
-            half = len(yvals)/2
+            half = len(yvals)//2
             return ( yvals[half-1], yvals[half] )
         else:
-            middle = len(yvals)/2
+            middle = len(yvals)//2
             return ( yvals[middle-1], yvals[middle+1] )
-    ind_min = (len(yvals)-nvals)/2
+    ind_min = (len(yvals)-nvals)//2
     ind_max = len(yvals)-1 - ind_min
 
     return (yvals[ind_min], yvals[ind_max])
@@ -999,7 +998,7 @@ class AggregateBins:
         values = _th1ToOrderedDict(th1, self._renameBin)
 
         binIndexOrder = [] # for reordering bins if self._originalOrder is True
-        for i, (key, labels) in enumerate(six.iteritems(self._mapping)):
+        for i, (key, labels) in enumerate(self._mapping.items()):
             sumTime = 0.
             sumErrorSq = 0.
             nsum = 0
@@ -1021,7 +1020,7 @@ class AggregateBins:
                 # the iteration timing plots), so let's test them all
                 for lab in labels:
                     if lab in values:
-                        ivalue = values.keys().index(lab)
+                        ivalue = list(values.keys()).index(lab)
                         break
             binIndexOrder.append( (ivalue, i) )
 
@@ -1074,7 +1073,7 @@ class AggregateBins:
         return result
 
 class AggregateHistos:
-    """Class to create a histogram by aggregaging integrals of another histoggrams."""
+    """Class to create a histogram by aggregating integrals of another histogram."""
     def __init__(self, name, mapping, normalizeTo=None):
         """Constructor.
 
@@ -1096,7 +1095,7 @@ class AggregateHistos:
     def create(self, tdirectory):
         """Create and return the histogram from a TDirectory"""
         result = []
-        for key, histoName in six.iteritems(self._mapping):
+        for key, histoName in self._mapping.items():
             th1 = _getObject(tdirectory, histoName)
             if th1 is None:
                 continue
@@ -1182,8 +1181,8 @@ class ROC:
 
 
 # Plot styles
-_plotStylesColor = [4, 2, ROOT.kBlack, ROOT.kOrange+7, ROOT.kMagenta-3]
-_plotStylesMarker = [21, 20, 22, 34, 33]
+_plotStylesColor = [4, 2, ROOT.kBlack, ROOT.kOrange+7, ROOT.kMagenta-3, ROOT.kGreen+2]
+_plotStylesMarker = [21, 20, 22, 34, 33, 23]
 
 def _drawFrame(pad, bounds, zmax=None, xbinlabels=None, xbinlabelsize=None, xbinlabeloption=None, ybinlabels=None, suffix=""):
     """Function to draw a frame
@@ -1830,7 +1829,7 @@ class Plot:
         self._histograms = []
 
     def setProperties(self, **kwargs):
-        for name, value in six.iteritems(kwargs):
+        for name, value in kwargs.items():
             if not hasattr(self, "_"+name):
                 raise Exception("No attribute '%s'" % name)
             setattr(self, "_"+name, value)
@@ -1934,9 +1933,9 @@ class Plot:
             return th1
 
         if self._fallback is not None:
-            self._histograms = map(_modifyHisto, self._histograms, profileX)
+            self._histograms = list(map(_modifyHisto, self._histograms, profileX))
         else:
-            self._histograms = map(lambda h: _modifyHisto(h, self._profileX), self._histograms)
+            self._histograms = list(map(lambda h: _modifyHisto(h, self._profileX), self._histograms))
         if requireAllHistograms and None in self._histograms:
             self._histograms = [None]*len(self._histograms)
 
@@ -1967,10 +1966,11 @@ class Plot:
             if self._fit:
                 st.SetOptFit(0o010)
                 st.SetOptStat(1001)
+            st.SetOptStat(1110)
             st.SetX1NDC(startingX)
             st.SetX2NDC(startingX+0.3)
             st.SetY1NDC(startingY+dy)
-            st.SetY2NDC(startingY+dy+0.15)
+            st.SetY2NDC(startingY+dy+0.12)
             st.SetTextColor(col)
 
         dy = 0.0
@@ -1979,7 +1979,7 @@ class Plot:
                 dy += self._statyadjust[i]
 
             _doStats(h, _plotStylesColor[i], dy)
-            dy -= 0.19
+            dy -= 0.16
 
     def _normalize(self):
         """Normalise histograms to unit area"""
@@ -2290,7 +2290,7 @@ class PlotGroup(object):
         self._ratioFactor = 1.25
 
     def setProperties(self, **kwargs):
-        for name, value in six.iteritems(kwargs):
+        for name, value in kwargs.items():
             if not hasattr(self, "_"+name):
                 raise Exception("No attribute '%s'" % name)
             setattr(self, "_"+name, value)
@@ -2497,7 +2497,7 @@ class PlotGroup(object):
         # Save the canvas to file and clear
         name = self._name
         if not os.path.exists(directory+'/'+name):
-            os.makedirs(directory+'/'+name)
+            os.makedirs(directory+'/'+name, exist_ok=True)
         if prefix is not None:
             name = prefix+name
         if postfix is not None:
@@ -2736,8 +2736,7 @@ class PlotterFolder:
                     if sf_translated is not None and not sf_translated in subfolders:
                         subfolders[sf_translated] = DQMSubFolder(sf, sf_translated)
 
-            self._dqmSubFolders = subfolders.values()
-            self._dqmSubFolders.sort(key=lambda sf: sf.subfolder)
+            self._dqmSubFolders = sorted(subfolders.values(), key=lambda sf: sf.subfolder)
 
         self._fallbackNames = fallbackNames
         self._fallbackDqmSubFolders = fallbackDqmSubFolders

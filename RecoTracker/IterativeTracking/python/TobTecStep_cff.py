@@ -6,6 +6,9 @@ from Configuration.Eras.Modifier_fastSim_cff import fastSim
 from Configuration.ProcessModifiers.trackdnn_cff import trackdnn
 from RecoTracker.IterativeTracking.dnnQualityCuts import qualityCutDictionary
 
+# for no-loopers
+from Configuration.ProcessModifiers.trackingNoLoopers_cff import trackingNoLoopers
+
 #######################################################################
 # Very large impact parameter tracking using TOB + TEC ring 5 seeding #
 #######################################################################
@@ -16,40 +19,46 @@ for _eraName, _postfix, _era in _cfg.nonDefaultEras():
 
 # TRIPLET SEEDING LAYERS
 from RecoLocalTracker.SiStripClusterizer.SiStripClusterChargeCut_cfi import *
-tobTecStepSeedLayersTripl = cms.EDProducer('SeedingLayersEDProducer',
-    layerList = cms.vstring(
+import RecoTracker.TkSeedingLayers.seedingLayersEDProducer_cfi as _mod
+
+tobTecStepSeedLayersTripl = _mod.seedingLayersEDProducer.clone(
+    layerList = [
     #TOB
     'TOB1+TOB2+MTOB3','TOB1+TOB2+MTOB4',
     #TOB+MTEC
     'TOB1+TOB2+MTEC1_pos','TOB1+TOB2+MTEC1_neg',
+    ],
+    TOB = dict(
+         TTRHBuilder      = cms.string('WithTrackAngle'), 
+         clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+         matchedRecHits   = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
+         skipClusters     = cms.InputTag('tobTecStepClusters')
     ),
-    TOB = cms.PSet(
-         TTRHBuilder    = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
-         matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
-         skipClusters   = cms.InputTag('tobTecStepClusters')
+    MTOB = dict(
+         TTRHBuilder      = cms.string('WithTrackAngle'), 
+         clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+         skipClusters     = cms.InputTag('tobTecStepClusters'),
+         rphiRecHits      = cms.InputTag('siStripMatchedRecHits','rphiRecHit')
     ),
-    MTOB = cms.PSet(
-         TTRHBuilder    = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
-         skipClusters   = cms.InputTag('tobTecStepClusters'),
-         rphiRecHits    = cms.InputTag('siStripMatchedRecHits','rphiRecHit')
-    ),
-    MTEC = cms.PSet(
-        rphiRecHits    = cms.InputTag('siStripMatchedRecHits','rphiRecHit'),
-        skipClusters = cms.InputTag('tobTecStepClusters'),
-        useRingSlector = cms.bool(True),
-        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
-        minRing = cms.int32(6),
-        maxRing = cms.int32(7)
+    MTEC = dict(
+        rphiRecHits      = cms.InputTag('siStripMatchedRecHits','rphiRecHit'),
+        skipClusters     = cms.InputTag('tobTecStepClusters'),
+        useRingSlector   = cms.bool(True),
+        TTRHBuilder      = cms.string('WithTrackAngle'), 
+        clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+        minRing          = cms.int32(6),
+        maxRing          = cms.int32(7)
     )
 )
 
 # Triplet TrackingRegion
 from RecoTracker.TkTrackingRegions.globalTrackingRegionFromBeamSpotFixedZ_cfi import globalTrackingRegionFromBeamSpotFixedZ as _globalTrackingRegionFromBeamSpotFixedZ
-tobTecStepTrackingRegionsTripl = _globalTrackingRegionFromBeamSpotFixedZ.clone(RegionPSet = dict(
-    ptMin            = 0.55,
-    originHalfLength = 20.0,
-    originRadius     = 3.5
-))
+tobTecStepTrackingRegionsTripl = _globalTrackingRegionFromBeamSpotFixedZ.clone(
+    RegionPSet = dict(
+        ptMin            = 0.55,
+        originHalfLength = 20.0,
+        originRadius     = 3.5)
+)
 
 from Configuration.Eras.Modifier_pp_on_XeXe_2017_cff import pp_on_XeXe_2017
 from Configuration.ProcessModifiers.pp_on_AA_cff import pp_on_AA
@@ -119,34 +128,37 @@ _fastSim_tobTecStepSeedsTripl = FastSimulation.Tracking.TrajectorySeedProducer_c
 fastSim.toReplaceWith(tobTecStepSeedsTripl,_fastSim_tobTecStepSeedsTripl)
 
 # PAIR SEEDING LAYERS
-tobTecStepSeedLayersPair = cms.EDProducer('SeedingLayersEDProducer',
-    layerList = cms.vstring('TOB1+TEC1_pos','TOB1+TEC1_neg', 
-                            'TEC1_pos+TEC2_pos','TEC1_neg+TEC2_neg', 
-                            'TEC2_pos+TEC3_pos','TEC2_neg+TEC3_neg', 
-                            'TEC3_pos+TEC4_pos','TEC3_neg+TEC4_neg', 
-                            'TEC4_pos+TEC5_pos','TEC4_neg+TEC5_neg', 
-                            'TEC5_pos+TEC6_pos','TEC5_neg+TEC6_neg', 
-                            'TEC6_pos+TEC7_pos','TEC6_neg+TEC7_neg'),
-    TOB = cms.PSet(
-         TTRHBuilder    = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+tobTecStepSeedLayersPair = _mod.seedingLayersEDProducer.clone( 
+    layerList = ['TOB1+TEC1_pos','TOB1+TEC1_neg', 
+                 'TEC1_pos+TEC2_pos','TEC1_neg+TEC2_neg', 
+                 'TEC2_pos+TEC3_pos','TEC2_neg+TEC3_neg', 
+                 'TEC3_pos+TEC4_pos','TEC3_neg+TEC4_neg', 
+                 'TEC4_pos+TEC5_pos','TEC4_neg+TEC5_neg', 
+                 'TEC5_pos+TEC6_pos','TEC5_neg+TEC6_neg', 
+                 'TEC6_pos+TEC7_pos','TEC6_neg+TEC7_neg'],
+    TOB = dict(
+         TTRHBuilder    = cms.string('WithTrackAngle'),
+         clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
          matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
          skipClusters   = cms.InputTag('tobTecStepClusters')
     ),
-    TEC = cms.PSet(
+    TEC = dict(
         matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
         skipClusters = cms.InputTag('tobTecStepClusters'),
         useRingSlector = cms.bool(True),
-        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+        TTRHBuilder = cms.string('WithTrackAngle'), 
+        clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
         minRing = cms.int32(5),
         maxRing = cms.int32(5)
     )
 )
 # Pair TrackingRegion
-tobTecStepTrackingRegionsPair = _globalTrackingRegionFromBeamSpotFixedZ.clone(RegionPSet = dict(
-    ptMin            = 0.6,
-    originHalfLength = 30.0,
-    originRadius     = 6.0,
-))
+tobTecStepTrackingRegionsPair = _globalTrackingRegionFromBeamSpotFixedZ.clone(
+    RegionPSet = dict(
+        ptMin            = 0.6,
+        originHalfLength = 30.0,
+        originRadius     = 6.0)
+)
 
 (pp_on_XeXe_2017 | pp_on_AA).toReplaceWith(tobTecStepTrackingRegionsPair, 
                 _mixedTripletStepTrackingRegionsCommon_pp_on_HI.clone(RegionPSet = dict(
@@ -242,6 +254,8 @@ tobTecStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder
     maxDPhiForLooperReconstruction = cms.double(2.0),
     maxPtForLooperReconstruction   = cms.double(0.7)
 )
+trackingNoLoopers.toModify(tobTecStepTrajectoryBuilder,
+                           maxPtForLooperReconstruction = 0.0)
 # Important note for LowPU: in RunI_TobTecStep the
 # inOutTrajectoryFilter parameter is spelled as
 # inOutTrajectoryFilterName, and I suspect it has no effect there. I
@@ -255,7 +269,8 @@ tobTecStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder
 
 # MAKING OF TRACK CANDIDATES
 import RecoTracker.CkfPattern.CkfTrackCandidates_cfi
-tobTecStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTrackCandidates.clone(
+# Give handle for CKF for HI
+_tobTecStepTrackCandidatesCkf = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTrackCandidates.clone(
     src = 'tobTecStepSeeds',
     clustersToSkip              = cms.InputTag('tobTecStepClusters'),
     ### these two parameters are relevant only for the CachingSeedCleanerBySharedInput
@@ -268,6 +283,31 @@ tobTecStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTra
     cleanTrajectoryAfterInOut   = True,
     TrajectoryCleaner = 'tobTecStepTrajectoryCleanerBySharedHits'
 )
+tobTecStepTrackCandidates = _tobTecStepTrackCandidatesCkf.clone()
+
+from Configuration.ProcessModifiers.trackingMkFitTobTecStep_cff import trackingMkFitTobTecStep
+import RecoTracker.MkFit.mkFitSeedConverter_cfi as mkFitSeedConverter_cfi
+import RecoTracker.MkFit.mkFitIterationConfigESProducer_cfi as mkFitIterationConfigESProducer_cfi
+import RecoTracker.MkFit.mkFitProducer_cfi as mkFitProducer_cfi
+import RecoTracker.MkFit.mkFitOutputConverter_cfi as mkFitOutputConverter_cfi
+tobTecStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConverter.clone(
+    seeds = 'tobTecStepSeeds',
+)
+tobTecStepTrackCandidatesMkFitConfig = mkFitIterationConfigESProducer_cfi.mkFitIterationConfigESProducer.clone(
+    ComponentName = 'tobTecStepTrackCandidatesMkFitConfig',
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-tobTecStep.json',
+)
+tobTecStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
+    seeds = 'tobTecStepTrackCandidatesMkFitSeeds',
+    config = ('', 'tobTecStepTrackCandidatesMkFitConfig'),
+    clustersToSkip = 'tobTecStepClusters',
+)
+trackingMkFitTobTecStep.toReplaceWith(tobTecStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(
+    seeds = 'tobTecStepSeeds',
+    mkFitSeeds = 'tobTecStepTrackCandidatesMkFitSeeds',
+    tracks = 'tobTecStepTrackCandidatesMkFit',
+))
+
 import FastSimulation.Tracking.TrackCandidateProducer_cfi
 fastSim.toReplaceWith(tobTecStepTrackCandidates,
                       FastSimulation.Tracking.TrackCandidateProducer_cfi.trackCandidateProducer.clone(
@@ -373,11 +413,12 @@ trackingPhase1.toReplaceWith(tobTecStep, tobTecStepClassifier1.clone(
      qualityCuts = [-0.6,-0.45,-0.3]
 ))
 
-from RecoTracker.FinalTrackSelectors.TrackTfClassifier_cfi import *
+from RecoTracker.FinalTrackSelectors.trackTfClassifier_cfi import *
 from RecoTracker.FinalTrackSelectors.trackSelectionTf_cfi import *
-trackdnn.toReplaceWith(tobTecStep, TrackTfClassifier.clone(
+from RecoTracker.FinalTrackSelectors.trackSelectionTf_CKF_cfi import *
+trackdnn.toReplaceWith(tobTecStep, trackTfClassifier.clone(
      src         = 'tobTecStepTracks',
-     qualityCuts = qualityCutDictionary["TobTecStep"]
+     qualityCuts = qualityCutDictionary.TobTecStep.value()
 ))
 (trackdnn & fastSim).toModify(tobTecStep,vertices = 'firstStepPrimaryVerticesBeforeMixing')
 
@@ -449,30 +490,35 @@ TobTecStepTask = cms.Task(tobTecStepClusters,
                           tobTecStep)
 TobTecStep = cms.Sequence(TobTecStepTask)
 
+_TobTecStepTask_trackingMkFit = TobTecStepTask.copy()
+_TobTecStepTask_trackingMkFit.add(tobTecStepTrackCandidatesMkFitSeeds, tobTecStepTrackCandidatesMkFit, tobTecStepTrackCandidatesMkFitConfig)
+trackingMkFitTobTecStep.toReplaceWith(TobTecStepTask, _TobTecStepTask_trackingMkFit)
 
 ### Following are specific for LowPU, they're collected here to
 ### not to interfere too much with the default configuration
 # SEEDING LAYERS
-tobTecStepSeedLayers = cms.EDProducer('SeedingLayersEDProducer',
-    layerList = cms.vstring('TOB1+TOB2', 
+tobTecStepSeedLayers = _mod.seedingLayersEDProducer.clone(
+    layerList = ['TOB1+TOB2', 
         'TOB1+TEC1_pos', 'TOB1+TEC1_neg', 
         'TEC1_pos+TEC2_pos', 'TEC2_pos+TEC3_pos', 
         'TEC3_pos+TEC4_pos', 'TEC4_pos+TEC5_pos', 
         'TEC5_pos+TEC6_pos', 'TEC6_pos+TEC7_pos', 
         'TEC1_neg+TEC2_neg', 'TEC2_neg+TEC3_neg', 
         'TEC3_neg+TEC4_neg', 'TEC4_neg+TEC5_neg', 
-        'TEC5_neg+TEC6_neg', 'TEC6_neg+TEC7_neg'),
-    TOB = cms.PSet(
+        'TEC5_neg+TEC6_neg', 'TEC6_neg+TEC7_neg'],
+    TOB = dict(
         matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
         skipClusters = cms.InputTag('tobTecStepClusters'),
-        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTiny'))
+        TTRHBuilder = cms.string('WithTrackAngle'), 
+        clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTiny'))
     ),
-    TEC = cms.PSet(
+    TEC = dict(
         matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
         skipClusters = cms.InputTag('tobTecStepClusters'),
         #    untracked bool useSimpleRphiHitsCleaner = false
         useRingSlector = cms.bool(True),
-        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTiny')),
+        TTRHBuilder = cms.string('WithTrackAngle'), 
+        clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTiny')),
         minRing = cms.int32(5),
         maxRing = cms.int32(5)
     )

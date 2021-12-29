@@ -232,13 +232,13 @@ protected:
   const SiPixelLorentzAngle* lorentzAngle_;
   const SiPixelLorentzAngle* lorentzAngleWidth_;  // for the charge width (generic)
 
-  const SiPixelGenErrorDBObject* genErrorDBObject_;  // NEW
-  //const SiPixelCPEGenericErrorParm * genErrorParm_;  // OLD
-
+  const SiPixelGenErrorDBObject* genErrorDBObject_;
   const SiPixelTemplateDBObject* templateDBobject_;
   bool alpha2Order;  // switch on/off E.B effect.
 
-  bool DoLorentz_;
+  bool useLAFromDB_;  //Use LA value from the database (used for generic CPE or in template CPE if an error)
+
+  bool doLorentzFromAlignment_;
   bool LoadTemplatesFromDB_;
 
   //errors for template reco for edge hits, based on observed residuals from

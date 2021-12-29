@@ -5,13 +5,14 @@
 #include <SimCalorimetry/EcalTrigPrimAlgos/interface/EcalFenixAmplitudeFilter.h>
 #include <iostream>
 
-EcalFenixAmplitudeFilter::EcalFenixAmplitudeFilter() : inputsAlreadyIn_(0), shift_(6) {}
+EcalFenixAmplitudeFilter::EcalFenixAmplitudeFilter(bool tpInfoPrintout)
+    : inputsAlreadyIn_(0), stripid_{0}, shift_(6), tpInfoPrintout_(tpInfoPrintout) {}
 
 EcalFenixAmplitudeFilter::~EcalFenixAmplitudeFilter() {}
 
 int EcalFenixAmplitudeFilter::setInput(int input, int fgvb) {
   if (input > 0X3FFFF) {
-    std::cout << "ERROR IN INPUT OF AMPLITUDE FILTER" << std::endl;
+    edm::LogError("EcalTPG") << "ERROR IN INPUT OF EVEN AMPLITUDE FILTER";
     return -1;
   }
   if (inputsAlreadyIn_ < 5) {
@@ -33,18 +34,26 @@ void EcalFenixAmplitudeFilter::process(std::vector<int> &addout,
                                        std::vector<int> &output,
                                        std::vector<int> &fgvbIn,
                                        std::vector<int> &fgvbOut) {
-  // test
   inputsAlreadyIn_ = 0;
   for (unsigned int i = 0; i < 5; i++) {
-    buffer_[i] = 0;  // FIXME: 5
+    buffer_[i] = 0;
     fgvbBuffer_[i] = 0;
   }
-
-  // test end
 
   for (unsigned int i = 0; i < addout.size(); i++) {
     setInput(addout[i], fgvbIn[i]);
     process();
+    if (tpInfoPrintout_) {
+      if (i >= 4) {
+        edm::LogVerbatim("EcalTPG") << i << " " << stripid_ << " " << weights_[0] << " " << weights_[1] << " "
+                                    << weights_[2] << " " << weights_[3] << " " << weights_[4] << " "
+                                    << weights_[0] / 64.0 << " " << weights_[1] / 64.0 << " " << weights_[2] / 64.0
+                                    << " " << weights_[3] / 64.0 << " " << weights_[4] / 64.0 << " [" << buffer_[0]
+                                    << ", " << buffer_[1] << ", " << buffer_[2] << ", " << buffer_[3] << ", "
+                                    << buffer_[4] << "]"
+                                    << " --> output: " << processedOutput_ << " EVEN";
+      }
+    }
     output[i] = processedOutput_;
     fgvbOut[i] = processedFgvbOutput_;
   }
@@ -62,10 +71,9 @@ void EcalFenixAmplitudeFilter::process(std::vector<int> &addout,
 }
 
 void EcalFenixAmplitudeFilter::process() {
-  // UB FIXME: 5
   processedOutput_ = 0;
   processedFgvbOutput_ = 0;
-  if (inputsAlreadyIn_ < 5)
+  if (inputsAlreadyIn_ < 5)  // 5 digis required to produce first ET value
     return;
   int output = 0;
   int fgvbInt = 0;
@@ -86,6 +94,7 @@ void EcalFenixAmplitudeFilter::process() {
 void EcalFenixAmplitudeFilter::setParameters(uint32_t raw,
                                              const EcalTPGWeightIdMap *ecaltpgWeightMap,
                                              const EcalTPGWeightGroup *ecaltpgWeightGroup) {
+  stripid_ = raw;
   uint32_t params_[5];
   const EcalTPGGroups::EcalTPGGroupsMap &groupmap = ecaltpgWeightGroup->getMap();
   EcalTPGGroups::EcalTPGGroupsMapItr it = groupmap.find(raw);
@@ -95,18 +104,9 @@ void EcalFenixAmplitudeFilter::setParameters(uint32_t raw,
     EcalTPGWeightIdMap::EcalTPGWeightMapItr itw = weightmap.find(weightid);
     (*itw).second.getValues(params_[0], params_[1], params_[2], params_[3], params_[4]);
 
-    // we have to transform negative coded in 7 bits into negative coded in 32
-    // bits maybe this should go into the getValue method??
-    // std::cout << "peak flag settings" << std::endl;
     for (int i = 0; i < 5; ++i) {
       weights_[i] = (params_[i] & 0x40) ? (int)(params_[i] | 0xffffffc0) : (int)(params_[i]);
-
-      // Construct the peakFlag for sFGVB processing
-      // peakFlag_[i] = ((params_[i] & 0x80) > 0x0) ? 1 : 0;
-      // std::cout << " " << params_[i] << std::endl;
-      // std::cout << " " << peakFlag_[i] << std::endl;
     }
-    // std::cout << std::endl;
   } else
     edm::LogWarning("EcalTPG") << " could not find EcalTPGGroupsMap entry for " << raw;
 }

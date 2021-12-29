@@ -1,4 +1,4 @@
-#include "FWCore/Framework/src/StreamSchedule.h"
+#include "FWCore/Framework/interface/StreamSchedule.h"
 
 #include "DataFormats/Provenance/interface/BranchIDListHelper.h"
 #include "DataFormats/Provenance/interface/ProcessConfiguration.h"
@@ -8,14 +8,14 @@
 #include "FWCore/Framework/src/TriggerReport.h"
 #include "FWCore/Framework/src/TriggerTimingReport.h"
 #include "FWCore/Framework/src/Factory.h"
-#include "FWCore/Framework/src/OutputModuleCommunicator.h"
+#include "FWCore/Framework/interface/OutputModuleCommunicator.h"
 #include "FWCore/Framework/src/TriggerResultInserter.h"
 #include "FWCore/Framework/src/PathStatusInserter.h"
 #include "FWCore/Framework/src/EndPathStatusInserter.h"
-#include "FWCore/Framework/src/WorkerInPath.h"
-#include "FWCore/Framework/src/ModuleHolder.h"
-#include "FWCore/Framework/src/WorkerT.h"
-#include "FWCore/Framework/src/ModuleRegistry.h"
+#include "FWCore/Framework/interface/WorkerInPath.h"
+#include "FWCore/Framework/interface/maker/ModuleHolder.h"
+#include "FWCore/Framework/interface/maker/WorkerT.h"
+#include "FWCore/Framework/interface/ModuleRegistry.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
@@ -608,9 +608,10 @@ namespace edm {
       //use to give priorities on an error to ones from Paths
       auto pathErrorHolder = std::make_unique<std::atomic<std::exception_ptr*>>(nullptr);
       auto pathErrorPtr = pathErrorHolder.get();
+      ServiceWeakToken weakToken = serviceToken;
       auto allPathsDone = make_waiting_task(
-          [iTask, this, serviceToken, pathError = std::move(pathErrorHolder)](std::exception_ptr const* iPtr) mutable {
-            ServiceRegistry::Operate operate(serviceToken);
+          [iTask, this, weakToken, pathError = std::move(pathErrorHolder)](std::exception_ptr const* iPtr) mutable {
+            ServiceRegistry::Operate operate(weakToken.lock());
 
             std::exception_ptr ptr;
             if (pathError->load()) {
@@ -627,9 +628,9 @@ namespace edm {
       // run under that condition.
       WaitingTaskHolder allPathsHolder(*iTask.group(), allPathsDone);
 
-      auto pathsDone = make_waiting_task([allPathsHolder, pathErrorPtr, transitionInfo = info, this, serviceToken](
+      auto pathsDone = make_waiting_task([allPathsHolder, pathErrorPtr, transitionInfo = info, this, weakToken](
                                              std::exception_ptr const* iPtr) mutable {
-        ServiceRegistry::Operate operate(serviceToken);
+        ServiceRegistry::Operate operate(weakToken.lock());
 
         if (iPtr) {
           //this is used to prioritize this error over one

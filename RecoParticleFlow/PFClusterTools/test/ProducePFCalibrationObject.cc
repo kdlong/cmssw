@@ -10,31 +10,26 @@
 
 #include <iostream>
 #include <vector>
-#include "CondFormats/PhysicsToolsObjects/interface/PerformancePayloadFromTFormula.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
 
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
-#include "CondFormats/DataRecord/interface/PFCalibrationRcd.h"
-
 #include "TF1.h"
 
 using namespace std;
 using namespace edm;
 
-ProducePFCalibrationObject::ProducePFCalibrationObject(const edm::ParameterSet& pSet) {
-  read = pSet.getUntrackedParameter<bool>("read");
-  write = pSet.getUntrackedParameter<bool>("write");
-
-  fToWrite = pSet.getParameter<vector<ParameterSet> >("toWrite");
-  fToRead = pSet.getUntrackedParameter<vector<string> >("toRead");
-}
+ProducePFCalibrationObject::ProducePFCalibrationObject(const edm::ParameterSet& pSet)
+    : read(pSet.getUntrackedParameter<bool>("read")),
+      write(pSet.getUntrackedParameter<bool>("write")),
+      fToWrite(pSet.getParameter<vector<ParameterSet> >("toWrite")),
+      fToRead(pSet.getUntrackedParameter<vector<string> >("toRead")),
+      perfToken(esConsumes<edm::Transition::BeginRun>()) {}
 
 ProducePFCalibrationObject::~ProducePFCalibrationObject() {}
 
-// void ProducePFCalibrationObject::beginJob() {
 void ProducePFCalibrationObject::beginRun(const edm::Run& run, const edm::EventSetup& eSetup) {
   cout << "[ProducePFCalibrationObject] beginJob" << endl;
 
@@ -104,24 +99,20 @@ void ProducePFCalibrationObject::beginRun(const edm::Run& run, const edm::EventS
     PhysicsTFormulaPayload allTFormulas(limitsToWrite, formulasToWrite);
 
     // put them in the container
-    PerformancePayloadFromTFormula* pfCalibrationFormulas =
-        new PerformancePayloadFromTFormula(resToWrite, binsToWrite, allTFormulas);
+    PerformancePayloadFromTFormula pfCalibrationFormulas(resToWrite, binsToWrite, allTFormulas);
 
     // actually write to DB
     edm::Service<cond::service::PoolDBOutputService> dbOut;
     if (dbOut.isAvailable()) {
-      dbOut->writeOne<PerformancePayloadFromTFormula>(pfCalibrationFormulas, 1, record);
+      dbOut->writeOneIOV(pfCalibrationFormulas, 1, record);
     }
   }
 
   if (read) {
     // ---------------------------------------------------------------------------------
     // Read the objects
-    edm::ESHandle<PerformancePayload> perfH;
-    eSetup.get<PFCalibrationRcd>().get(perfH);
-
     const PerformancePayloadFromTFormula* pfCalibrations =
-        static_cast<const PerformancePayloadFromTFormula*>(perfH.product());
+        static_cast<const PerformancePayloadFromTFormula*>(&eSetup.getData(perfToken));
 
     for (vector<string>::const_iterator name = fToRead.begin(); name != fToRead.end(); ++name) {
       cout << "Function: " << *name << endl;

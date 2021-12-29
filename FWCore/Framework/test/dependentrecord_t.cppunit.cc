@@ -38,6 +38,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstring>
 
 using namespace edm::eventsetup;
 
@@ -759,8 +760,9 @@ namespace {
         if (rec) {
           edm::FinalWaitingTask waitTask;
           tbb::task_group group;
+          edm::ServiceToken token;
           rec->prefetchAsync(
-              edm::WaitingTaskHolder(group, &waitTask), proxies[i], &iImpl, edm::ServiceToken{}, edm::ESParentContext{});
+              edm::WaitingTaskHolder(group, &waitTask), proxies[i], &iImpl, token, edm::ESParentContext{});
           do {
             group.wait();
           } while (not waitTask.done());
@@ -787,8 +789,9 @@ namespace {
         if (rec) {
           edm::FinalWaitingTask waitTask;
           tbb::task_group group;
+          edm::ServiceToken token;
           rec->prefetchAsync(
-              edm::WaitingTaskHolder(group, &waitTask), proxies[i], &iImpl, edm::ServiceToken{}, edm::ESParentContext{});
+              edm::WaitingTaskHolder(group, &waitTask), proxies[i], &iImpl, token, edm::ESParentContext{});
           do {
             group.wait();
           } while (not waitTask.done());

@@ -5,12 +5,8 @@
 <use name="FWCore/Framework"/>
 <use name="FWCore/MessageLogger"/>
 <use name="FWCore/ParameterSet"/>
-<use name="FWCore/Utilities"/>
 <use name="Geometry/CSCGeometry"/>
 <use name="L1Trigger/CSCTriggerPrimitives"/>
-<use name="SimDataFormats/TrackingHit"/>
-<use name="SimDataFormats/GeneratorProducts"/>
-<use name="CommonTools/UtilAlgos"/>
 <use name="rootgraphics"/>
 <library file="*.cc" name="CSCTriggerPrimitivesPlugins">
   <flags EDM_PLUGIN="1"/>

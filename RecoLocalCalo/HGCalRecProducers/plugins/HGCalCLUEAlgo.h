@@ -29,10 +29,11 @@ using Density = hgcal_clustering::Density;
 template <typename TILE>
 class HGCalCLUEAlgoT : public HGCalClusteringAlgoBase {
 public:
-  HGCalCLUEAlgoT(const edm::ParameterSet& ps)
+  HGCalCLUEAlgoT(const edm::ParameterSet& ps, edm::ConsumesCollector iC)
       : HGCalClusteringAlgoBase(
             (HGCalClusteringAlgoBase::VerbosityLevel)ps.getUntrackedParameter<unsigned int>("verbosity", 3),
-            reco::CaloCluster::undefined),
+            reco::CaloCluster::undefined,
+            iC),
         thresholdW0_(ps.getParameter<std::vector<double>>("thresholdW0")),
         positionDeltaRho2_(ps.getParameter<double>("positionDeltaRho2")),
         vecDeltas_(ps.getParameter<std::vector<double>>("deltac")),
@@ -90,7 +91,7 @@ public:
                                    {
                                        1.3,
                                        1.3,
-                                       5.0,
+                                       1.3,
                                        0.0315,  // for scintillator
                                    });
     iDesc.add<bool>("dependSensor", true);
@@ -110,6 +111,9 @@ public:
     descNestedNoiseMIP.add<unsigned int>("scaleByDoseAlgo", 0);
     descNestedNoiseMIP.add<double>("scaleByDoseFactor", 1.);
     descNestedNoiseMIP.add<std::string>("doseMap", "");
+    descNestedNoiseMIP.add<std::string>("sipmMap", "");
+    descNestedNoiseMIP.add<double>("referenceIdark", -1);
+    descNestedNoiseMIP.add<double>("referenceXtalk", -1);
     descNestedNoiseMIP.add<double>("noise_MIP", 1. / 100.);
     iDesc.add<edm::ParameterSetDescription>("noiseMip", descNestedNoiseMIP);
     iDesc.add<bool>("use2x2", true);  // use 2x2 or 3x3 scenario for scint density calculation

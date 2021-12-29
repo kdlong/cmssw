@@ -75,6 +75,7 @@ private:
 
     std::unique_ptr<TH1D> h_de_t;
     std::unique_ptr<TProfile> p_de_t_vs_xi_simu, p_de_t_vs_t_simu;
+    std::unique_ptr<TH2D> h2_de_t_vs_t_simu;
 
     PlotGroup()
         : h_de_xi(new TH1D("", ";#xi_{reco} - #xi_{simu}", 100, 0., 0.)),
@@ -92,7 +93,8 @@ private:
 
           h_de_t(new TH1D("", ";t_{reco} - t_{simu}", 100, -1., +1.)),
           p_de_t_vs_xi_simu(new TProfile("", ";xi_{simu};t_{reco} - t_{simu}", 50, 0., 0.25)),
-          p_de_t_vs_t_simu(new TProfile("", ";t_{simu};t_{reco} - t_{simu}", 20, 0., 5.)) {}
+          p_de_t_vs_t_simu(new TProfile("", ";t_{simu};t_{reco} - t_{simu}", 20, 0., 5.)),
+          h2_de_t_vs_t_simu(new TH2D("", ";t_{simu};t_{reco} - t_{simu}", 150, 0., 5., 300, -2., +2.)) {}
 
     static TGraphErrors profileToRMSGraph(TProfile *p, const char *name = "") {
       TGraphErrors gr_err;
@@ -142,6 +144,7 @@ private:
       profileToRMSGraph(p_de_t_vs_xi_simu.get(), "g_rms_de_t_vs_xi_simu").Write();
       p_de_t_vs_t_simu->Write("p_de_t_vs_t_simu");
       profileToRMSGraph(p_de_t_vs_t_simu.get(), "g_rms_de_t_vs_t_simu").Write();
+      h2_de_t_vs_t_simu->Write("h2_de_t_vs_t_simu");
     }
   };
 
@@ -152,8 +155,8 @@ private:
     std::unique_ptr<TH1D> h_t_sh_minus_vtx_t, h_t_dh_minus_vtx_z;
 
     DoubleArmPlotGroup()
-        : h2_t_sh_vs_vtx_t(new TH2D("", ";vtx_t   (mm);(t_56 + t_45)/2   (mm)", 100, -250., -250., 100, +250., +250.)),
-          h2_t_dh_vs_vtx_z(new TH2D("", ";vtx_z   (mm);(t_56 - t_45)/2   (mm)", 100, -250., -250., 100, +250., +250.)),
+        : h2_t_sh_vs_vtx_t(new TH2D("", ";vtx_t   (mm);(t_56 + t_45)/2   (mm)", 100, -250., +250., 100, -250., +250.)),
+          h2_t_dh_vs_vtx_z(new TH2D("", ";vtx_z   (mm);(t_56 - t_45)/2   (mm)", 100, -250., +250., 100, -250., +250.)),
           h_t_sh_minus_vtx_t(new TH1D("", ";(t_56 + t_45)/2 - vtx_t   (mm)", 100, -100., +100.)),
           h_t_dh_minus_vtx_z(new TH1D("", ";(t_56 - t_45)/2 - vtx_z   (mm)", 100, -100., +100.)) {}
 
@@ -161,10 +164,10 @@ private:
       const double t_sum_half = (time_56 + time_45) / 2. * CLHEP::c_light;
       const double t_dif_half = (time_56 - time_45) / 2. * CLHEP::c_light;
 
-      h2_t_sh_vs_vtx_t->Fill(t_sum_half, vtx_t);
+      h2_t_sh_vs_vtx_t->Fill(vtx_t, t_sum_half);
       h_t_sh_minus_vtx_t->Fill(t_sum_half - vtx_t);
 
-      h2_t_dh_vs_vtx_z->Fill(t_dif_half, vtx_z);
+      h2_t_dh_vs_vtx_z->Fill(vtx_z, t_dif_half);
       h_t_dh_minus_vtx_z->Fill(t_dif_half - vtx_z);
     }
 
@@ -385,6 +388,7 @@ void CTPPSProtonReconstructionSimulationValidator::fillPlots(unsigned int meth_i
   plt.h_de_t->Fill(t_reco - t_simu);
   plt.p_de_t_vs_xi_simu->Fill(xi_simu, t_reco - t_simu);
   plt.p_de_t_vs_t_simu->Fill(t_simu, t_reco - t_simu);
+  plt.h2_de_t_vs_t_simu->Fill(t_simu, t_reco - t_simu);
 }
 
 //----------------------------------------------------------------------------------------------------

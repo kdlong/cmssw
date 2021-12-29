@@ -12,9 +12,9 @@
 #include <functional>
 #include "tbb/global_control.h"
 #include "FWCore/Framework/interface/one/OutputModule.h"
-#include "FWCore/Framework/src/OutputModuleCommunicatorT.h"
-#include "FWCore/Framework/src/TransitionInfoTypes.h"
-#include "FWCore/Framework/src/WorkerT.h"
+#include "FWCore/Framework/interface/OutputModuleCommunicatorT.h"
+#include "FWCore/Framework/interface/TransitionInfoTypes.h"
+#include "FWCore/Framework/interface/maker/WorkerT.h"
 #include "FWCore/Framework/interface/OccurrenceTraits.h"
 #include "DataFormats/Provenance/interface/ProductRegistry.h"
 #include "DataFormats/Provenance/interface/BranchIDListHelper.h"
@@ -27,7 +27,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/ServiceRegistry/interface/ServiceRegistry.h"
 #include "FWCore/Framework/interface/FileBlock.h"
-#include "FWCore/Framework/src/PreallocationConfiguration.h"
+#include "FWCore/Framework/interface/PreallocationConfiguration.h"
 #include "FWCore/Concurrency/interface/WaitingTaskHolder.h"
 
 #include "FWCore/Utilities/interface/Exception.h"
@@ -110,7 +110,8 @@ private:
   void doWork(edm::Worker* iBase, Info const& info, edm::StreamID id, edm::ParentContext const& iContext) {
     edm::FinalWaitingTask task;
     tbb::task_group group;
-    iBase->doWorkAsync<Traits>(edm::WaitingTaskHolder(group, &task), info, edm::ServiceToken(), id, iContext, nullptr);
+    edm::ServiceToken token;
+    iBase->doWorkAsync<Traits>(edm::WaitingTaskHolder(group, &task), info, token, id, iContext, nullptr);
     do {
       group.wait();
     } while (not task.done());

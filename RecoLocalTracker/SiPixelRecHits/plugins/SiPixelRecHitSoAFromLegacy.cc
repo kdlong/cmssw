@@ -141,7 +141,9 @@ void SiPixelRecHitSoAFromLegacy::produce(edm::StreamID streamID, edm::Event& iEv
   assert(numberOfClusters == int(hitsModuleStart[gpuClustering::maxNumModules]));
 
   // output SoA
-  auto output = std::make_unique<TrackingRecHit2DCPU>(numberOfClusters, &cpeView, hitsModuleStart, nullptr);
+  // element 96 is the start of BPIX2 (i.e. the number of clusters in BPIX1)
+  auto output =
+      std::make_unique<TrackingRecHit2DCPU>(numberOfClusters, hitsModuleStart[96], &cpeView, hitsModuleStart, nullptr);
 
   if (0 == numberOfClusters) {
     iEvent.put(std::move(output));
@@ -236,11 +238,16 @@ void SiPixelRecHitSoAFromLegacy::produce(edm::StreamID streamID, edm::Event& iEv
   assert(numberOfHits == numberOfClusters);
 
   // fill data structure to support CA
-  for (auto i = 0; i < 11; ++i) {
+  for (auto i = 0U; i < phase1PixelTopology::numberOfLayers + 1; ++i) {
     output->hitsLayerStart()[i] = hitsModuleStart[cpeView.layerGeometry().layerStart[i]];
   }
-  cms::cuda::fillManyFromVector(
-      output->phiBinner(), 10, output->iphi(), output->hitsLayerStart(), numberOfHits, 256, nullptr);
+  cms::cuda::fillManyFromVector(output->phiBinner(),
+                                phase1PixelTopology::numberOfLayers,
+                                output->iphi(),
+                                output->hitsLayerStart(),
+                                numberOfHits,
+                                256,
+                                output->phiBinnerStorage());
 
   LogDebug("SiPixelRecHitSoAFromLegacy") << "created HitSoa for " << numberOfClusters << " clusters in "
                                          << numberOfDetUnits << " Dets";

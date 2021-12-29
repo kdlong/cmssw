@@ -4,16 +4,13 @@
 #include "DetectorDescription/DDCMS/interface/DDutils.h"
 #include "DataFormats/Math/interface/angle_units.h"
 // Header files for endcap supercrystal geometry
-#include "Geometry/EcalCommonData/interface/DDEcalEndcapTrap.h"
+#include "Geometry/EcalCommonData/interface/DDEcalEndcapTrapX.h"
 #include <CLHEP/Geometry/Transform3D.h>
 
 #include <string>
 #include <vector>
 
 using namespace angle_units::operators;
-
-using DDTranslation = ROOT::Math::DisplacementVector3D<ROOT::Math::Cartesian3D<double> >;
-using DDRotation = ROOT::Math::Rotation3D;
 
 //#define EDM_ML_DEBUG
 
@@ -77,7 +74,7 @@ namespace {
     double zFront;
   };
 
-  const DDRotation& myrot(cms::DDNamespace& ns, const std::string& nam, const DDRotation& r) {
+  const DDRotationMatrix& myrot(cms::DDNamespace& ns, const std::string& nam, const DDRotationMatrix& r) {
     ns.addRotation(nam, r);
     return ns.rotation(ns.prepend(nam));
   }
@@ -89,6 +86,52 @@ namespace {
       v.remove_suffix(v.size() - (trim_pos + 1));
     return v;
   }
+
+  void placeEFRYn00(dd4hep::Volume& eeSCALog,
+                    const dd4hep::Volume& eeCRLog,
+                    int copyNum,
+                    cms::DDNamespace& ns,
+                    const std::string& rname,
+                    DDEcalEndcapTrapX& crystal,
+                    double cryZOff) {
+    // The "EECrRoC1R1" rotation is too small. It is ignored by ROOT when the volume is placed. In order for the
+    // volume to be placed with some rotation, the original rotation is increased by 1%, which is just enough for
+    // the revised rotation to pass ROOT's check for a valid, non-identity rotation. It is hoped that such a small
+    // change in a tiny rotaion will have no negative effects in the geometry.
+    //
+    // ROOT version where issue is observed: ROOT 6.22/09
+    // TGeoRotation::CheckMatrix() is the method that checks rotations. When it determines a rotation is too
+    // small, it sets the rotation to be ignored.
+    // Original rotation angles: x = -7.045281e-07, y = 7.045385e-07, z = 0
+    // Adjusted rotation angles: x = -7.115734e-07, y = 7.115839e-07, z = 0
+
+    double xx, xy, xz, yx, yy, yz, zx, zy, zz;
+    auto rotAdjusted = crystal.rotation();
+    rotAdjusted.GetComponents(xx, xy, xz, yx, yy, yz, zx, zy, zz);
+    double xtheta = atan2(zy, zz);
+    double distyz = sqrt(zy * zy + zz * zz);
+    double ytheta = atan2(-zx, distyz);
+    double ztheta = atan2(yx, xx);
+    LogDebug("EcalGeom") << "Original " << rname << " rotation angles: xtheta = " << std::setprecision(18) << xtheta
+                         << ", distyz = " << distyz << ", ytheta = " << ytheta << ", ztheta = " << ztheta;
+    double increase = 1.01;  // Increase rotation angle by 1%
+    xtheta *= increase;
+    ytheta *= increase;
+    LogDebug("EcalGeom") << "Adjusted (+1%) " << rname << " rotation angles: xtheta = " << std::setprecision(18)
+                         << xtheta << ", distyz = " << distyz << ", ytheta = " << ytheta << ", ztheta = " << ztheta;
+    double xdiag = cos(xtheta), xoff = sin(xtheta);
+    double ydiag = cos(ytheta), yoff = sin(ytheta);
+    DDRotationMatrix xrot(1., 0., 0., 0., xdiag, -xoff, 0., xoff, xdiag);
+    DDRotationMatrix yrot(ydiag, 0., yoff, 0., 1., 0., -yoff, 0., ydiag);
+    rotAdjusted = yrot * xrot;
+    eeSCALog.placeVolume(
+        eeCRLog,
+        copyNum,
+        dd4hep::Transform3D(
+            myrot(ns, rname, rotAdjusted),
+            dd4hep::Position(crystal.centrePos().x(), crystal.centrePos().y(), crystal.centrePos().z() - cryZOff)));
+  }
+
 }  // namespace
 
 static long algorithm(dd4hep::Detector& /* description */, cms::DDParsingContext& ctxt, xml_h e) {
@@ -308,18 +351,18 @@ static long algorithm(dd4hep::Detector& /* description */, cms::DDParsingContext
 
       const CLHEP::HepRotationZ cutm(ffived);
 
-      DDRotation cutRot(5 != iSCType ? DDRotation()
-                                     : myrot(ns,
-                                             "EECry5Rot",
-                                             DDRotation(cutm.xx(),
-                                                        cutm.xy(),
-                                                        cutm.xz(),
-                                                        cutm.yx(),
-                                                        cutm.yy(),
-                                                        cutm.yz(),
-                                                        cutm.zx(),
-                                                        cutm.zy(),
-                                                        cutm.zz())));
+      DDRotationMatrix cutRot(5 != iSCType ? DDRotationMatrix()
+                                           : myrot(ns,
+                                                   "EECry5Rot",
+                                                   DDRotationMatrix(cutm.xx(),
+                                                                    cutm.xy(),
+                                                                    cutm.xz(),
+                                                                    cutm.yx(),
+                                                                    cutm.yy(),
+                                                                    cutm.yz(),
+                                                                    cutm.zx(),
+                                                                    cutm.zy(),
+                                                                    cutm.zz())));
 
       dd4hep::Solid eeCutEnv = dd4hep::SubtractionSolid(ee.envName + std::to_string(iSCType),
                                                         ns.solid(ee.envName + std::to_string(iSCType) + "Tmp"),
@@ -390,20 +433,27 @@ static long algorithm(dd4hep::Detector& /* description */, cms::DDParsingContext
         if (imax > 0) {
           // Loop over crystals in this row
           for (int irow(imin); irow <= imax; ++irow) {
-            // Create crystal as a DDEcalEndcapTrap object and calculate rotation and
+            // Create crystal as a DDEcalEndcapTrapX object and calculate rotation and
             // translation required to position it in the SC.
-            DDEcalEndcapTrap crystal(1, ee.crysFront, ee.crysRear, ee.crysLength);
+            DDEcalEndcapTrapX crystal(1, ee.crysFront, ee.crysRear, ee.crysLength);
 
             crystal.moveto(ee.cryFCtr[icol - 1][irow - 1], ee.cryRCtr[icol - 1][irow - 1]);
 
             std::string rname("EECrRoC" + std::to_string(icol) + "R" + std::to_string(irow));
 
-            eeSCALog.placeVolume(eeCRLog,
-                                 100 * iSCType + 10 * (icol - 1) + (irow - 1),
-                                 dd4hep::Transform3D(myrot(ns, rname, crystal.rotation()),
-                                                     dd4hep::Position(crystal.centrePos().x(),
-                                                                      crystal.centrePos().y(),
-                                                                      crystal.centrePos().z() - ee.cryZOff)));
+            if (rname == "EECrRoC1R1") {
+              // The "EECrRoC1R1" rotation is too small and would be ignored by ROOT. It needs to be
+              // increased by 1% to take effect. See placeEFRYn00 for more details.
+
+              placeEFRYn00(
+                  eeSCALog, eeCRLog, 100 * iSCType + 10 * (icol - 1) + (irow - 1), ns, rname, crystal, ee.cryZOff);
+            } else
+              eeSCALog.placeVolume(eeCRLog,
+                                   100 * iSCType + 10 * (icol - 1) + (irow - 1),
+                                   dd4hep::Transform3D(myrot(ns, rname, crystal.rotation()),
+                                                       dd4hep::Position(crystal.centrePos().x(),
+                                                                        crystal.centrePos().y(),
+                                                                        crystal.centrePos().z() - ee.cryZOff)));
 #ifdef EDM_ML_DEBUG
             edm::LogVerbatim("EEGeom") << eeCRLog.name() << " " << (100 * iSCType + 10 * (icol - 1) + (irow - 1))
                                        << " in " << eeSCALog.name();
@@ -434,9 +484,9 @@ static long algorithm(dd4hep::Detector& /* description */, cms::DDParsingContext
           }
         }
 
-        // Create SC as a DDEcalEndcapTrap object and calculate rotation and
+        // Create SC as a DDEcalEndcapTrapX object and calculate rotation and
         // translation required to position it in the endcap.
-        DDEcalEndcapTrap scrys(1, ee.sCEFront, ee.sCERear, ee.sCELength);
+        DDEcalEndcapTrapX scrys(1, ee.sCEFront, ee.sCERear, ee.sCELength);
         scrys.moveto(ee.scrFCtr[icol - 1][irow - 1], ee.scrRCtr[icol - 1][irow - 1]);
         scrys.translate(DDTranslation(0., 0., -ee.zOff));
 

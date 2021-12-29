@@ -31,6 +31,7 @@
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
 #include "DataFormats/DetId/interface/DetId.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "DQM/TrackerRemapper/interface/Phase1PixelROCMaps.h"
 
 #include <memory>
 #include <sstream>
@@ -57,9 +58,10 @@ namespace {
   1d histogram of SiPixelFEDChannelContainer of 1 IOV 
   *************************************************/
 
-  class SiPixelFEDChannelContainerTest : public PlotImage<SiPixelFEDChannelContainer, SINGLE_IOV> {
+  template <SiPixelPI::DetType myType>
+  class SiPixelFEDChannelContainerMap : public PlotImage<SiPixelFEDChannelContainer, SINGLE_IOV> {
   public:
-    SiPixelFEDChannelContainerTest()
+    SiPixelFEDChannelContainerMap()
         : PlotImage<SiPixelFEDChannelContainer, SINGLE_IOV>("SiPixelFEDChannelContainer scenarios count"),
           m_trackerTopo{StandaloneTrackerTopology::fromTrackerParametersXMLFile(
               edm::FileInPath("Geometry/TrackerCommonData/data/PhaseI/trackerParameters.xml").fullPath())} {
@@ -80,7 +82,7 @@ namespace {
       auto paramValues = PlotBase::inputParamValues();
       auto ip = paramValues.find("Scenarios");
       if (ip != paramValues.end()) {
-        auto input = boost::lexical_cast<std::string>(ip->second);
+        auto input = ip->second;
         typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
         boost::char_separator<char> sep{","};
         tokenizer tok{input, sep};
@@ -95,40 +97,10 @@ namespace {
         the_scenarios.push_back("all");
       }
 
-      int nlad_list[n_layers] = {6, 14, 22, 32};
-      int divide_roc = 1;
-
-      // ---------------------    BOOK HISTOGRAMS
-      std::array<TH2D*, n_layers> h_bpix_occ;
-      std::array<TH2D*, n_rings> h_fpix_occ;
-
-      // barrel
-      for (unsigned int lay = 1; lay <= 4; lay++) {
-        int nlad = nlad_list[lay - 1];
-
-        std::string name = "occ_Layer_" + std::to_string(lay);
-        std::string title = "; Module # ; Ladder #";
-        h_bpix_occ[lay - 1] = new TH2D(name.c_str(),
-                                       title.c_str(),
-                                       72 * divide_roc,
-                                       -4.5,
-                                       4.5,
-                                       (nlad * 4 + 2) * divide_roc,
-                                       -nlad - 0.5,
-                                       nlad + 0.5);
-      }
-
-      // endcaps
-      for (unsigned int ring = 1; ring <= n_rings; ring++) {
-        int n = ring == 1 ? 92 : 140;
-        float y = ring == 1 ? 11.5 : 17.5;
-        std::string name = "occ_ring_" + std::to_string(ring);
-        std::string title = "; Disk # ; Blade/Panel #";
-
-        h_fpix_occ[ring - 1] = new TH2D(name.c_str(), title.c_str(), 56 * divide_roc, -3.5, 3.5, n * divide_roc, -y, y);
-      }
+      Phase1PixelROCMaps theROCMap("");
 
       auto tag = PlotBase::getTag<0>();
+      auto tagname = tag.name;
       auto iov = tag.iovs.front();
 
       // open db session for the cabling map
@@ -234,105 +206,42 @@ namespace {
           auto myDetId = DetId(t_detid);
 
           if (subid == PixelSubdetector::PixelBarrel) {
-            auto layer = m_trackerTopo.pxbLayer(myDetId);
-            auto s_ladder = SiPixelPI::signed_ladder(myDetId, m_trackerTopo, true);
-            auto s_module = SiPixelPI::signed_module(myDetId, m_trackerTopo, true);
-
-            bool isFlipped = SiPixelPI::isBPixOuterLadder(myDetId, m_trackerTopo, false);
-            if ((layer > 1 && s_module < 0))
-              isFlipped = !isFlipped;
-
-            auto ladder = m_trackerTopo.pxbLadder(myDetId);
-            auto module = m_trackerTopo.pxbModule(myDetId);
-            LogDebug("SiPixelFEDChannelContainerTest")
-                << "layer:" << layer << " ladder:" << ladder << " module:" << module << " signed ladder: " << s_ladder
-                << " signed module: " << s_module << std::endl;
-
-            auto rocsToMask =
-                SiPixelPI::maskedBarrelRocsToBins(layer, s_ladder, s_module, badRocsFromFEDChannels, isFlipped);
-            for (const auto& bin : rocsToMask) {
-              double x = h_bpix_occ[layer - 1]->GetXaxis()->GetBinCenter(std::get<0>(bin));
-              double y = h_bpix_occ[layer - 1]->GetYaxis()->GetBinCenter(std::get<1>(bin));
-              h_bpix_occ[layer - 1]->Fill(x, y, 1);
-            }
+            theROCMap.fillSelectedRocs(myDetId, badRocsFromFEDChannels, 1.);
           }  // if it's barrel
           else if (subid == PixelSubdetector::PixelEndcap) {
-            auto ring = SiPixelPI::ring(myDetId, m_trackerTopo, true);
-            auto s_blade = SiPixelPI::signed_blade(myDetId, m_trackerTopo, true);
-            auto s_disk = SiPixelPI::signed_disk(myDetId, m_trackerTopo, true);
-            auto s_blade_panel = SiPixelPI::signed_blade_panel(myDetId, m_trackerTopo, true);
-            auto panel = m_trackerTopo.pxfPanel(t_detid);
-
-            //bool isFlipped = (s_disk > 0) ? (std::abs(s_blade)%2==0) : (std::abs(s_blade)%2==1);
-            bool isFlipped = (s_disk > 0) ? (panel == 1) : (panel == 2);
-
-            LogDebug("SiPixelFEDChannelContainerTest")
-                << "ring:" << ring << " blade: " << s_blade << " panel: " << panel
-                << " signed blade/panel: " << s_blade_panel << " disk: " << s_disk << std::endl;
-
-            auto rocsToMask =
-                SiPixelPI::maskedForwardRocsToBins(ring, s_blade, panel, s_disk, badRocsFromFEDChannels, isFlipped);
-            for (const auto& bin : rocsToMask) {
-              double x = h_fpix_occ[ring - 1]->GetXaxis()->GetBinCenter(std::get<0>(bin));
-              double y = h_fpix_occ[ring - 1]->GetYaxis()->GetBinCenter(std::get<1>(bin));
-              h_fpix_occ[ring - 1]->Fill(x, y, 1);
-            }  // if it's endcap
-          } else {
+            theROCMap.fillSelectedRocs(myDetId, badRocsFromFEDChannels, 1.);
+          }  // if it's endcap
+          else {
             throw cms::Exception("LogicError") << "Unknown Pixel SubDet ID " << std::endl;
-          }
-        }  // loop on the channels
-      }    // loop on the scenarios
+          }  // else nonsense
+        }    // loop on the channels
+      }      // loop on the scenarios
 
       gStyle->SetOptStat(0);
       //=========================
-      TCanvas canvas("Summary", "Summary", 1200, 1600);
-      canvas.Divide(2, 3);
-      canvas.SetBottomMargin(0.11);
-      canvas.SetLeftMargin(0.13);
-      canvas.SetRightMargin(0.05);
-      canvas.Modified();
-
-      // dress the plots
-      for (unsigned int lay = 1; lay <= n_layers; lay++) {
-        SiPixelPI::dress_occup_plot(canvas, h_bpix_occ[lay - 1], lay, 0, 1);
-      }
-
-      canvas.Update();
-      canvas.Modified();
+      TCanvas canvas("Summary", "Summary", 1200, k_height[myType]);
       canvas.cd();
-
-      for (unsigned int ring = 1; ring <= n_rings; ring++) {
-        SiPixelPI::dress_occup_plot(canvas, h_fpix_occ[ring - 1], 0, n_layers + ring, 1);
-      }
 
       auto unpacked = SiPixelPI::unpack(std::get<0>(iov));
 
-      for (unsigned int lay = 1; lay <= n_layers; lay++) {
-        canvas.cd(lay);
-        auto ltx = TLatex();
-        ltx.SetTextFont(62);
-        ltx.SetTextColor(kBlue);
-        ltx.SetTextSize(0.055);
-        ltx.SetTextAlign(11);
-        ltx.DrawLatexNDC(gPad->GetLeftMargin(),
-                         1 - gPad->GetTopMargin() + 0.01,
-                         unpacked.first == 0
-                             ? ("IOV:" + std::to_string(unpacked.second)).c_str()
-                             : (std::to_string(unpacked.first) + "," + std::to_string(unpacked.second)).c_str());
-      }
+      std::string IOVstring = (unpacked.first == 0)
+                                  ? std::to_string(unpacked.second)
+                                  : (std::to_string(unpacked.first) + "," + std::to_string(unpacked.second));
 
-      for (unsigned int ring = 1; ring <= n_rings; ring++) {
-        canvas.cd(n_layers + ring);
-        auto ltx = TLatex();
-        ltx.SetTextFont(62);
-        ltx.SetTextColor(kBlue);
-        ltx.SetTextSize(0.050);
-        ltx.SetTextAlign(11);
-        ltx.DrawLatexNDC(gPad->GetLeftMargin(),
-                         1 - gPad->GetTopMargin() + 0.01,
-                         unpacked.first == 0
-                             ? ("IOV:" + std::to_string(unpacked.second)).c_str()
-                             : (std::to_string(unpacked.first) + "," + std::to_string(unpacked.second)).c_str());
+      const auto headerText = fmt::sprintf("#color[4]{%s},  IOV: #color[4]{%s}", tagname, IOVstring);
+
+      switch (myType) {
+        case SiPixelPI::t_barrel:
+          theROCMap.drawBarrelMaps(canvas, headerText);
+          break;
+        case SiPixelPI::t_forward:
+          theROCMap.drawForwardMaps(canvas, headerText);
+          break;
+        case SiPixelPI::t_all:
+          theROCMap.drawMaps(canvas, headerText);
+          break;
+        default:
+          throw cms::Exception("SiPixelQualityMap") << "\nERROR: unrecognized Pixel Detector part " << std::endl;
       }
 
       std::string fileName(m_imageFileName);
@@ -370,12 +279,19 @@ namespace {
     static constexpr int n_rings = 2;
     static constexpr int n_layers = 4;
 
+    // graphics
+    static constexpr std::array<int, 3> k_height = {{1200, 600, 1600}};
+
     TrackerTopology m_trackerTopo;
     edm::ParameterSet m_connectionPset;
     cond::persistency::ConnectionPool m_connectionPool;
     std::string m_CablingTagName;
     std::string m_condDbCabling;
   };
+
+  using SiPixelBPixFEDChannelContainerMap = SiPixelFEDChannelContainerMap<SiPixelPI::t_barrel>;
+  using SiPixelFPixFEDChannelContainerMap = SiPixelFEDChannelContainerMap<SiPixelPI::t_forward>;
+  using SiPixelFullFEDChannelContainerMap = SiPixelFEDChannelContainerMap<SiPixelPI::t_all>;
 
   /************************************************
   1d histogram of SiPixelFEDChannelContainer of 1 IOV
@@ -472,6 +388,8 @@ namespace {
 
 // Register the classes as boost python plugin
 PAYLOAD_INSPECTOR_MODULE(SiPixelFEDChannelContainer) {
-  PAYLOAD_INSPECTOR_CLASS(SiPixelFEDChannelContainerTest);
+  PAYLOAD_INSPECTOR_CLASS(SiPixelBPixFEDChannelContainerMap);
+  PAYLOAD_INSPECTOR_CLASS(SiPixelFPixFEDChannelContainerMap);
+  PAYLOAD_INSPECTOR_CLASS(SiPixelFullFEDChannelContainerMap);
   PAYLOAD_INSPECTOR_CLASS(SiPixelFEDChannelContainerScenarios);
 }

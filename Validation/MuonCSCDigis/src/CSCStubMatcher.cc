@@ -1,5 +1,5 @@
 #include "Validation/MuonCSCDigis/interface/CSCStubMatcher.h"
-#include "DataFormats/L1TMuon/interface/CSCConstants.h"
+#include "DataFormats/CSCDigi/interface/CSCConstants.h"
 #include <algorithm>
 
 using namespace std;
@@ -36,10 +36,15 @@ CSCStubMatcher::CSCStubMatcher(const edm::ParameterSet& pSet, edm::ConsumesColle
     gemDigiMatcher_.reset(new GEMDigiMatcher(pSet, std::move(iC)));
   cscDigiMatcher_.reset(new CSCDigiMatcher(pSet, std::move(iC)));
 
-  clctToken_ = iC.consumes<CSCCLCTDigiCollection>(cscCLCT.getParameter<edm::InputTag>("inputTag"));
-  alctToken_ = iC.consumes<CSCALCTDigiCollection>(cscALCT.getParameter<edm::InputTag>("inputTag"));
-  lctToken_ = iC.consumes<CSCCorrelatedLCTDigiCollection>(cscLCT.getParameter<edm::InputTag>("inputTag"));
-  mplctToken_ = iC.consumes<CSCCorrelatedLCTDigiCollection>(cscMPLCT.getParameter<edm::InputTag>("inputTag"));
+  clctInputTag_ = cscCLCT.getParameter<edm::InputTag>("inputTag");
+  alctInputTag_ = cscALCT.getParameter<edm::InputTag>("inputTag");
+  lctInputTag_ = cscLCT.getParameter<edm::InputTag>("inputTag");
+  mplctInputTag_ = cscMPLCT.getParameter<edm::InputTag>("inputTag");
+
+  clctToken_ = iC.consumes<CSCCLCTDigiCollection>(clctInputTag_);
+  alctToken_ = iC.consumes<CSCALCTDigiCollection>(alctInputTag_);
+  lctToken_ = iC.consumes<CSCCorrelatedLCTDigiCollection>(lctInputTag_);
+  mplctToken_ = iC.consumes<CSCCorrelatedLCTDigiCollection>(mplctInputTag_);
 
   geomToken_ = iC.esConsumes<CSCGeometry, MuonGeometryRecord>();
 }
@@ -72,10 +77,29 @@ void CSCStubMatcher::match(const SimTrack& t, const SimVertex& v) {
   // clear collections
   clear();
 
-  matchCLCTsToSimTrack(clcts);
-  matchALCTsToSimTrack(alcts);
-  matchLCTsToSimTrack(lcts);
-  matchMPLCTsToSimTrack(mplcts);
+  if (!alctsH_.isValid()) {
+    edm::LogError("CSCStubMatcher") << "Cannot get ALCTs with label " << alctInputTag_.encode();
+  } else {
+    matchALCTsToSimTrack(alcts);
+  }
+
+  if (!clctsH_.isValid()) {
+    edm::LogError("CSCStubMatcher") << "Cannot get CLCTs with label " << clctInputTag_.encode();
+  } else {
+    matchCLCTsToSimTrack(clcts);
+  }
+
+  if (!lctsH_.isValid()) {
+    edm::LogError("CSCStubMatcher") << "Cannot get LCTs with label " << lctInputTag_.encode();
+  } else {
+    matchLCTsToSimTrack(lcts);
+  }
+
+  if (!mplctsH_.isValid()) {
+    edm::LogError("CSCStubMatcher") << "Cannot get MPLCTs with label " << mplctInputTag_.encode();
+  } else {
+    matchMPLCTsToSimTrack(mplcts);
+  }
 }
 
 void CSCStubMatcher::matchCLCTsToSimTrack(const CSCCLCTDigiCollection& clcts) {
@@ -95,7 +119,7 @@ void CSCStubMatcher::matchCLCTsToSimTrack(const CSCCLCTDigiCollection& clcts) {
 
     // get the comparator digis in this chamber
     std::vector<CSCComparatorDigiContainer> comps;
-    for (int ilayer = 1; ilayer <= 6; ilayer++) {
+    for (int ilayer = CSCDetId::minLayerId(); ilayer <= CSCDetId::maxLayerId(); ilayer++) {
       CSCDetId layerid(ch_id.endcap(), ch_id.station(), ring, ch_id.chamber(), ilayer);
       comps.push_back(cscDigiMatcher_->comparatorDigisInDetId(layerid));
     }
@@ -275,28 +299,9 @@ void CSCStubMatcher::matchLCTsToSimTrack(const CSCCorrelatedLCTDigiCollection& l
       // Add ghost LCTs when there are two in bx
       // and the two don't share half-strip or wiregroup
       if (bx_to_lcts[bx].size() == 2 and addGhostLCTs_) {
-        // don't do this in station ME1/1 or ME2/1
-        if (!(ch_id.ring() == 1 and (ch_id.station() == 1 or ch_id.station() == 2))) {
-          auto lct11 = bx_to_lcts[bx][0];
-          auto lct22 = bx_to_lcts[bx][1];
-          int wg1 = lct11.getKeyWG();
-          int wg2 = lct22.getKeyWG();
-          int hs1 = lct11.getStrip();
-          int hs2 = lct22.getStrip();
-
-          if (!(wg1 == wg2 || hs1 == hs2) and lct11.getType() == CSCCorrelatedLCTDigi::ALCTCLCT and
-              lct22.getType() == CSCCorrelatedLCTDigi::ALCTCLCT) {
-            CSCCorrelatedLCTDigi lct12 = lct11;
-            lct12.setWireGroup(wg2);
-            lct12.setALCT(lct22.getALCT());
-            lcts_tmp.push_back(lct12);
-
-            CSCCorrelatedLCTDigi lct21 = lct22;
-            lct21.setWireGroup(wg1);
-            lct21.setALCT(lct11.getALCT());
-            lcts_tmp.push_back(lct21);
-          }
-        }
+        auto lct11 = bx_to_lcts[bx][0];
+        auto lct22 = bx_to_lcts[bx][1];
+        addGhostLCTs(lct11, lct22, lcts_tmp);
       }
     }
 
@@ -640,7 +645,7 @@ GlobalPoint CSCStubMatcher::getGlobalPosition(unsigned int rawId, const CSCCorre
   float fractional_strip = lct.getFractionalStrip();
   // case ME1/a
   if (cscId.station() == 1 and cscId.ring() == 4 and lct.getStrip() > CSCConstants::MAX_HALF_STRIP_ME1B) {
-    fractional_strip -= CSCConstants::MAX_NUM_STRIPS_ME1B;
+    fractional_strip -= CSCConstants::NUM_STRIPS_ME1B;
   }
   // regular cases
   const auto& chamber = cscGeometry_->chamber(cscId);
@@ -662,4 +667,28 @@ void CSCStubMatcher::clear() {
   chamber_to_alcts_.clear();
   chamber_to_lcts_.clear();
   chamber_to_mplcts_.clear();
+}
+
+void CSCStubMatcher::addGhostLCTs(const CSCCorrelatedLCTDigi& lct11,
+                                  const CSCCorrelatedLCTDigi& lct22,
+                                  CSCCorrelatedLCTDigiContainer& lcts_tmp) const {
+  int wg1 = lct11.getKeyWG();
+  int wg2 = lct22.getKeyWG();
+  int hs1 = lct11.getStrip();
+  int hs2 = lct22.getStrip();
+
+  if (!(wg1 == wg2 || hs1 == hs2)) {
+    // flip the ALCTs
+    CSCCorrelatedLCTDigi lct12 = lct11;
+    lct12.setWireGroup(wg2);
+    lct12.setALCT(lct22.getALCT());
+    lct12.setCLCT(lct11.getCLCT());
+    lcts_tmp.push_back(lct12);
+
+    CSCCorrelatedLCTDigi lct21 = lct22;
+    lct21.setWireGroup(wg1);
+    lct21.setALCT(lct11.getALCT());
+    lct21.setCLCT(lct22.getCLCT());
+    lcts_tmp.push_back(lct21);
+  }
 }

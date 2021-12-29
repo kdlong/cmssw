@@ -24,29 +24,30 @@ called by the dynamic loading code.
 //         Created:  Tue Nov 22 15:35:11 EST 2005
 //
 
-// system include files
-
-// user include files
-
-// forward declarations
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 class SimWatcher {
 public:
   SimWatcher() {}
   virtual ~SimWatcher() {}
 
-  // ---------- const member functions ---------------------
+  // Two methods are needed to be implemented in the thread
+  // safe watchers and producers
+  virtual void registerConsumes(edm::ConsumesCollector){};
+  virtual void beginRun(edm::EventSetup const &){};
 
-  // ---------- static member functions --------------------
+  bool isMT() const { return applicableForMT; }
 
-  // ---------- member functions ---------------------------
+  SimWatcher(const SimWatcher &) = delete;
+  const SimWatcher &operator=(const SimWatcher &) = delete;
+
+protected:
+  // Set "true" for thread safe watchers/producers
+  void setMT(bool val) { applicableForMT = val; }
 
 private:
-  SimWatcher(const SimWatcher &) = delete;  // stop default
-
-  const SimWatcher &operator=(const SimWatcher &) = delete;  // stop default
-
-  // ---------- member data --------------------------------
+  bool applicableForMT{false};
 };
 
 #endif
