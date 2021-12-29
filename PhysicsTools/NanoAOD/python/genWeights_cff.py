@@ -23,11 +23,13 @@ genWeightsTable = cms.EDProducer(
     weightgroups = cms.vstring(['scale', 'PDF', 'matrix element', 'unknown', 'parton shower']),
     # Max number of groups to store for each type above, -1 ==> store all found                                           
     maxGroupsPerType = cms.vint32([-1, -1, -1, -1, 1]),
-    # If empty or not specified, no critieria is applied to filter on LHAPDF IDs                                          
+    # If empty or not specified, no criteria are applied to filter on LHAPDF IDs                                          
     #pdfIds = cms.untracked.vint32([91400, 306000, 260000]),                                                              
     #unknownOnlyIfEmpty = cms.untracked.vstring(['scale', 'PDF']),                                                        
     #unknownOnlyIfAllEmpty = cms.untracked.bool(False),
-    keepAllPSWeights = cms.bool(False)
+    keepAllPSWeights = cms.bool(False),
+    #ignoreGroups = cms.bool(True),
+    #storeUngrouped = cms.int32(100),
 )
 
 genWeightsTableTask = cms.Task(lheWeights, genWeights, genWeightsTable)
