@@ -30,6 +30,11 @@ class LHEWeightProductProducer : public edm::one::EDProducer<edm::BeginLuminosit
 public:
   explicit LHEWeightProductProducer(const edm::ParameterSet& iConfig);
   ~LHEWeightProductProducer() override;
+  void produce(edm::Event&, const edm::EventSetup&) override;
+  void beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) override;
+  void beginRun(edm::Run const& run, edm::EventSetup const& es) override;
+  void endRun(edm::Run const& run, edm::EventSetup const& es) override;
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
   gen::LHEWeightHelper weightHelper_;
@@ -39,11 +44,6 @@ private:
   std::vector<edm::EDGetTokenT<GenWeightInfoProduct>> weightInfoTokens_;
   bool foundWeightProduct_ = false;
   bool hasLhe_ = false;
-
-  void produce(edm::Event&, const edm::EventSetup&) override;
-  void beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) override;
-  void beginRun(edm::Run const& run, edm::EventSetup const& es) override;
-  void endRun(edm::Run const& run, edm::EventSetup const& es) override;
 };
 
 // TODO: Accept a vector of strings (source, externalLHEProducer) exit if neither are found
@@ -53,8 +53,8 @@ LHEWeightProductProducer::LHEWeightProductProducer(const edm::ParameterSet& iCon
           lheLabels_, [this](const std::string& tag) { return mayConsume<LHEEventProduct>(tag); })),
       lheRunInfoTokens_(edm::vector_transform(
           lheLabels_, [this](const std::string& tag) { return mayConsume<LHERunInfoProduct, edm::InRun>(tag); })),
-      weightInfoTokens_(edm::vector_transform(iConfig.getParameter<std::vector<std::string>>("weightProductLabels"), 
-          [this](const std::string& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })) {
+      weightInfoTokens_(edm::vector_transform(iConfig.getParameter<std::vector<edm::InputTag>>("weightProductLabels"), 
+          [this](const edm::InputTag& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })) {
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
   weightHelper_.setFailIfInvalidXML(iConfig.getUntrackedParameter<bool>("failIfInvalidXML", false));
@@ -142,5 +142,20 @@ void LHEWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock&
   }
   lumi.put(std::move(weightInfoProduct));
 }
+
+void LHEWeightProductProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  edm::ParameterSetDescription desc;
+  desc.add<std::vector<std::string>>("lheSourceLabels", std::vector<std::string>{{"externalLHEProducer"}, {"source"}})
+      ->setComment("tag(s) to look for LHERunInfoProduct/LHEEventProduct"
+        "If they are found, a new one won't be created. Leave this argument empty if you want to recreate new products regardless.");
+  desc.add<std::vector<edm::InputTag>>("weightProductLabels", std::vector<edm::InputTag>{{""}})
+      ->setComment("tag(s) to look for existing GenWeightProduct/GenWeightInfoProducts. "
+        "If they are found, a new one won't be created. Leave this argument empty if you want to recreate new products regardless.");
+  desc.addUntracked<bool>("debug", false)->setComment("Output debug info");
+  desc.addUntracked<bool>("failIfInvalidXML", true)->setComment("Throw exception if XML header is invalid (rather than trying to recover and parse anyway)");
+  desc.addUntracked<bool>("fillEmptyIfWeightFails", false)->setComment("Produce an empty product if parsing of header fails");
+  descriptions.add("lheWeights", desc);
+}
+
 
 DEFINE_FWK_MODULE(LHEWeightProductProducer);

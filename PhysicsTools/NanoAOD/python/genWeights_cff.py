@@ -1,21 +1,18 @@
 import FWCore.ParameterSet.Config as cms
 from GeneratorInterface.Core.genWeights_cfi import genWeights
+from GeneratorInterface.Core.lheWeights_cfi import lheWeights
 
 genWeightsNano = genWeights.clone()
 genWeightsNano.weightProductLabels = ["genWeights"]
+genWeightsNano.debug = True
 
-lheWeights = cms.EDProducer("LHEWeightProductProducer",
-    lheSourceLabels = cms.vstring(["externalLHEProducer", "source"]),
-    # Places to look for an existing weight product. IF found, don't create a new one
-    weightProductLabels = cms.vstring(["externalLHEProducer", "source"]),
-    failIfInvalidXML = cms.untracked.bool(False),
-    debug = cms.untracked.bool(True),
-    fillEmptyIfWeightFails = cms.untracked.bool(False),
-)
+lheWeightsNano = lheWeights.clone()
+lheWeightsNano.weightProductLabels = ["lheWeights"]
+lheWeightsNano.debug = True
 
 genWeightsTable = cms.EDProducer("GenWeightsTableProducer",
-    lheWeights = cms.VInputTag(["externalLHEProducer", "source", "lheWeights"]),
     lheWeightPrecision = cms.int32(14),
+    lheWeights = cms.VInputTag(["lheWeights", "lheWeightsNano"]),
     genWeights = cms.VInputTag(["genWeights", "genWeightsNano"]),
     genLumiInfoHeader = cms.InputTag("generator"),
     # Warning: you can use a full string, but only the first character is read.                                           
