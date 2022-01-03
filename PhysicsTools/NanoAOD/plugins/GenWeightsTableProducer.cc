@@ -20,6 +20,7 @@
 #include "FWCore/Utilities/interface/transform.h"
 #include "PhysicsTools/NanoAOD/interface/GenWeightCounters.h"
 #include <iostream>
+#include <algorithm>
 
 namespace {
   typedef std::vector<gen::SharedWeightGroupData> WeightGroupDataContainer;
@@ -36,14 +37,19 @@ public:
   GenWeightsTableProducer(edm::ParameterSet const& params);
 
   void produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
+  void fillTableIgnoringGroups(std::vector<nanoaod::FlatTable>& weightTablevec,
+                                                    const WeightGroupDataContainer& weightInfos,
+                                                    WeightsContainer& allWeights,
+                                                    size_t maxStore,
+                                                    std::string tablename) const;
   void addWeightGroupToTable(
-			     std::unique_ptr<std::vector<nanoaod::FlatTable>>& weightTablevec,
+			     std::vector<nanoaod::FlatTable>& weightTablevec,
                              const WeightGroupDataContainer& weightInfos,
                              WeightsContainer& allWeights) const;
   // Need to either pass the handle or a pointer to avoid a copy and conversion to the base class
   WeightGroupDataContainer weightDataPerType(edm::Handle<GenWeightInfoProduct>& weightsInfoHandle,
                                              gen::WeightType weightType,
-                                             int& maxStore) const;
+                                             int maxStore) const;
 
   WeightGroupsToStore groupsToStore(bool foundLheWeights, 
                                     edm::Handle<GenWeightInfoProduct>& genWeightInfoHandle,
@@ -137,10 +143,12 @@ protected:
       {gen::WeightType::kUnknownWeights, "UnknownWeight"},
   };
   int lheWeightPrecision_;
+  std::vector<gen::WeightType> unknownOnlyIfEmpty_;
   bool keepAllPSWeights_;
-  bool ignoreLheGroups_ = true;
-  bool ignoreGenGroups_ = false;
-  int nStoreUngroupedLhe_ = 105;
+  bool ignoreLheGroups_;
+  bool ignoreGenGroups_;
+  int nStoreUngroupedLhe_;
+  int nStoreUngroupedGen_;
 
   enum { inLHE, inGen };
 };
@@ -166,7 +174,13 @@ GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params
       maxGroupsPerType_(params.getParameter<std::vector<int>>("maxGroupsPerType")),
       pdfIds_(params.getUntrackedParameter<std::vector<int>>("pdfIds", {})),
       lheWeightPrecision_(params.getParameter<int32_t>("lheWeightPrecision")),
-      keepAllPSWeights_(params.getParameter<bool>("keepAllPSWeights")) {
+      unknownOnlyIfEmpty_(edm::vector_transform(params.getParameter<std::vector<std::string>>("unknownOnlyIfEmpty"),
+                                          [](auto& c) { return gen::WeightType(c.at(0)); })),
+      keepAllPSWeights_(params.getParameter<bool>("keepAllPSWeights")),
+      ignoreLheGroups_(params.getUntrackedParameter<bool>("ignoreLheGroups", false)),
+      ignoreGenGroups_(params.getUntrackedParameter<bool>("ignoreGenGroups", false)),
+      nStoreUngroupedLhe_(params.getUntrackedParameter<int>("nStoreUngroupedLhe", 10)),
+      nStoreUngroupedGen_(params.getUntrackedParameter<int>("nStoreUngroupedGen", 10)) {
   if (weightgroups_.size() != maxGroupsPerType_.size())
     throw std::invalid_argument("Inputs 'weightgroups' and 'maxGroupsPerType' must have equal size");
   produces<nanoaod::FlatTable>("GENWeight");
@@ -223,48 +237,131 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
   //create a container with dummy weight vector
   auto weightTablevec = std::make_unique<std::vector<nanoaod::FlatTable>>();
   if (foundLheWeights) {
-    addWeightGroupToTable(weightTablevec, weightInfos.at(inLHE), lheWeights);
+    if (ignoreLheGroups_) {
+        fillTableIgnoringGroups(*weightTablevec, weightInfos.at(inLHE), lheWeights, nStoreUngroupedLhe_, "LHEWeight");
+    }
+    else
+        addWeightGroupToTable(*weightTablevec, weightInfos.at(inLHE), lheWeights);
   }
 
-  addWeightGroupToTable(weightTablevec, weightInfos.at(inGen), genWeights);
+  if (ignoreGenGroups_)
+    fillTableIgnoringGroups(*weightTablevec, weightInfos.at(inGen), genWeights, nStoreUngroupedGen_, "GenWeight");
+  else
+    addWeightGroupToTable(*weightTablevec, weightInfos.at(inGen), genWeights);
 
   iEvent.put(std::move(weightTablevec),"LHEWeightTableVec");
 }
 
+// Sequentially add the weights, up to maxStore
+// Note that the order of the weights in the WeightsVector matches the order of weightgroups.
+// In very rare cases, this could be modified from the order in the LHE file. If this happens,
+// write a warning message in the table info
+void GenWeightsTableProducer::fillTableIgnoringGroups(
+						    std::vector<nanoaod::FlatTable>& weightTablevec,
+                                                    const WeightGroupDataContainer& weightInfos,
+                                                    WeightsContainer& allWeights,
+                                                    size_t maxStore,
+                                                    std::string tablename) const {
+
+    std::vector<double> weights(maxStore);
+    size_t groupIdx = 0;
+    size_t offset = 0;
+    std::string tableInfo = "First ";
+    tableInfo.append(std::to_string(maxStore));
+    tableInfo.append(" weights; ");
+    std::string warnings = "";
+    bool foundUnassociated = false;
+    for (size_t i = 0; i < maxStore; i++) {
+        if (groupIdx >= allWeights.size())
+            throw cms::Exception("GenWeightsTableProducer") 
+                << "Requested " + std::to_string(maxStore) + " weights, which is more than there are in the file";
+        size_t entry = i - offset;
+        auto& weightsForGroup = allWeights.at(groupIdx);
+        weights.at(i) = weightsForGroup.at(entry);
+
+        if (weightInfos.size() <= groupIdx)
+            throw cms::Exception("GenWeightsTableProducer") << "Unable to match weight to one of " << weightInfos.size() << " WeightGroups";
+        auto matchingGroup = weightInfos.at(groupIdx).group;
+        if (entry == 0) {
+            size_t maxRange = std::min(offset+weightsForGroup.size()-1, maxStore);
+            tableInfo.append("[");
+            tableInfo.append(std::to_string(offset));
+            tableInfo.append("]-[");
+            tableInfo.append(std::to_string(maxRange));
+            tableInfo.append("] ");
+            tableInfo.append(matchingGroup->name());
+            tableInfo.append("; ");
+        }
+
+        // Check if the order corresponds to the LHE file order
+        try {
+            auto matchingInfo = matchingGroup->weightMetaInfo(entry);
+
+            if (matchingInfo.globalIndex != i) {
+                warnings.append("Index ");
+                warnings.append(std::to_string(i));
+                warnings.append(" does not match order in the LHE file or gen product (where it is entry ");
+                warnings.append(std::to_string(matchingInfo.globalIndex));
+                warnings.append(")");
+            }
+        } catch (cms::Exception& e) {
+            if (!foundUnassociated)
+                warnings.append("Could not associate some weights to a group. Cannot verify"
+                    " that the order is maintained wrt the LHE file or gen product");
+            foundUnassociated = true;
+        }
+        if (entry == weightsForGroup.size()-1) {
+            groupIdx += 1;
+            offset += weightsForGroup.size();
+        }
+    }
+    if (!warnings.empty()) 
+        tableInfo.append("WARNING: " + warnings);
+
+    weightTablevec.emplace_back(weights.size(), tablename, false);
+    weightTablevec.back().addColumn<float>("", weights, tableInfo, lheWeightPrecision_);
+}
+
 void GenWeightsTableProducer::addWeightGroupToTable(
-						    std::unique_ptr<std::vector<nanoaod::FlatTable>>& weightTablevec,
+						    std::vector<nanoaod::FlatTable>& weightTablevec,
                                                     const WeightGroupDataContainer& weightInfos,
                                                     WeightsContainer& allWeights) const {
   std::unordered_map<gen::WeightType, int> typeCount = {};
   for (auto& type : gen::allWeightTypes)
     typeCount[type] = 0;
 
-  // TODO: Handle keepAllWeights 
   for (const auto& groupInfo : weightInfos) {
     gen::WeightType weightType = groupInfo.group->weightType();
     std::string entryName = weightTypeNames_.at(weightType);
     std::string label = groupInfo.group->description();
-    auto& weights = allWeights.at(groupInfo.index);
+    auto weights = allWeights.at(groupInfo.index);
     if (weightType == gen::WeightType::kScaleWeights) {
         const auto& scaleGroup = *std::static_pointer_cast<const gen::ScaleWeightGroupInfo>(groupInfo.group);
         auto weightsAndLabel = orderedScaleWeights(weights, scaleGroup);
         label.append(weightsAndLabel.first);
         weights = weightsAndLabel.second;
     } else if (weightType == gen::WeightType::kPartonShowerWeights) {
-      const auto& psGroup = *std::static_pointer_cast<const gen::PartonShowerWeightGroupInfo>(groupInfo.group);
-      auto weightsAndLabel = preferredPSweights(weights, psGroup);
-      label.append(weightsAndLabel.first);
-      weights = weightsAndLabel.second;
-    }
-    else
-      label.append(groupInfo.group->description());
+      const auto psGroup = std::static_pointer_cast<const gen::PartonShowerWeightGroupInfo>(groupInfo.group);
+      if(!keepAllPSWeights_) {
+        auto weightsAndLabel = preferredPSweights(weights, *psGroup);
+        label.append(weightsAndLabel.first);
+        weights = weightsAndLabel.second;
+      } else if (psGroup->isWellFormed()) {
+        double baseline = weights[psGroup->weightIndexFromLabel("Baseline")];
+        for (size_t i = 0; i < weights.size(); i++)
+          weights[i] = weights[i]/baseline;
+        label = "PS weights (w_var / w_nominal)";
+      } else
+        label.append("WARNING: Did not properly parse weight information. Verify order manually.");
+    } else if (!groupInfo.group->isWellFormed())
+      label.append("WARNING: Did not properly parse weight information. Verify order manually.");
 
     if(typeCount[weightType] > 0) {
       entryName.append("AltSet");
       entryName.append(std::to_string(typeCount[weightType]));
     }
-    weightTablevec->emplace_back(weights.size(), entryName, false);
-    weightTablevec->back().addColumn<float>("", weights, label, lheWeightPrecision_);
+    weightTablevec.emplace_back(weights.size(), entryName, false);
+    weightTablevec.back().addColumn<float>("", weights, label, lheWeightPrecision_);
 
     typeCount[weightType]++;
   }
@@ -278,33 +375,49 @@ WeightGroupsToStore GenWeightsTableProducer::groupsToStore(bool foundLheWeights,
       storePerType[weightgroups_.at(i)] = maxGroupsPerType_.at(i);
   
   WeightGroupsToStore weightsToStore;
-  if (!(ignoreLheGroups_ && ignoreGenGroups_)) {
-      for (auto weightType : gen::allWeightTypes) {
-          if (foundLheWeights && !ignoreLheGroups_) {
-              auto lheWeights = weightDataPerType(lheWeightInfoHandle, weightType, storePerType[weightType]);
-              for (auto& w : lheWeights)
-                  weightsToStore.at(inLHE).push_back({w.index, std::move(w.group)});
-          }
-      if (!ignoreGenGroups_) {
-          auto genWeights = weightDataPerType(genWeightInfoHandle, weightType, storePerType[weightType]);
-          for (auto& w : genWeights)
-              weightsToStore.at(inGen).push_back({w.index, std::move(w.group)});
-          }
-      }
-  }
-  // For now treating 'ignoreGroups' as only relevant to LHE...
-  else if (ignoreLheGroups_) {
-      auto& allGroups = lheWeightInfoHandle->allWeightGroupsInfo();
-      for (size_t i = 0; i < allGroups.size(); i++) {
-          weightsToStore.at(inLHE).push_back({i, std::make_shared<gen::WeightGroupInfo>(allGroups[i])});
-      }
-  }
+  // The order LHE then GEN is useful for the unknownOnlyIfEmpy check
+  bool storeUnknown = unknownOnlyIfEmpty_.empty();
+  auto groupsToSearch = unknownOnlyIfEmpty_;
+  for (auto genOrLhe : {inLHE, inGen}) {
+    bool isLHE = genOrLhe == inLHE;
+    if (isLHE && !foundLheWeights)
+        continue; 
+    auto& hand = isLHE ? lheWeightInfoHandle : genWeightInfoHandle;
+    bool ignoreGroups = isLHE ? ignoreLheGroups_ : ignoreGenGroups_;
+    if (ignoreGroups) {
+       auto& groups = hand->allWeightGroupsInfo();
+       for (size_t i = 0; i < groups.size(); i++)
+           weightsToStore.at(genOrLhe).push_back({i, std::make_shared<gen::WeightGroupInfo>(groups[i])});
+    } else {
+        for (auto weightType : gen::allWeightTypes) {
+            if (weightType == gen::WeightType::kUnknownWeights && !storeUnknown)
+                continue;
+            auto allWeights = weightDataPerType(hand, weightType, storePerType[weightType]);
+            // Only store unknown if at least one specified groups is empty
+            if (!storeUnknown && !groupsToSearch.empty()) {
+                auto it = std::find(std::begin(groupsToSearch), std::end(groupsToSearch), weightType);
+                if (it != std::end(groupsToSearch)) {
+                    if (allWeights.empty())
+                        storeUnknown = true;
+                    // Remove from array to avoid repeating the check on GEN. NOTE, if parton
+                    // shower weights are included as one of the ones to consider, this can
+                    // cause unknown LHE weights to be stored, given the order of the loops
+                    else
+                        groupsToSearch.erase(it);
+
+                }
+            }
+            for (auto& w : allWeights)
+                weightsToStore.at(genOrLhe).push_back({w.index, std::move(w.group)});
+        }
+    }
+  } 
   return weightsToStore;
 }
 
 WeightGroupDataContainer GenWeightsTableProducer::weightDataPerType(edm::Handle<GenWeightInfoProduct>& weightsInfoHandle,
                                                                     gen::WeightType weightType,
-                                                                    int& maxStore) const {
+                                                                    int maxStore) const {
   std::vector<gen::WeightGroupData> allgroups;
   if (weightType == gen::WeightType::kPdfWeights && !pdfIds_.empty()) {
     allgroups = weightsInfoHandle->pdfGroupsWithIndicesByLHAIDs(pdfIds_);
@@ -367,7 +480,6 @@ std::pair<std::string, std::vector<double>> GenWeightsTableProducer::preferredPS
   std::vector<double> psTosave;
 
   std::string labels = "PS weights (w_var / w_nominal); ";
-  // TODO: Probably just drop them if they aren't well formed...
   if (pswV.isWellFormed()) {
     double baseline = psWeights.at(pswV.weightIndexFromLabel("Baseline"));
     psTosave.emplace_back(psWeights.at(pswV.variationIndex(true, false, gen::PSVarType::def)) / baseline);
@@ -431,7 +543,13 @@ void GenWeightsTableProducer::fillDescriptions(edm::ConfigurationDescriptions& d
   desc.add<std::vector<int>>("maxGroupsPerType");
   desc.addOptionalUntracked<std::vector<int>>("pdfIds");
   desc.add<int32_t>("lheWeightPrecision", -1)->setComment("Number of bits in the mantissa for LHE weights");
-  desc.add<bool>("keepAllPSWeights", false)->setComment("True:stores all 45 PS weights; False:saves preferred 4");
+  desc.add<std::vector<std::string>>("unknownOnlyIfEmpty")
+      ->setComment("Only store weights in an Unknown WeightGroup if one of the specified groups is empty");
+  desc.add<bool>("keepAllPSWeights", false)->setComment("True: stores all PS weights (usually 45); False: saves preferred 4");
+  desc.addUntracked<bool>("ignoreLheGroups", false)->setComment("Ignore LHE groups and store the first n weights, regardless of type");
+  desc.addUntracked<bool>("ignoreGenGroups", false)->setComment("Ignore Gen groups and store the first n weights, regardless of type");
+  desc.addUntracked<int>("nStoreUngroupedLhe", 10)->setComment("Store the first n LHE weights (only relevant if ignoreLheGroups is true)");
+  desc.addUntracked<int>("nStoreUngroupedGen", 10)->setComment("Store the first n Gen weights (only relevant if ignoreGenGroups is true)");
   descriptions.addDefault(desc);
 }
 
