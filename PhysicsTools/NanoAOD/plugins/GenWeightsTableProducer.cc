@@ -387,7 +387,7 @@ WeightGroupsToStore GenWeightsTableProducer::groupsToStore(bool foundLheWeights,
     if (ignoreGroups) {
        auto& groups = hand->allWeightGroupsInfo();
        for (size_t i = 0; i < groups.size(); i++)
-           weightsToStore.at(genOrLhe).push_back({i, std::make_shared<gen::WeightGroupInfo>(groups[i])});
+           weightsToStore.at(genOrLhe).push_back({i, std::shared_ptr<const gen::WeightGroupInfo>(groups[i]->clone())});
     } else {
         for (auto weightType : gen::allWeightTypes) {
             if (weightType == gen::WeightType::kUnknownWeights && !storeUnknown)
@@ -434,7 +434,7 @@ WeightGroupDataContainer GenWeightsTableProducer::weightDataPerType(edm::Handle<
   WeightGroupDataContainer out;
   for (int i = 0; i < toStore; i++) {
     auto& group = allgroups.at(i);
-    gen::SharedWeightGroupData temp = {group.index, std::move(group.group)};
+    gen::SharedWeightGroupData temp = {group.index, std::shared_ptr<const gen::WeightGroupInfo>(group.group->clone())};
     out.push_back(temp);
   }
   return out;
