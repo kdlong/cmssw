@@ -175,12 +175,12 @@ namespace gen {
       psGroup.setNameIsPythiaSyntax(true);
   }
 
-  bool WeightHelper::splitPdfWeight(ParsedWeight& weight) {
-    if (weightGroups_[weight.wgtGroup_idx]->weightType() == gen::WeightType::kPdfWeights) {
-      auto& pdfGroup = *static_cast<gen::PdfWeightGroupInfo*>(weightGroups_[weight.wgtGroup_idx].get());
+  bool WeightHelper::splitPdfWeight(ParsedWeight& weight, std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) {
+    if (weightGroups[weight.wgtGroup_idx]->weightType() == gen::WeightType::kPdfWeights) {
+      auto& pdfGroup = *static_cast<gen::PdfWeightGroupInfo*>(weightGroups[weight.wgtGroup_idx].get());
       int lhaid = lhapdfId(weight, pdfGroup);
       if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.parentLhapdfId() > 0) {
-        weightGroups_.push_back(buildGroup(weight));
+        weightGroups.push_back(buildGroup(weight));
         weight.wgtGroup_idx++;
         return true;
       }
@@ -217,64 +217,9 @@ namespace gen {
   //  }
   //}
 
-  int WeightHelper::addWeightToProduct(
-      GenWeightProduct& product, double weight, std::string name, int weightNum, int groupIndex) {
-    try {
-      groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
-    } catch (const cms::Exception& e) {
-      if (!allowUnassociatedWeights_ || unassociatedIndex_ == -1)
-          throw e;
-      if (debug_) {
-        std::cout << "WARNING: " << e.what() << std::endl;
-      }
-      groupIndex = unassociatedIndex_;
-    }
-    // This should be impossible, but in case the try/catch doesn't work, come here
-    if (groupIndex < 0 || groupIndex >= static_cast<int>(weightGroups_.size()))
-      throw cms::Exception("WeightHelper") << "Unmatched Generator weight! ID was " << name << " index was " << std::to_string(weightNum) <<
-                           "\nNot found in any of " << std::to_string(weightGroups_.size()) << " weightGroups.";
-
-    auto& group = *weightGroups_[groupIndex];
-    bool isUnassociated = groupIndex == unassociatedIndex_;
-    // NOTE: Adding the weight explicitly to the group is necessary for this code to work properly, 
-    // but it WON'T be propagated to the group info in the GenWeightInfoProduct, which is
-    // already written to the lumi before the event processing. The Unknown group there will appear empty.
-    if (isUnassociated)
-        group.addContainedId(weightNum, name, name);
-
-    int entry =  group.weightVectorEntry(name, weightNum);
-    if (debug_)
-      std::cout << "Adding weight num " << weightNum << " EntryNum " << entry << " to group " << groupIndex << std::endl;
-    product.addWeight(weight, groupIndex, entry);
-    return groupIndex;
-  }
-
-  int WeightHelper::findContainingWeightGroup(std::string wgtId, int weightIndex, int previousGroupIndex) {
-    // Start search at previous index, under expectation of ordered weights
-    previousGroupIndex = previousGroupIndex >= 0 ? previousGroupIndex : 0;
-    for (int index = previousGroupIndex; index < std::min(index + 1, static_cast<int>(weightGroups_.size())); index++) {
-      const auto& weightGroup = *weightGroups_[index];
-      if (weightGroup.indexInRange(weightIndex) && weightGroup.containsWeight(wgtId, weightIndex)) {
-        return static_cast<int>(index);
-      }
-    }
-
-    // Fall back to unordered search
-    int counter = 0;
-    for (const auto& weightGroup : weightGroups_) {
-      if (weightGroup->containsWeight(wgtId, weightIndex))
-        return counter;
-      counter++;
-    }
-    // Needs to be properly handled
-    throw cms::Exception("Unmatched Generator weight! ID was " + wgtId + " index was " + std::to_string(weightIndex) +
-                         "\nNot found in any of " + std::to_string(weightGroups_.size()) + " weightGroups.");
-    return -1;
-  }
-
-  void WeightHelper::printWeights() {
+  void WeightHelper::printWeights(const std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) {
     // checks
-    for (const auto& group : weightGroups_) {
+    for (const auto& group : weightGroups) {
       std::cout << std::boolalpha << group->name() << " (" << group->firstId() << "-" << group->lastId()
                 << "): " << group->isWellFormed() << std::endl;
       if (group->weightType() == gen::WeightType::kScaleWeights) {
@@ -345,8 +290,8 @@ namespace gen {
     return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
   }
 
-  void WeightHelper::buildGroups() {
-    weightGroups_.clear();
+  std::vector<std::unique_ptr<gen::WeightGroupInfo>> WeightHelper::buildGroups(bool addUnassociated) {
+    std::vector<std::unique_ptr<gen::WeightGroupInfo>> weightGroups;
     int groupOffset = 0;
     for (auto& weight : parsedWeights_) {
       weight.wgtGroup_idx += groupOffset;
@@ -354,17 +299,17 @@ namespace gen {
         std::cout << "Building group for weight " << weight.content << " group " << weight.groupname << " group index "
                   << weight.wgtGroup_idx << std::endl;
 
-      int numGroups = static_cast<int>(weightGroups_.size());
+      int numGroups = static_cast<int>(weightGroups.size());
       if (weight.wgtGroup_idx == numGroups) {
-        weightGroups_.push_back(buildGroup(weight));
+        weightGroups.push_back(buildGroup(weight));
       } else if (weight.wgtGroup_idx >= numGroups)
         throw cms::Exception("Invalid group index " + std::to_string(weight.wgtGroup_idx));
 
       // split PDF groups
-      if (splitPdfWeight(weight))
+      if (splitPdfWeight(weight, weightGroups))
         groupOffset++;
 
-      auto& group = weightGroups_[weight.wgtGroup_idx];
+      auto& group = weightGroups[weight.wgtGroup_idx];
       group->addContainedId(weight.index, weight.id, weight.content);
       if (group->weightType() == gen::WeightType::kScaleWeights)
         updateScaleInfo(*static_cast<gen::ScaleWeightGroupInfo*>(group.get()), weight);
@@ -374,6 +319,9 @@ namespace gen {
         updatePartonShowerInfo(*static_cast<gen::PartonShowerWeightGroupInfo*>(group.get()), weight);
     }
     //cleanupOrphanCentralWeight();
+    if (addUnassociated)
+      addUnassociatedGroup(weightGroups);
+    return weightGroups;
   }
 
 }  // namespace gen

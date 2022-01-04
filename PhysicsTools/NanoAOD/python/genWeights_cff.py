@@ -31,6 +31,4 @@ genWeightsTable = cms.EDProducer("GenWeightsTableProducer",
     # nStoreUngroupedLhe = cms.untracked.int32(100),
 )
 
-#genWeightsTableTask = cms.Task(lheWeights, genWeights, genWeightsTable)
-#genWeightsTableTask = cms.Task(lheWeightsNano, genWeightsNano, genWeightsTable)
-genWeightsTableTask = cms.Task(lheWeightsNano, genWeightsNano)
+genWeightsTableTask = cms.Task(lheWeightsNano, genWeightsNano, genWeightsTable)

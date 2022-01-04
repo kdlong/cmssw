@@ -6,7 +6,7 @@ using namespace tinyxml2;
 namespace gen {
   GenWeightHelper::GenWeightHelper() {}
 
-  void GenWeightHelper::parseWeightGroupsFromNames(std::vector<std::string> weightNames) {
+  std::vector<std::unique_ptr<gen::WeightGroupInfo>> GenWeightHelper::parseWeightGroupsFromNames(std::vector<std::string> weightNames, bool addUnassociated) {
     parsedWeights_.clear();
     int index = 0;
     int groupIndex = -1;
@@ -14,7 +14,7 @@ namespace gen {
     std::string curGroup = "";
     // If size is 1, it's just the central weight
     if (weightNames.size() <= 1)
-      return;
+      return {};
 
     for (std::string weightName : weightNames) {
       if (weightName.find("LHE") != std::string::npos) {
@@ -50,8 +50,9 @@ namespace gen {
       }
       index++;
     }
-    buildGroups();
+    auto groups = buildGroups(addUnassociated);
     if (debug_)
-      printWeights();
+      printWeights(groups);
+    return groups;
   }
 }  // namespace gen

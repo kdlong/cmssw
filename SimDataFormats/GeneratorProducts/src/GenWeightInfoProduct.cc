@@ -7,10 +7,8 @@
 
 GenWeightInfoProduct::GenWeightInfoProduct(std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) {
   weightGroupsInfo_ = std::move(weightGroups);
-}
-
-GenWeightInfoProduct::GenWeightInfoProduct(std::vector<std::unique_ptr<gen::WeightGroupInfo>> weightGroups) {
-  weightGroupsInfo_ = std::move(weightGroups);
+  auto it = std::find_if(std::begin(weightGroups), std::end(weightGroups), [](auto& entry) { return entry->name() == "unassociated"; });
+  unassociatedIdx_ = std::distance(std::begin(weightGroups), it);
 }
 
 const std::vector<std::unique_ptr<gen::WeightGroupInfo>>& GenWeightInfoProduct::allWeightGroupsInfo() const {
@@ -24,15 +22,17 @@ const std::vector<gen::WeightGroupData> GenWeightInfoProduct::allWeightGroupsInf
   return groupInfo;
 }
 
-const gen::WeightGroupInfo* GenWeightInfoProduct::containingWeightGroupInfo(int index) const {
-  // The weight values in the product are arranged to match the order of the groups in the GenWeightInfoProduct
-  int maxIdx = 0;
-  for (const auto& weightGroup : weightGroupsInfo_) {
-    int minIdx = maxIdx;
-    maxIdx = maxIdx+weightGroup->nIdsContained();
-    if (index >= minIdx && index < maxIdx)
-      return weightGroup.get();
-  }
+gen::WeightGroupData GenWeightInfoProduct::containingWeightGroupInfo(int index, size_t startSearch) const {
+  // When filling the weights, most likely to find the weight matches the previous group or the one after
+  if (startSearch < weightGroupsInfo_.size() && weightGroupsInfo_[startSearch]->containsWeight(index))
+    return {startSearch, weightGroupsInfo_[startSearch].get()};
+  else if (startSearch+1 < weightGroupsInfo_.size() && weightGroupsInfo_[startSearch+1]->containsWeight(index))
+    return {startSearch+1, weightGroupsInfo_[startSearch+1].get()};
+
+  auto it = std::find_if(std::begin(weightGroupsInfo_), std::end(weightGroupsInfo_), [index](auto& entry) { return entry->containsWeight(index); });
+  if (it != std::end(weightGroupsInfo_))
+      return {static_cast<size_t>(std::distance(std::begin(weightGroupsInfo_), it)), it->get()};
+
   throw cms::Exception("GenWeightInfoProduct") << "No weight group found containing the weight index requested";
 }
 

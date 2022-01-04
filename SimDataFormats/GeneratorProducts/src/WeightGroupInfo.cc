@@ -19,7 +19,7 @@ namespace gen {
 
   WeightGroupInfo* WeightGroupInfo::clone() const {
     throw cms::Exception("WeightGroupInfo")
-        << "WeightGroupInfo is abstract, so it's clone() method can't be implemented.";
+        << "In group " << name_ << ": WeightGroupInfo is abstract, so it's clone() method can't be implemented.";
   }
 
   WeightMetaInfo WeightGroupInfo::weightMetaInfo(int weightEntry) const { 

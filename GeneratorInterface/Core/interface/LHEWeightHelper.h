@@ -24,7 +24,7 @@ namespace gen {
     enum class ErrorType { Empty, SwapHeader, HTMLStyle, NoWeightGroup, TrailingStr, Unknown, NoError };
 
     void setHeaderLines(std::vector<std::string> headerLines);
-    void parseWeights();
+    std::vector<std::unique_ptr<gen::WeightGroupInfo>> parseWeights(bool addUnassociated);
     bool isConsistent();
     void swapHeaders();
     void setFailIfInvalidXML(bool value) { failIfInvalidXML_ = value; }

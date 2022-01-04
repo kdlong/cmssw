@@ -387,6 +387,7 @@ WeightGroupsToStore GenWeightsTableProducer::groupsToStore(bool foundLheWeights,
     if (ignoreGroups) {
        auto& groups = hand->allWeightGroupsInfo();
        for (size_t i = 0; i < groups.size(); i++)
+           // TODO: 
            weightsToStore.at(genOrLhe).push_back({i, std::shared_ptr<const gen::WeightGroupInfo>(groups[i]->clone())});
     } else {
         for (auto weightType : gen::allWeightTypes) {

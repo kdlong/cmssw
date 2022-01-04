@@ -70,10 +70,10 @@ namespace gen {
     parsedWeights_.push_back({inner->Attribute("id"), weightIndex++, groupName, text, attributes, groupIndex});
   }
 
-  void LHEWeightHelper::parseWeights() {
+  std::vector<std::unique_ptr<gen::WeightGroupInfo>> LHEWeightHelper::parseWeights(bool addUnassociatedGroup) {
     tinyxml2::XMLDocument xmlDoc;
     if (!parseLHE(xmlDoc)) {
-      return;
+      return {};
     }
 
     int weightIndex = 0;
@@ -95,9 +95,10 @@ namespace gen {
       }
       groupIndex++;
     }
-    buildGroups();
+    auto groups = buildGroups(addUnassociatedGroup);
     if (debug_)
-      printWeights();
+      printWeights(groups);
+    return groups;
   }
 
   std::string LHEWeightHelper::parseGroupName(tinyxml2::XMLElement* el) {
