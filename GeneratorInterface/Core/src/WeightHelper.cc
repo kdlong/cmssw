@@ -4,21 +4,27 @@
 #include <regex>
 
 namespace gen {
-  WeightHelper::WeightHelper() { model_ = ""; }
+  WeightHelper::WeightHelper() { 
+      model_ = ""; 
+      gen::UnknownWeightGroupInfo unassoc("unassociated");
+      unassoc.setDescription("Weights with missing or invalid header meta data");
+      // Keep track separately so it can be modified within the event
+      unassociatedGroup_ = std::make_unique<gen::UnknownWeightGroupInfo>(unassoc);
+  }
 
-  bool WeightHelper::isScaleWeightGroup(const ParsedWeight& weight) {
+  bool WeightHelper::isScaleWeightGroup(const ParsedWeight& weight) const {
     return (weight.groupname.find("scale_variation") != std::string::npos ||
             weight.groupname.find("Central scale variation") != std::string::npos);
   }
 
-  bool WeightHelper::isPdfWeightGroup(const ParsedWeight& weight) {
+  bool WeightHelper::isPdfWeightGroup(const ParsedWeight& weight) const {
     const std::string& name = weight.groupname;
     if (name.find("PDF_variation") != std::string::npos)
       return true;
     return LHAPDF::lookupLHAPDFID(name) != -1;
   }
 
-  bool WeightHelper::isPartonShowerWeightGroup(const ParsedWeight& weight) {
+  bool WeightHelper::isPartonShowerWeightGroup(const ParsedWeight& weight) const {
     const std::string& groupname = boost::to_lower_copy(weight.groupname);
     std::vector<std::string> psNames = {"isr", "fsr", "nominal", "baseline", "emission"};
     for (const auto& name : psNames) {
@@ -28,7 +34,7 @@ namespace gen {
     return false;
   }
 
-  bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) {
+  bool WeightHelper::isOrphanPdfWeightGroup(ParsedWeight& weight) const {
     std::pair<std::string, int> pairLHA;
     try {
       pairLHA = LHAPDF::lookupPDF(stoi(searchAttributes("pdf", weight)));
@@ -44,7 +50,7 @@ namespace gen {
     }
   }
 
-  bool WeightHelper::isMEParamWeightGroup(const ParsedWeight& weight) {
+  bool WeightHelper::isMEParamWeightGroup(const ParsedWeight& weight) const {
     return (weight.groupname.find("mg_reweighting") != std::string::npos ||
             weight.groupname.find("variation") != std::string::npos);
     // variation used for blanket of all variations, might need to change
@@ -80,7 +86,7 @@ namespace gen {
     return "";
   }
 
-  void WeightHelper::updateScaleInfo(gen::ScaleWeightGroupInfo& scaleGroup, const ParsedWeight& weight) {
+  void WeightHelper::updateScaleInfo(gen::ScaleWeightGroupInfo& scaleGroup, const ParsedWeight& weight) const {
     std::string muRText = searchAttributes("mur", weight);
     std::string muFText = searchAttributes("muf", weight);
     std::string dynNumText = searchAttributes("dyn", weight);
@@ -120,7 +126,7 @@ namespace gen {
     }
   }
 
-  int WeightHelper::lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) {
+  int WeightHelper::lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) const {
     std::string lhaidText = searchAttributes("pdf", weight);
 
     if (debug_)
@@ -142,7 +148,7 @@ namespace gen {
     return -1;
   }
 
-  void WeightHelper::updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight) {
+  void WeightHelper::updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight) const {
     int lhaid = lhapdfId(weight, pdfGroup);
     if (debug_)
       std::cout << "LHAID identified as " << lhaid << std::endl;
@@ -166,7 +172,7 @@ namespace gen {
     pdfGroup.addLhaid(lhaid);
   }
 
-  void WeightHelper::updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight) {
+  void WeightHelper::updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight) const {
     if (psGroup.nIdsContained() == DEFAULT_PSWEIGHT_LENGTH) {
       psGroup.setIsWellFormed(true);
       psGroup.cacheWeightIndicesByLabel();
@@ -175,7 +181,7 @@ namespace gen {
       psGroup.setNameIsPythiaSyntax(true);
   }
 
-  bool WeightHelper::splitPdfWeight(ParsedWeight& weight, std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) {
+  bool WeightHelper::splitPdfWeight(ParsedWeight& weight, std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const {
     if (weightGroups[weight.wgtGroup_idx]->weightType() == gen::WeightType::kPdfWeights) {
       auto& pdfGroup = *static_cast<gen::PdfWeightGroupInfo*>(weightGroups[weight.wgtGroup_idx].get());
       int lhaid = lhapdfId(weight, pdfGroup);
@@ -217,7 +223,7 @@ namespace gen {
   //  }
   //}
 
-  void WeightHelper::printWeights(const std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) {
+  void WeightHelper::printWeights(const std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const {
     // checks
     for (const auto& group : weightGroups) {
       std::cout << std::boolalpha << group->name() << " (" << group->firstId() << "-" << group->lastId()
@@ -256,7 +262,7 @@ namespace gen {
     }
   }
 
-  std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) {
+  std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) const {
     if (debug_) {
       std::cout << "Building group for weight group " << weight.groupname << " weight content is " << weight.content
                 << std::endl;
@@ -290,10 +296,11 @@ namespace gen {
     return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
   }
 
-  std::vector<std::unique_ptr<gen::WeightGroupInfo>> WeightHelper::buildGroups(bool addUnassociated) {
+  std::vector<std::unique_ptr<gen::WeightGroupInfo>> WeightHelper::buildGroups(
+        std::vector<ParsedWeight>& parsedWeights, bool addUnassociated) const {
     std::vector<std::unique_ptr<gen::WeightGroupInfo>> weightGroups;
     int groupOffset = 0;
-    for (auto& weight : parsedWeights_) {
+    for (auto& weight : parsedWeights) {
       weight.wgtGroup_idx += groupOffset;
       if (debug_)
         std::cout << "Building group for weight " << weight.content << " group " << weight.groupname << " group index "

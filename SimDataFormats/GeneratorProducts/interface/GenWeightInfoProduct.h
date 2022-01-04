@@ -22,6 +22,7 @@ namespace gen {
     size_t index;
     std::shared_ptr<const gen::WeightGroupInfo> group;
   };
+  typedef std::vector<std::unique_ptr<gen::WeightGroupInfo>> WeightGroupInfoContainer;
 }  // namespace gen
 
 class GenWeightInfoProduct {

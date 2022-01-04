@@ -7,7 +7,7 @@ namespace gen {
   GenWeightHelper::GenWeightHelper() {}
 
   std::vector<std::unique_ptr<gen::WeightGroupInfo>> GenWeightHelper::parseWeightGroupsFromNames(std::vector<std::string> weightNames, bool addUnassociated) {
-    parsedWeights_.clear();
+    std::vector<ParsedWeight> parsedWeights;
     int index = 0;
     int groupIndex = -1;
     int showerGroupIndex = -1;
@@ -37,20 +37,20 @@ namespace gen {
         }
         // Gen Weights can't have an ID, because they are just a std::vector<float> in the event
         attributes["id"] = "";
-        parsedWeights_.push_back({attributes["id"], index, curGroup, text, attributes, groupIndex});
+        parsedWeights.push_back({attributes["id"], index, curGroup, text, attributes, groupIndex});
       } else {
-        parsedWeights_.push_back(
+        parsedWeights.push_back(
             {"", index, weightName, weightName, std::unordered_map<std::string, std::string>(), groupIndex});
-        if (isPartonShowerWeightGroup(parsedWeights_.back())) {
+        if (isPartonShowerWeightGroup(parsedWeights.back())) {
           if (showerGroupIndex < 0) {
             showerGroupIndex = ++groupIndex;
           }
-          parsedWeights_.back().wgtGroup_idx = showerGroupIndex;  // all parton showers are grouped together
+          parsedWeights.back().wgtGroup_idx = showerGroupIndex;  // all parton showers are grouped together
         }
       }
       index++;
     }
-    auto groups = buildGroups(addUnassociated);
+    auto groups = buildGroups(parsedWeights, addUnassociated);
     if (debug_)
       printWeights(groups);
     return groups;

@@ -27,14 +27,15 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/transform.h"
 
-class LHEWeightProductProducer : public edm::one::EDProducer<edm::BeginLuminosityBlockProducer, edm::one::WatchRuns> {
+class LHEWeightProductProducer : public edm::one::EDProducer<edm::BeginLuminosityBlockProducer, 
+    edm::RunCache<gen::WeightGroupInfoContainer>> {
 public:
   explicit LHEWeightProductProducer(const edm::ParameterSet& iConfig);
   ~LHEWeightProductProducer() override;
   void produce(edm::Event&, const edm::EventSetup&) override;
   void beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) override;
-  void beginRun(edm::Run const& run, edm::EventSetup const& es) override;
-  void endRun(edm::Run const& run, edm::EventSetup const& es) override;
+  std::shared_ptr<gen::WeightGroupInfoContainer> globalBeginRun(edm::Run const& run, edm::EventSetup const& es) const;
+  void globalEndRun(edm::Run const& iRun, edm::EventSetup const&) {}
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
@@ -44,7 +45,7 @@ private:
   std::vector<edm::EDGetTokenT<LHERunInfoProduct>> lheRunInfoTokens_;
   std::vector<edm::EDGetTokenT<GenWeightInfoProduct>> weightInfoTokens_;
   bool foundWeightProduct_ = false;
-  bool hasLhe_ = false;
+  bool hasLhe_ = true;
   edm::EDPutTokenT<GenWeightInfoProduct> groupPutToken_;
   edm::EDGetTokenT<GenWeightInfoProduct> groupGetToken_;
   GenWeightInfoProduct weightsInfo_;
@@ -91,17 +92,16 @@ void LHEWeightProductProducer::produce(edm::Event& iEvent, const edm::EventSetup
   iEvent.put(std::move(weightProduct));
 }
 
-void LHEWeightProductProducer::beginRun(edm::Run const& run, edm::EventSetup const& es) {
+std::shared_ptr<gen::WeightGroupInfoContainer> LHEWeightProductProducer::globalBeginRun(edm::Run const& run, edm::EventSetup const& es) const {
   edm::Handle<LHERunInfoProduct> lheRunInfoHandle;
   for (auto& label : lheLabels_) {
     run.getByLabel(label, lheRunInfoHandle);
     if (lheRunInfoHandle.isValid()) {
-      hasLhe_ = true;
       break;
     }
   }
-  if (!hasLhe_)
-    return;
+  if (!lheRunInfoHandle.isValid())
+    return {};
 
   typedef std::vector<LHERunInfoProduct::Header>::const_iterator header_cit;
   LHERunInfoProduct::Header headerWeightInfo;
@@ -112,10 +112,20 @@ void LHEWeightProductProducer::beginRun(edm::Run const& run, edm::EventSetup con
     }
   }
 
-  weightHelper_.setHeaderLines(headerWeightInfo.lines());
+  gen::WeightGroupInfoContainer groups;
+  try {
+    // TODO: Maybe make unassociated group optional
+    groups = weightHelper_.parseWeights(headerWeightInfo.lines(), true);
+  } catch (cms::Exception& e) {
+    std::string error = e.what();
+    error +=
+        "\n   NOTE: if you want to attempt to process this sample anyway, set failIfInvalidXML = False "
+        "in the configuration file\n. If you set this flag and the error persists, the issue "
+        " is fatal and must be solved at the LHE/gridpack level.";
+    throw cms::Exception("LHEWeightProductProducer") << error;
+  }
+  return std::make_shared<gen::WeightGroupInfoContainer>(std::move(groups));
 }
-
-void LHEWeightProductProducer::endRun(edm::Run const& run, edm::EventSetup const& es) {}
 
 void LHEWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) {
   edm::Handle<GenWeightInfoProduct> weightInfoHandle;
@@ -131,20 +141,8 @@ void LHEWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock&
   if (!hasLhe_)
     return;
 
-  std::unique_ptr<GenWeightInfoProduct> weightInfoProduct;
-  try {
-    // TODO: Maybe make unassociated group optional
-    auto groups = weightHelper_.parseWeights(true);
-    weightInfoProduct = std::make_unique<GenWeightInfoProduct>(groups);
-    weightsInfo_ = *weightInfoProduct;
-  } catch (cms::Exception& e) {
-    std::string error = e.what();
-    error +=
-        "\n   NOTE: if you want to attempt to process this sample anyway, set failIfInvalidXML = False "
-        "in the configuration file\n. If you set this flag and the error persists, the issue "
-        " is fatal and must be solved at the LHE/gridpack level.";
-    throw cms::Exception("LHEWeightProductProducer") << error;
-  }
+  auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>(*runCache(lumi.getRun().index()));
+  weightsInfo_ = *weightInfoProduct;
 
   lumi.emplace(groupPutToken_, std::move(weightInfoProduct));
 }

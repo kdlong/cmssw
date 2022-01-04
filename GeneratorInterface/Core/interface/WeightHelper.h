@@ -39,12 +39,10 @@ namespace gen {
     void setGuessPSWeightIdx(bool guessPSWeightIdx) {
       PartonShowerWeightGroupInfo::setGuessPSWeightIdx(guessPSWeightIdx);
     }
-    void addUnassociatedGroup(std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) {
+    void addUnassociatedGroup(std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const {
       gen::UnknownWeightGroupInfo unassoc("unassociated");
       unassoc.setDescription("Weights with missing or invalid header meta data");
       weightGroups.push_back(std::make_unique<gen::UnknownWeightGroupInfo>(unassoc));
-      // Keep track separately so it can be modified within the event
-      unassociatedGroup_ = std::make_unique<gen::UnknownWeightGroupInfo>(unassoc);
     }
     int addWeightToProduct(
         GenWeightProduct& product, double weight, std::string name, int weightNum, int groupIndex);
@@ -60,22 +58,21 @@ namespace gen {
     const unsigned int FIRST_PSWEIGHT_ENTRY = 2;
     const unsigned int DEFAULT_PSWEIGHT_LENGTH = 46;
     std::string model_;
-    std::vector<ParsedWeight> parsedWeights_;
     std::map<std::string, std::string> currWeightAttributeMap_;
     std::map<std::string, std::string> currGroupAttributeMap_;
-    bool isScaleWeightGroup(const ParsedWeight& weight);
-    bool isMEParamWeightGroup(const ParsedWeight& weight);
-    bool isPdfWeightGroup(const ParsedWeight& weight);
-    bool isPartonShowerWeightGroup(const ParsedWeight& weight);
-    bool isOrphanPdfWeightGroup(ParsedWeight& weight);
-    void updateScaleInfo(gen::ScaleWeightGroupInfo& scaleGroup, const ParsedWeight& weight);
-    void updateMEParamInfo(const ParsedWeight& weight, int index);
-    void updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight);
-    void updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight);
+    bool isScaleWeightGroup(const ParsedWeight& weight) const;
+    bool isMEParamWeightGroup(const ParsedWeight& weight) const;
+    bool isPdfWeightGroup(const ParsedWeight& weight) const;
+    bool isPartonShowerWeightGroup(const ParsedWeight& weight) const;
+    bool isOrphanPdfWeightGroup(ParsedWeight& weight) const;
+    void updateScaleInfo(gen::ScaleWeightGroupInfo& scaleGroup, const ParsedWeight& weight) const;
+    void updateMEParamInfo(const ParsedWeight& weight, int index) const;
+    void updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight) const;
+    void updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight) const;
     //void cleanupOrphanCentralWeight();
-    bool splitPdfWeight(ParsedWeight& weight, std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups);
+    bool splitPdfWeight(ParsedWeight& weight, std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const;
 
-    int lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup);
+    int lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) const;
     std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByRegex(const std::string& label, const ParsedWeight& weight) const;
@@ -91,10 +88,10 @@ namespace gen {
         {"down", {"_dn", "Lo"}},
         {"me_variation", {"mass", "sthw2", "width"}},
     };
-    void printWeights(const std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups);
-    std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight);
-    std::vector<std::unique_ptr<gen::WeightGroupInfo>> buildGroups(bool addUnassociatedGroup);
-    std::string searchString(const std::string& label, const std::string& name);
+    void printWeights(const std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const;
+    std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight) const;
+    std::vector<std::unique_ptr<gen::WeightGroupInfo>> buildGroups(std::vector<ParsedWeight>& parsedWeights, bool addUnassociatedGroup) const;
+    std::string searchString(const std::string& label, const std::string& name) const;
   };
 
   // Templated function (needed here because of plugins)

@@ -6,7 +6,11 @@
 #include "FWCore/Utilities/interface/Exception.h"
 
 GenWeightInfoProduct::GenWeightInfoProduct(std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) {
-  weightGroupsInfo_ = std::move(weightGroups);
+  // Could just do a std::move on the vector, but copying is safer if the user expects the vector to still be usable  
+  for (auto& ptr : weightGroups) {
+    std::unique_ptr<gen::WeightGroupInfo> cloneptr(ptr->clone());
+    weightGroupsInfo_.emplace_back(std::move(cloneptr));
+  }
   auto it = std::find_if(std::begin(weightGroups), std::end(weightGroups), [](auto& entry) { return entry->name() == "unassociated"; });
   unassociatedIdx_ = std::distance(std::begin(weightGroups), it);
 }
