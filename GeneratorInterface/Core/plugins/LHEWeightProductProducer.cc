@@ -47,7 +47,6 @@ private:
   bool foundWeightProduct_ = false;
   bool hasLhe_ = true;
   edm::EDPutTokenT<GenWeightInfoProduct> groupPutToken_;
-  edm::EDGetTokenT<GenWeightInfoProduct> groupGetToken_;
   GenWeightInfoProduct weightsInfo_;
 };
 
@@ -61,7 +60,6 @@ LHEWeightProductProducer::LHEWeightProductProducer(const edm::ParameterSet& iCon
       weightInfoTokens_(edm::vector_transform(iConfig.getParameter<std::vector<edm::InputTag>>("weightProductLabels"), 
           [this](const edm::InputTag& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })),
       groupPutToken_(produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>()) {
-      //groupGetToken_(consumes<GenWeightInfoProduct, edm::InLumi>(edm::InputTag("lheWeightsNano"))) {
   produces<GenWeightProduct>();
   weightHelper_.setFailIfInvalidXML(iConfig.getUntrackedParameter<bool>("failIfInvalidXML", false));
   weightHelper_.setfillEmptyIfWeightFails(iConfig.getUntrackedParameter<bool>("fillEmptyIfWeightFails", false));
@@ -84,10 +82,6 @@ void LHEWeightProductProducer::produce(edm::Event& iEvent, const edm::EventSetup
     }
   }
 
-  //const edm::LuminosityBlock& iLumi = iEvent.getLuminosityBlock(); 
-  //edm::Handle<GenWeightInfoProduct> weightsInfoHand;
-  //iLumi.getByToken(groupGetToken_, weightsInfoHand);
-  //auto weightProduct = weightHelper_.weightProduct(*weightsInfoHand, lheEventInfo->weights(), lheEventInfo->originalXWGTUP());
   auto weightProduct = weightHelper_.weightProduct(weightsInfo_, lheEventInfo->weights(), lheEventInfo->originalXWGTUP());
   iEvent.put(std::move(weightProduct));
 }

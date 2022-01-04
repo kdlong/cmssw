@@ -18,17 +18,13 @@ namespace gen {
     const gen::WeightGroupInfo* group;
   };
 
-  struct SharedWeightGroupData {
-    size_t index;
-    std::shared_ptr<const gen::WeightGroupInfo> group;
-  };
   typedef std::vector<std::unique_ptr<gen::WeightGroupInfo>> WeightGroupInfoContainer;
 }  // namespace gen
 
 class GenWeightInfoProduct {
 public:
   GenWeightInfoProduct() {}
-  GenWeightInfoProduct(std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups);
+  GenWeightInfoProduct(gen::WeightGroupInfoContainer& weightGroups);
   GenWeightInfoProduct(std::unique_ptr<GenWeightInfoProduct> other) { 
       copy(*other);
   }
@@ -48,13 +44,13 @@ public:
   }
   ~GenWeightInfoProduct() {}
 
-  const std::vector<std::unique_ptr<gen::WeightGroupInfo>>& allWeightGroupsInfo() const;
+  const gen::WeightGroupInfoContainer& allWeightGroupsInfo() const;
   const std::vector<gen::WeightGroupData> allWeightGroupsInfoWithIndices() const;
   gen::WeightGroupData containingWeightGroupInfo(int index, size_t startSearch=0) const;
   const gen::WeightGroupInfo* orderedWeightGroupInfo(int index) const;
   std::vector<gen::WeightGroupData> weightGroupsByType(gen::WeightType type) const;
   std::vector<int> weightGroupIndicesByType(gen::WeightType type) const;
-  std::vector<gen::WeightGroupData> weightGroupsAndIndicesByType(gen::WeightType type) const;
+  std::vector<gen::WeightGroupData> weightGroupsAndIndicesByType(gen::WeightType type, int maxStore=-1) const;
   std::optional<gen::WeightGroupData> pdfGroupWithIndexByLHAID(int lhaid) const;
   std::vector<gen::WeightGroupData> pdfGroupsWithIndicesByLHAIDs(const std::vector<int>& lhaids) const;
   void addWeightGroupInfo(gen::WeightGroupInfo info);
@@ -74,7 +70,7 @@ public:
   const int unassociatedIdx() const { return unassociatedIdx_; }
 
 private:
-  std::vector<std::unique_ptr<gen::WeightGroupInfo>> weightGroupsInfo_;
+  gen::WeightGroupInfoContainer weightGroupsInfo_;
   int unassociatedIdx_ = -1;
 };
 

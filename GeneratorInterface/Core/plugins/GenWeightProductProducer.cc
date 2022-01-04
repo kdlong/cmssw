@@ -42,7 +42,6 @@ private:
   const bool debug_;
   bool foundWeightProduct_ = false;
   edm::EDPutTokenT<GenWeightInfoProduct> groupPutToken_;
-  edm::EDGetTokenT<GenWeightInfoProduct> groupGetToken_;
   GenWeightInfoProduct weightsInfo_;
 };
 
@@ -59,7 +58,6 @@ GenWeightProductProducer::GenWeightProductProducer(const edm::ParameterSet& iCon
   weightHelper_.setDebug(debug_);
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
-  //mayConsume<GenWeightInfoProduct, edm::InLumi>(edm::InputTag("genWeightsNano"));
   weightHelper_.setGuessPSWeightIdx(iConfig.getUntrackedParameter<bool>("guessPSWeightIdx", false));
   weightHelper_.setfillEmptyIfWeightFails(iConfig.getUntrackedParameter<bool>("fillEmptyIfWeightFails", false));
 }
@@ -77,10 +75,6 @@ void GenWeightProductProducer::produce(edm::Event& iEvent, const edm::EventSetup
   iEvent.getByToken(genEventToken_, genEventInfo);
 
   float centralWeight = !genEventInfo->weights().empty() ? genEventInfo->weights().at(0) : 1.;
-  //const edm::LuminosityBlock& iLumi = iEvent.getLuminosityBlock(); 
-  //edm::Handle<GenWeightInfoProduct> weightsInfoHand;
-  //iLumi.getByLabel("genWeightsNano", weightsInfoHand);
-  //auto weightProduct = weightHelper_.weightProduct(*weightsInfoHand, genEventInfo->weights(), centralWeight);
   auto weightProduct = weightHelper_.weightProduct(weightsInfo_, genEventInfo->weights(), centralWeight);
   iEvent.put(std::move(weightProduct));
 }
