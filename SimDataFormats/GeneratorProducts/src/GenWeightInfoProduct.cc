@@ -49,7 +49,7 @@ const gen::WeightGroupInfo* GenWeightInfoProduct::orderedWeightGroupInfo(int wei
 
 std::vector<gen::WeightGroupData> GenWeightInfoProduct::weightGroupsAndIndicesByType(gen::WeightType type, int maxStore) const {
   std::vector<gen::WeightGroupData> matchingGroups;
-  size_t toStore = maxStore > 0 ? static_cast<size_t>(maxStore) : std::min<size_t>(maxStore, weightGroupsInfo_.size());
+  size_t toStore = maxStore <= 0 ? weightGroupsInfo_.size() : std::min<size_t>(maxStore, weightGroupsInfo_.size());
   for (size_t i = 0; i < toStore; i++) {
     const gen::WeightGroupInfo* group = weightGroupsInfo_[i].get();
     if (group->weightType() == type)

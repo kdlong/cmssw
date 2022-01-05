@@ -50,8 +50,6 @@ namespace gen {
     bool fillEmptyIfWeightFails() { return fillEmptyIfWeightFails_; }
 
   protected:
-    // TODO: Make this only print from one thread a la
-    // https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/NanoAOD/plugins/GenWeightsTableProducer.cc#L1069
     bool debug_ = false;
     bool fillEmptyIfWeightFails_ = false;
     std::unique_ptr<gen::WeightGroupInfo> unassociatedGroup_;
@@ -69,8 +67,8 @@ namespace gen {
     void updateMEParamInfo(const ParsedWeight& weight, int index) const;
     void updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight) const;
     void updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight) const;
-    //void cleanupOrphanCentralWeight();
-    bool splitPdfWeight(ParsedWeight& weight, std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const;
+    void cleanupOrphanCentralWeight(WeightGroupInfoContainer& weightGroups) const;
+    bool splitPdfWeight(ParsedWeight& weight, WeightGroupInfoContainer& weightGroups) const;
 
     int lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) const;
     std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;
@@ -88,13 +86,12 @@ namespace gen {
         {"down", {"_dn", "Lo"}},
         {"me_variation", {"mass", "sthw2", "width"}},
     };
-    void printWeights(const std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const;
+    void printWeights(const WeightGroupInfoContainer& weightGroups) const;
     std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight) const;
-    std::vector<std::unique_ptr<gen::WeightGroupInfo>> buildGroups(std::vector<ParsedWeight>& parsedWeights, bool addUnassociatedGroup) const;
+    WeightGroupInfoContainer buildGroups(std::vector<ParsedWeight>& parsedWeights, bool addUnassociatedGroup) const;
     std::string searchString(const std::string& label, const std::string& name) const;
   };
 
-  // Templated function (needed here because of plugins)
   template <typename T>
   std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(
         const GenWeightInfoProduct& weightsInfo, std::vector<T> weights, float w0) {
@@ -102,8 +99,7 @@ namespace gen {
     weightProduct->setNumWeightSets(weightsInfo.numberOfGroups());
     gen::WeightGroupData groupData = {0, nullptr};
     int i = 0;
-    // Need to understand if this is still needed, I believe it should be fine with the new unassociated groups
-    // This happens if there are no PS weights, so the weights vector contains only the central GEN weight.
+    // size=1 happens if there are no PS weights, so the weights vector contains only the central GEN weight.
     if (weights.size() > 1) {
       for (const auto& weight : weights) {
         double wgtval;
@@ -126,7 +122,6 @@ namespace gen {
           }
           // Access the unassociated group separately so it can be modified
           unassociatedGroup_->addContainedId(i, wgtid, wgtid);
-          // Really the weight product should know where the unassociated idx is
           groupData = {static_cast<size_t>(unassociatedIdx), unassociatedGroup_.get()};
         }
 

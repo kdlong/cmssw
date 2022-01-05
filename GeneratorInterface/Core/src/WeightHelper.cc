@@ -181,7 +181,7 @@ namespace gen {
       psGroup.setNameIsPythiaSyntax(true);
   }
 
-  bool WeightHelper::splitPdfWeight(ParsedWeight& weight, std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const {
+  bool WeightHelper::splitPdfWeight(ParsedWeight& weight, WeightGroupInfoContainer& weightGroups) const {
     if (weightGroups[weight.wgtGroup_idx]->weightType() == gen::WeightType::kPdfWeights) {
       auto& pdfGroup = *static_cast<gen::PdfWeightGroupInfo*>(weightGroups[weight.wgtGroup_idx].get());
       int lhaid = lhapdfId(weight, pdfGroup);
@@ -195,7 +195,7 @@ namespace gen {
   }
 
   // Come back to improving this, it's gross
-  //void WeightHelper::cleanupOrphanCentralWeight() {
+  void WeightHelper::cleanupOrphanCentralWeight(WeightGroupInfoContainer& weightGroups) const {
   //  std::vector<int> removeList;
   //  for (auto& group : weightGroups_) {
   //    if (group->weightType() != WeightType::kScaleWeights)
@@ -214,16 +214,36 @@ namespace gen {
   //      }
   //    }
   //  }
-  //  auto& orphanedWeight = std::find_if(std::begin(weightGroups_), std::end(weightGroups_),
-  //      [](auto& entry) { return entry->containsCentralWeight(); });
+    auto centralIt = std::find_if(std::begin(weightGroups), std::end(weightGroups),
+        [](auto& entry) { return entry->weightType() == gen::WeightType::kScaleWeights 
+                && static_cast<ScaleWeightGroupInfo*>(entry.get())->containsCentralWeight(); });
+    if (centralIt == std::end(weightGroups))
+        return;
 
-  //  std::sort(removeList.begin(), removeList.end(), std::greater<int>());
-  //  for (auto idx : removeList) {
-  //    weightGroups_.erase(weightGroups_.begin() + idx);
-  //  }
-  //}
+    auto& centralWeight = *static_cast<gen::ScaleWeightGroupInfo*>(centralIt->get());
 
-  void WeightHelper::printWeights(const std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const {
+    std::vector<size_t> toRemove;
+    for (size_t i = 0; i < weightGroups.size(); i++) {
+        auto& group = weightGroups[i];
+        if (group->weightType() == gen::WeightType::kPdfWeights) {
+            auto& pdfGroup = *static_cast<gen::PdfWeightGroupInfo*>(group.get());
+            // These are weights that contain nothing but a single central weight, because
+            // some versions of madgraph write the central weight separately
+            if (pdfGroup.nIdsContained() == 1 && pdfGroup.parentLhapdfId() == centralWeight.lhaid()) {
+                toRemove.push_back(i);
+                const auto& weightInfo = pdfGroup.weightMetaInfo(0);
+                centralWeight.addContainedId(weightInfo.globalIndex, weightInfo.id, weightInfo.label, 1, 1);
+            }
+        }
+    }
+    // Indices are guaranteed to be unique, delete from high to low to avoid changing indices
+    std::sort(std::begin(toRemove), std::end(toRemove), std::greater<size_t>());
+    for (auto i : toRemove) {
+        weightGroups.erase(std::begin(weightGroups)+i);
+    }
+  }
+
+  void WeightHelper::printWeights(const WeightGroupInfoContainer& weightGroups) const {
     // checks
     for (const auto& group : weightGroups) {
       std::cout << std::boolalpha << group->name() << " (" << group->firstId() << "-" << group->lastId()
@@ -296,9 +316,9 @@ namespace gen {
     return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
   }
 
-  std::vector<std::unique_ptr<gen::WeightGroupInfo>> WeightHelper::buildGroups(
+  WeightGroupInfoContainer WeightHelper::buildGroups(
         std::vector<ParsedWeight>& parsedWeights, bool addUnassociated) const {
-    std::vector<std::unique_ptr<gen::WeightGroupInfo>> weightGroups;
+    WeightGroupInfoContainer weightGroups;
     int groupOffset = 0;
     for (auto& weight : parsedWeights) {
       weight.wgtGroup_idx += groupOffset;
@@ -325,7 +345,7 @@ namespace gen {
       else if (group->weightType() == gen::WeightType::kPartonShowerWeights)
         updatePartonShowerInfo(*static_cast<gen::PartonShowerWeightGroupInfo*>(group.get()), weight);
     }
-    //cleanupOrphanCentralWeight();
+    cleanupOrphanCentralWeight(weightGroups);
     if (addUnassociated)
       addUnassociatedGroup(weightGroups);
     return weightGroups;
