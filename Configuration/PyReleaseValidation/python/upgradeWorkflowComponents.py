@@ -61,6 +61,10 @@ upgradeKeys[2026] = [
     '2026D87PU',
     '2026D88',
     '2026D88PU',
+    '2026D89',
+    '2026D89PU',
+    '2026D90',
+    '2026D90PU',
 ]
 
 # pre-generation of WF numbers
@@ -152,7 +156,7 @@ class UpgradeWorkflow_baseline(UpgradeWorkflow):
         era=properties.get('Era', None)
         modifier=properties.get('ProcessModifier',None)
         if cust is not None: stepDict[stepName][k]['--customise']=cust
-        if era is not None: 
+        if era is not None:
             stepDict[stepName][k]['--era']=era
         if modifier is not None: stepDict[stepName][k]['--procModifier']=modifier
     def condition(self, fragment, stepList, key, hasHarvest):
@@ -232,6 +236,8 @@ upgradeWFs['trackingOnly'] = UpgradeWorkflow_trackingOnly(
         'HARVESTGlobal',
         'RecoNano',
         'HARVESTNano',
+        'RecoFakeHLT',
+        'HARVESTFakeHLT',
     ],
     suffix = '_trackingOnly',
     offset = 0.1,
@@ -253,6 +259,7 @@ class UpgradeWorkflow_trackingRun2(UpgradeWorkflowTracking):
 upgradeWFs['trackingRun2'] = UpgradeWorkflow_trackingRun2(
     steps = [
         'Reco',
+        'RecoFakeHLT',
     ],
     suffix = '_trackingRun2',
     offset = 0.2,
@@ -269,6 +276,8 @@ upgradeWFs['trackingOnlyRun2'] = UpgradeWorkflow_trackingOnlyRun2(
     steps = [
         'Reco',
         'HARVEST',
+        'RecoFakeHLT',
+        'HARVESTFakeHLT',
     ],
     suffix = '_trackingOnlyRun2',
     offset = 0.3,
@@ -284,6 +293,7 @@ class UpgradeWorkflow_trackingLowPU(UpgradeWorkflowTracking):
 upgradeWFs['trackingLowPU'] = UpgradeWorkflow_trackingLowPU(
     steps = [
         'Reco',
+        'RecoFakeHLT',
     ],
     suffix = '_trackingLowPU',
     offset = 0.4,
@@ -294,7 +304,7 @@ class UpgradeWorkflow_pixelTrackingOnly(UpgradeWorkflowTracking):
         if 'Reco' in step: stepDict[stepName][k] = merge([self.step3, stepDict[step][k]])
         elif 'HARVEST' in step: stepDict[stepName][k] = merge([{'-s': 'HARVESTING:@trackingOnlyValidation+@pixelTrackingOnlyDQM'}, stepDict[step][k]])
     def condition_(self, fragment, stepList, key, hasHarvest):
-        return '2017' in key or '2018' in key or '2021' in key
+        return '2017' in key or '2018' in key or '2021' in key or '2026' in key
 upgradeWFs['pixelTrackingOnly'] = UpgradeWorkflow_pixelTrackingOnly(
     steps = [
         'Reco',
@@ -303,6 +313,8 @@ upgradeWFs['pixelTrackingOnly'] = UpgradeWorkflow_pixelTrackingOnly(
         'HARVESTGlobal',
         'RecoNano',
         'HARVESTNano',
+        'RecoFakeHLT',
+        'HARVESTFakeHLT',
     ],
     suffix = '_pixelTrackingOnly',
     offset = 0.5,
@@ -326,6 +338,7 @@ upgradeWFs['trackingMkFit'] = UpgradeWorkflow_trackingMkFit(
         'Reco',
         'RecoGlobal',
         'RecoNano',
+        'RecoFakeHLT',
     ],
     suffix = '_trackingMkFit',
     offset = 0.7,
@@ -469,6 +482,7 @@ class PatatrackWorkflow(UpgradeWorkflow):
             ('2021' in key and fragment == "TTbar_14TeV"),
             ('2018' in key and fragment == "ZMM_13"),
             ('2021' in key and fragment == "ZMM_14"),
+            ('2026D88' in key and fragment == "TTbar_14TeV" and "PixelOnly" in self.suffix)
         ]
         result = any(selected) and hasHarvest
 
@@ -876,6 +890,9 @@ class UpgradeWorkflow_0T(UpgradeWorkflow):
         myGT=stepDict[step][k]['--conditions']
         myGT+="_0T"
         stepDict[stepName][k] = merge([{'-n':'1','--magField':'0T','--conditions':myGT}, stepDict[step][k]])
+    def setupPU_(self, step, stepName, stepDict, k, properties):
+        # override '-n' setting from PUDataSets in relval_steps.py
+        stepDict[stepName][k] = merge([{'-n':'1'}, stepDict[step][k]])
     def condition(self, fragment, stepList, key, hasHarvest):
         return (fragment=="TTbar_13" or fragment=="TTbar_14TeV") and ('2017' in key or '2018' in key or '2021' in key)
 upgradeWFs['0T'] = UpgradeWorkflow_0T(
@@ -1516,6 +1533,20 @@ upgradeProperties[2026] = {
         'HLTmenu': '@fake2',
         'GT' : 'auto:phase2_realistic_T21',
         'Era' : 'Phase2C11I13M9',
+        'ScenToRun' : ['GenSimHLBeamSpot','DigiTrigger','RecoGlobal', 'HARVESTGlobal'],
+    },
+    '2026D89' : {
+        'Geom' : 'Extended2026D89', 
+        'HLTmenu': '@fake2',
+        'GT' : 'auto:phase2_realistic_T27',
+        'Era' : 'Phase2C11I13T27M9',
+        'ScenToRun' : ['GenSimHLBeamSpot','DigiTrigger','RecoGlobal', 'HARVESTGlobal'],
+    },
+    '2026D90' : {
+        'Geom' : 'Extended2026D90',
+        'HLTmenu': '@fake2',
+        'GT' : 'auto:phase2_realistic_T27',
+        'Era' : 'Phase2C11I13T27M9',
         'ScenToRun' : ['GenSimHLBeamSpot','DigiTrigger','RecoGlobal', 'HARVESTGlobal'],
     },
 }

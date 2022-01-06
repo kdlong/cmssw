@@ -2,6 +2,8 @@
 
 HLTriggerFirstPath	#	menu structure
 HLTriggerFinalPath	#	menu structure
+Status_OnCPU		#	CMSHLT-2206
+Status_OnGPU		#	CMSHLT-2206
 HLT_ZeroBias_v*	#	trigger studies
 HLT_Physics_v*	#	CMSHLT-892
 DST_Physics_v*	#	trigger studies
@@ -714,6 +716,7 @@ HLTMonitorOutput                          # CMSHLT-462, CMSHLT-481
 CalibrationOutput
 EcalCalibrationOutput
 RPCMONOutput
+ALCAPPSOutput				#	CMSHLT-2179
 ALCAPHISYMOutput
 ALCAP0Output
 ALCALumiPixelCountsExpressOutput	#	CMSHLT-2114
