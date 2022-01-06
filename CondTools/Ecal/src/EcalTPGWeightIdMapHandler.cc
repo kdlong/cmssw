@@ -90,7 +90,7 @@ void popcon::EcalTPGWeightIdMapHandler::getNewObjects() {
 
     readFromFile("last_tpg_weightIdMap_settings.txt");
 
-    unsigned int min_run = m_i_run_number + 1;
+    unsigned int min_run;
 
     if (m_firstRun < m_i_run_number) {
       min_run = m_i_run_number + 1;
@@ -281,7 +281,7 @@ void popcon::EcalTPGWeightIdMapHandler::readxmlFile() {
   unsigned int wloc[5];
   EcalTPGWeights w;
   EcalTPGWeightIdMap* weightMap = new EcalTPGWeightIdMap;
-  int ngroups, igroups;
+  int ngroups, igroups = 0;
   edm::LogInfo("EcalTPGWeightIdMapHandler") << "found " << igroups << "Weight groups";
   for (int i = 0; i < 5; i++)
     std::getline(fxml, dummyLine);  // skip first lines

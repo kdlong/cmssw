@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 from Validation.RecoMuon.PostProcessor_cff import *
 from Validation.RecoTrack.PostProcessorTracker_cfi import *
 from Validation.MuonIsolation.PostProcessor_cff import *
+from Validation.MuonCSCDigis.PostProcessor_cff import *
 from Validation.CaloTowers.CaloTowersPostProcessor_cff import *
 from Validation.HcalHits.SimHitsPostProcessor_cff import *
 from Validation.HcalDigis.HcalDigisPostProcessor_cff import *
@@ -43,6 +44,7 @@ postValidation = cms.Sequence(
     + METPostProcessor
     + L1GenPostProcessor
     + bdHadronTrackPostProcessor
+    + MuonCSCDigisPostProcessors
 )
 from Configuration.Eras.Modifier_phase1Pixel_cff import phase1Pixel
 
@@ -83,6 +85,7 @@ postValidation_muons = cms.Sequence(
     + MuonGEMRecHitsPostProcessors
     + MuonME0DigisPostProcessors
     + MuonME0SegPostProcessors
+    + MuonCSCDigisPostProcessors
     + rpcRecHitPostValidation_step
 )
 
@@ -115,8 +118,13 @@ postValidationOuterTracker = cms.Sequence( OuterTracker_harvestingV )
 
 _phase1_postValidation = postValidation.copy()
 _phase1_postValidation += siPixelPhase1OfflineDQM_harvestingV
+
+_phase1_postValidation_trackingOnly = postValidation_trackingOnly.copy()
+_phase1_postValidation_trackingOnly += siPixelPhase1OfflineDQM_harvestingV
+
 from Configuration.Eras.Modifier_phase1Pixel_cff import phase1Pixel
 phase1Pixel.toReplaceWith( postValidation, _phase1_postValidation )
+phase1Pixel.toReplaceWith( postValidation_trackingOnly, _phase1_postValidation_trackingOnly)
 
 _run3_postValidation = postValidation.copy()
 _run3_postValidation += MuonGEMHitsPostProcessors

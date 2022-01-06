@@ -19,7 +19,7 @@ namespace trklet {
 
   class TrackletEngineDisplaced : public ProcessBase {
   public:
-    TrackletEngineDisplaced(std::string name, Settings const& settings, Globals* global, unsigned int iSector);
+    TrackletEngineDisplaced(std::string name, Settings const& settings, Globals* global);
 
     ~TrackletEngineDisplaced() override;
 
@@ -29,6 +29,8 @@ namespace trklet {
     void execute();
 
     void readTables();
+
+    short memNameToIndex(const std::string& name);
 
   private:
     int layer1_;
@@ -41,7 +43,7 @@ namespace trklet {
 
     std::vector<StubPairsMemory*> stubpairs_;
 
-    std::vector<std::set<std::string> > table_;
+    std::vector<std::set<short> > table_;
 
     int firstphibits_;
     int secondphibits_;

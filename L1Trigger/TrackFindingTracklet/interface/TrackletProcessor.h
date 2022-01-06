@@ -4,12 +4,12 @@
 #define L1Trigger_TrackFindingTracklet_interface_TrackletProcessor_h
 
 #include "L1Trigger/TrackFindingTracklet/interface/TrackletCalculatorBase.h"
-#include "L1Trigger/TrackFindingTracklet/interface/VMStubsTEMemory.h"
-#include "L1Trigger/TrackFindingTracklet/interface/StubPairsMemory.h"
-#include "L1Trigger/TrackFindingTracklet/interface/TrackletProjectionsMemory.h"
-#include "L1Trigger/TrackFindingTracklet/interface/AllStubsMemory.h"
+#include "L1Trigger/TrackFindingTracklet/interface/TrackletLUT.h"
+#include "L1Trigger/TrackFindingTracklet/interface/CircularBuffer.h"
+#include "L1Trigger/TrackFindingTracklet/interface/TrackletEngineUnit.h"
 
 #include <vector>
+#include <tuple>
 #include <map>
 
 namespace trklet {
@@ -17,10 +17,13 @@ namespace trklet {
   class Settings;
   class Globals;
   class MemoryBase;
+  class AllStubsMemory;
+  class AllInnerStubsMemory;
+  class VMStubsTEMemory;
 
   class TrackletProcessor : public TrackletCalculatorBase {
   public:
-    TrackletProcessor(std::string name, Settings const& settings, Globals* globals, unsigned int iSector);
+    TrackletProcessor(std::string name, Settings const& settings, Globals* globals);
 
     ~TrackletProcessor() override = default;
 
@@ -30,29 +33,41 @@ namespace trklet {
 
     void addInput(MemoryBase* memory, std::string input) override;
 
-    void execute();
-
-    void setVMPhiBin();
-
-    void writeTETable();
+    void execute(unsigned int iSector, double phimin, double phimax);
 
   private:
     int iTC_;
+    int iAllStub_;
 
-    std::vector<VMStubsTEMemory*> innervmstubs_;
-    std::vector<VMStubsTEMemory*> outervmstubs_;
+    unsigned int maxStep_;
 
-    std::vector<AllStubsMemory*> innerallstubs_;
+    VMStubsTEMemory* outervmstubs_;
+
+    //                                 istub          imem          start imem    end imem
+    std::tuple<CircularBuffer<TEData>, unsigned int, unsigned int, unsigned int, unsigned int> tebuffer_;
+
+    std::vector<TrackletEngineUnit> teunits_;
+
+    std::vector<AllInnerStubsMemory*> innerallstubs_;
     std::vector<AllStubsMemory*> outerallstubs_;
 
-    bool extra_;
+    TrackletLUT pttableinner_;
+    TrackletLUT pttableouter_;
+    TrackletLUT useregiontable_;
 
-    std::map<unsigned int, std::vector<bool> > phitable_;
-    std::map<unsigned int, std::vector<bool> > pttableinner_;
-    std::map<unsigned int, std::vector<bool> > pttableouter_;
+    int nbitsfinephi_;
+    int nbitsfinephidiff_;
 
     int innerphibits_;
     int outerphibits_;
+
+    unsigned int nbitszfinebintable_;
+    unsigned int nbitsrfinebintable_;
+
+    unsigned int nbitsrzbin_;
+
+    TrackletLUT innerTable_;         //projection to next layer/disk
+    TrackletLUT innerOverlapTable_;  //projection to disk from layer
   };
 
 };  // namespace trklet

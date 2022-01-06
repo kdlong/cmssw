@@ -16,22 +16,24 @@ public:
   //typedef to simplify usage
   typedef typename Client::Output Output;
   //constructor
-  SonicEDFilter(edm::ParameterSet const& cfg)
-      : SonicAcquirer<Client, edm::stream::EDFilter<edm::ExternalWork, Capabilities...>>(cfg) {}
+  SonicEDFilter(edm::ParameterSet const& cfg, const std::string& debugName, bool verbose = true)
+      : SonicAcquirer<Client, edm::stream::EDFilter<edm::ExternalWork, Capabilities...>>(cfg, debugName, verbose) {}
   //destructor
   ~SonicEDFilter() override = default;
 
-  //derived classes use a dedicated produce() interface that incorporates client_.output()
+  //derived classes use a dedicated produce() interface that incorporates client_->output()
   bool filter(edm::Event& iEvent, edm::EventSetup const& iSetup) final {
     //measure time between acquire and produce
-    sonic_utils::printDebugTime(this->client_.debugName(), "dispatch() time: ", this->t_dispatch_);
+    if (this->verbose_)
+      sonic_utils::printDebugTime(this->debugName_, "dispatch() time: ", this->t_dispatch_);
 
     auto t0 = std::chrono::high_resolution_clock::now();
-    bool result = filter(iEvent, iSetup, this->client_.output());
-    sonic_utils::printDebugTime(this->client_.debugName(), "filter() time: ", t0);
+    bool result = filter(iEvent, iSetup, this->client_->output());
+    if (this->verbose_)
+      sonic_utils::printDebugTime(this->debugName_, "filter() time: ", t0);
 
     //reset client data
-    this->client_.reset();
+    this->client_->reset();
 
     return result;
   }

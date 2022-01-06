@@ -7,6 +7,7 @@
 #include <optional>
 #include <tuple>
 #include <variant>
+#include <limits>
 
 #include "DataFormats/Common/interface/ThinnedAssociation.h"
 #include "DataFormats/Provenance/interface/BranchID.h"
@@ -139,9 +140,9 @@ namespace edm {
       return ThinnedOrSlimmedProduct();
     }
 
-    auto makeThinnedIndexes(std::vector<unsigned int> const& keys,
-                            std::vector<WrapperBase const*> const& foundContainers,
-                            ThinnedAssociation const* thinnedAssociation) {
+    inline auto makeThinnedIndexes(std::vector<unsigned int> const& keys,
+                                   std::vector<WrapperBase const*> const& foundContainers,
+                                   ThinnedAssociation const* thinnedAssociation) {
       unsigned const nKeys = keys.size();
       std::vector<unsigned int> thinnedIndexes(nKeys, kThinningDoNotLookForThisIndex);
       bool hasAny = false;

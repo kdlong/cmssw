@@ -32,7 +32,10 @@ struct InputChunk;
 
 namespace evf {
   class FastMonitoringService;
-}
+  namespace FastMonState {
+    enum InputState : short;
+  }
+}  // namespace evf
 
 class FedRawDataInputSource : public edm::RawInputSource {
   friend struct InputFile;
@@ -48,6 +51,8 @@ public:
 protected:
   Next checkNext() override;
   void read(edm::EventPrincipal& eventPrincipal) override;
+  void setMonState(evf::FastMonState::InputState state);
+  void setMonStateSup(evf::FastMonState::InputState state);
 
 private:
   void rewind_() override;
@@ -55,7 +60,7 @@ private:
   void maybeOpenNewLumiSection(const uint32_t lumiSection);
   evf::EvFDaqDirector::FileStatus nextEvent();
   evf::EvFDaqDirector::FileStatus getNextEvent();
-  edm::Timestamp fillFEDRawDataCollection(FEDRawDataCollection&);
+  edm::Timestamp fillFEDRawDataCollection(FEDRawDataCollection& rawData, bool& tcdsInRange);
 
   void readSupervisor();
   void readWorker(unsigned int tid);

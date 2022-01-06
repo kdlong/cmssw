@@ -1,13 +1,13 @@
 #include "L1Trigger/TrackFindingTracklet/interface/VMProjectionsMemory.h"
 #include "L1Trigger/TrackFindingTracklet/interface/Tracklet.h"
-#include <iomanip>
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include <iomanip>
+#include <filesystem>
 
 using namespace std;
 using namespace trklet;
 
-VMProjectionsMemory::VMProjectionsMemory(string name, Settings const& settings, unsigned int iSector)
-    : MemoryBase(name, settings, iSector) {
+VMProjectionsMemory::VMProjectionsMemory(string name, Settings const& settings) : MemoryBase(name, settings) {
   initLayerDisk(7, layer_, disk_);
 }
 
@@ -20,9 +20,12 @@ void VMProjectionsMemory::addTracklet(Tracklet* tracklet, unsigned int allprojin
   tracklets_.push_back(tmp);
 }
 
-void VMProjectionsMemory::writeVMPROJ(bool first) {
+void VMProjectionsMemory::writeVMPROJ(bool first, unsigned int iSector) {
+  iSector_ = iSector;
+  const string dirVM = settings_.memPath() + "VMProjections/";
+
   std::ostringstream oss;
-  oss << "../data/MemPrints/VMProjections/VMProjections_" << getName();
+  oss << dirVM + "VMProjections_" << getName();
   //get rid of duplicates
   auto const& tmp = oss.str();
   int len = tmp.size();
@@ -31,12 +34,7 @@ void VMProjectionsMemory::writeVMPROJ(bool first) {
   oss << "_" << std::setfill('0') << std::setw(2) << (iSector_ + 1) << ".dat";
   auto const& fname = oss.str();
 
-  if (first) {
-    bx_ = 0;
-    event_ = 1;
-    out_.open(fname.c_str());
-  } else
-    out_.open(fname.c_str(), std::ofstream::app);
+  openfile(out_, first, dirVM, fname, __FILE__, __LINE__);
 
   out_ << "BX = " << (bitset<3>)bx_ << " Event : " << event_ << endl;
 

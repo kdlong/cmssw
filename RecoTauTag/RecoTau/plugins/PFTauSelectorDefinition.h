@@ -70,7 +70,7 @@ struct PFTauSelectorDefinition {
 
     // Build a string cut if desired
     if (cfg.exists("cut")) {
-      cut_.reset(new StringCutObjectSelector<reco::PFTau>(cfg.getParameter<std::string>("cut")));
+      cut_ = std::make_unique<StringCutObjectSelector<reco::PFTau>>(cfg.getParameter<std::string>("cut"));
     }
   }
 
@@ -96,7 +96,7 @@ struct PFTauSelectorDefinition {
     if (phID_ != e.processHistoryID()) {
       phID_ = e.processHistoryID();
       for (auto& disc : discriminatorContainers_) {
-        auto const& psetsFromProvenance = edm::parameterSet(*disc.handle.provenance(), e.processHistory());
+        auto const& psetsFromProvenance = edm::parameterSet(disc.handle.provenance()->stable(), e.processHistory());
         // find raw value indices
         if (psetsFromProvenance.exists("rawValues")) {
           auto const idlist = psetsFromProvenance.getParameter<std::vector<std::string>>("rawValues");
@@ -126,6 +126,10 @@ struct PFTauSelectorDefinition {
               throw cms::Exception("Configuration")
                   << "PFTauSelector: Requested working point '" << disc.rawLabels[i] << "' not found!\n";
           }
+        } else if (psetsFromProvenance.exists("VSjetWP")) {
+          // This else statement was added in the update of the HLT paths to use DeepTauId instead of charged isolation. Because the DeepTauId module is shared
+          // with offline and its psetsFromProvenance do not contain any of the above but only VSxWP, this selector would automatically go to the else statement
+          // that follows this one and fail. It is left empty because at HLT the raw values are not used and no action is needed here.
         } else
           throw cms::Exception("Configuration") << "PFTauSelector: No suitable ID list found in provenace config!\n";
         // find working point indices
@@ -157,8 +161,22 @@ struct PFTauSelectorDefinition {
               throw cms::Exception("Configuration")
                   << "PFTauSelector: Requested working point '" << disc.wpLabels[i] << "' not found!\n";
           }
+        } else if (psetsFromProvenance.exists("VSjetWP")) {
+          auto const idlist = psetsFromProvenance.getParameter<std::vector<std::string>>("VSjetWP");
+          for (size_t i = 0; i < disc.wpLabels.size(); ++i) {
+            bool found = false;
+            for (size_t j = 0; j < idlist.size(); ++j) {
+              if (disc.wpLabels[i] == idlist[j]) {
+                found = true;
+                disc.wpCuts[i] = j;
+              }
+            }
+            if (!found)
+              throw cms::Exception("Configuration")
+                  << "PFTauSelector: Requested working point '" << disc.wpLabels[i] << "' not found!\n";
+          }
         } else
-          throw cms::Exception("Configuration") << "PFTauSelector: No suitable ID list found in provenace config!\n";
+          throw cms::Exception("Configuration") << "PFTauSelector: No suitable ID WP list found in provenace config!\n";
       }
     }
 

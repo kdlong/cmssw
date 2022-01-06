@@ -54,6 +54,8 @@ namespace edm {
 
     public:
       ELdestination();
+      ELdestination(const ELdestination& orig) = delete;
+      ELdestination& operator=(const ELdestination& orig) = delete;
       virtual ~ELdestination();
 
       // -----  Methods invoked by the ELadministrator:
@@ -67,14 +69,14 @@ namespace edm {
 
       // -----  Behavior control methods invoked by the framework:
       //
-      void setThreshold(const ELseverityLevel& sv);
-      void setTraceThreshold(const ELseverityLevel& sv);
+      void setThreshold(const messagelogger::ELseverityLevel& sv);
+      void setTraceThreshold(const messagelogger::ELseverityLevel& sv);
       void setLimit(const std::string& s, int n);
-      void setLimit(const ELseverityLevel& sv, int n);
+      void setLimit(const messagelogger::ELseverityLevel& sv, int n);
       void setInterval(const std::string& s, int interval);
-      void setInterval(const ELseverityLevel& sv, int interval);
+      void setInterval(const messagelogger::ELseverityLevel& sv, int interval);
       void setTimespan(const std::string& s, int n);
-      void setTimespan(const ELseverityLevel& sv, int n);
+      void setTimespan(const messagelogger::ELseverityLevel& sv, int n);
 
       // -----  Select output format options:
       //
@@ -114,8 +116,8 @@ namespace edm {
       virtual void flush();
 
     protected:
-      ELseverityLevel threshold;
-      ELseverityLevel traceThreshold;
+      messagelogger::ELseverityLevel threshold;
+      messagelogger::ELseverityLevel traceThreshold;
       ELlimitsTable limits;
       std::string preamble;
       std::string newline;
@@ -134,10 +136,6 @@ namespace edm {
 
       // -----  Verboten methods:
       //
-    private:
-      ELdestination(const ELdestination& orig) = delete;
-      ELdestination& operator=(const ELdestination& orig) = delete;
-
     };  // ELdestination
 
     struct close_and_delete {

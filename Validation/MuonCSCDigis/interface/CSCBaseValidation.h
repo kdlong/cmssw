@@ -10,23 +10,30 @@
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "Geometry/CSCGeometry/interface/CSCGeometry.h"
 #include "SimMuon/MCTruth/interface/PSimHitMap.h"
+#include "SimDataFormats/Track/interface/SimTrack.h"
 
 class CSCBaseValidation {
 public:
   typedef dqm::legacy::DQMStore DQMStore;
   typedef dqm::legacy::MonitorElement MonitorElement;
 
-  CSCBaseValidation(const edm::InputTag &inputTag);
+  CSCBaseValidation(const edm::ParameterSet &ps);
   virtual ~CSCBaseValidation() {}
   void setGeometry(const CSCGeometry *geom) { theCSCGeometry = geom; }
   void setSimHitMap(const PSimHitMap *simHitMap) { theSimHitMap = simHitMap; }
   virtual void analyze(const edm::Event &e, const edm::EventSetup &eventSetup) = 0;
 
 protected:
+  bool isSimTrackGood(const SimTrack &t) const;
+
+  bool doSim_;
   const CSCLayer *findLayer(int detId) const;
-  edm::InputTag theInputTag;
   const PSimHitMap *theSimHitMap;
   const CSCGeometry *theCSCGeometry;
+
+  double simTrackMinPt_;
+  double simTrackMinEta_;
+  double simTrackMaxEta_;
 };
 
 #endif

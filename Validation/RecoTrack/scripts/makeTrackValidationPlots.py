@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import print_function
 import os
@@ -51,6 +51,7 @@ def main(opts):
             "seeding": limitProcessing,
             "building": limitProcessing,
             "bhadron": limitProcessing,
+            "displaced": limitProcessing,
         }
     }
     if opts.limit_relval:
@@ -64,6 +65,7 @@ def main(opts):
             "tpEtaGreater2p7": limitRelVal,
             "seeding": ignore,
             "bhadron": limitRelVal,
+            "displaced": limitRelVal,
         }
 
     trk = [trackingPlots.plotter]

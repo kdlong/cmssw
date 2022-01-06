@@ -5,6 +5,10 @@ from Configuration.Eras.Modifier_fastSim_cff import fastSim
 
 #for dnn classifier
 from Configuration.ProcessModifiers.trackdnn_cff import trackdnn
+from RecoTracker.IterativeTracking.dnnQualityCuts import qualityCutDictionary
+
+# for no-loopers
+from Configuration.ProcessModifiers.trackingNoLoopers_cff import trackingNoLoopers
 
 ##########################################################################
 # Large impact parameter tracking using TIB/TID/TEC stereo layer seeding #
@@ -18,8 +22,10 @@ for _eraName, _postfix, _era in _cfg.nonDefaultEras():
 
 # SEEDING LAYERS
 from RecoLocalTracker.SiStripClusterizer.SiStripClusterChargeCut_cfi import *
-pixelLessStepSeedLayers = cms.EDProducer('SeedingLayersEDProducer',
-    layerList = cms.vstring(
+import RecoTracker.TkSeedingLayers.seedingLayersEDProducer_cfi as _mod
+
+pixelLessStepSeedLayers = _mod.seedingLayersEDProducer.clone(
+    layerList = [
     #TIB
     'TIB1+TIB2+MTIB3','TIB1+TIB2+MTIB4',
     #TIB+TID
@@ -44,46 +50,52 @@ pixelLessStepSeedLayers = cms.EDProducer('SeedingLayersEDProducer',
     'TEC3_pos+TEC4_pos+MTEC5_pos','TEC3_neg+TEC4_neg+MTEC5_neg',
     'TEC3_pos+TEC5_pos+TEC6_pos', 'TEC3_neg+TEC5_neg+TEC6_neg',
     'TEC4_pos+TEC5_pos+TEC6_pos', 'TEC4_neg+TEC5_neg+TEC6_neg'    
-    ),
-    TIB = cms.PSet(
-         TTRHBuilder    = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+    ],
+    TIB = dict(
+         TTRHBuilder    = cms.string('WithTrackAngle'), 
+         clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
          matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
          skipClusters   = cms.InputTag('pixelLessStepClusters')
     ),
-    MTIB = cms.PSet(
-         TTRHBuilder    = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+    MTIB = dict(
+         TTRHBuilder    = cms.string('WithTrackAngle'), 
+         clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
          skipClusters   = cms.InputTag('pixelLessStepClusters'),
          rphiRecHits    = cms.InputTag('siStripMatchedRecHits','rphiRecHit')
     ),
-    TID = cms.PSet(
+    TID = dict(
         matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
         skipClusters = cms.InputTag('pixelLessStepClusters'),
         useRingSlector = cms.bool(True),
-        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+        TTRHBuilder = cms.string('WithTrackAngle'), 
+        clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
         minRing = cms.int32(1),
         maxRing = cms.int32(2)
     ),
-    MTID = cms.PSet(
+    MTID = dict(
         rphiRecHits    = cms.InputTag('siStripMatchedRecHits','rphiRecHit'),
         skipClusters = cms.InputTag('pixelLessStepClusters'),
         useRingSlector = cms.bool(True),
-        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+        TTRHBuilder = cms.string('WithTrackAngle'), 
+        clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
         minRing = cms.int32(3),
         maxRing = cms.int32(3)
     ),
-    TEC = cms.PSet(
+    TEC = dict(
         matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
         skipClusters = cms.InputTag('pixelLessStepClusters'),
         useRingSlector = cms.bool(True),
-        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+        TTRHBuilder = cms.string('WithTrackAngle'), 
+        clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
         minRing = cms.int32(1),
         maxRing = cms.int32(2)
     ),
-    MTEC = cms.PSet(
+    MTEC = dict(
         rphiRecHits = cms.InputTag('siStripMatchedRecHits','rphiRecHit'),
         skipClusters = cms.InputTag('pixelLessStepClusters'),
         useRingSlector = cms.bool(True),
-        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+        TTRHBuilder = cms.string('WithTrackAngle'), 
+        clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
         minRing = cms.int32(3),
         maxRing = cms.int32(3)
     )
@@ -111,30 +123,31 @@ vectorHits.toModify(pixelLessStepSeedLayers,
 #        'TOB3+TOB4', 'TOB4+TOB5', 
         'TID1_pos+TID2_pos', 'TID1_neg+TID2_neg'
     ],
-    TOB = cms.PSet(
-         TTRHBuilder    = cms.string('WithTrackAngle'), 
+    TOB = dict(
+         TTRHBuilder      = cms.string('WithTrackAngle'), 
          clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutNone')),
-         vectorRecHits = cms.InputTag("siPhase2VectorHits", 'vectorHitsAccepted'),
-         skipClusters   = cms.InputTag('pixelLessStepClusters')
+         vectorRecHits    = cms.InputTag("siPhase2VectorHits", 'vectorHitsAccepted'),
+         skipClusters     = cms.InputTag('pixelLessStepClusters')
     ),
     TIB = None,
     TID = dict(
-         clusterChargeCut = dict(refToPSet_ = cms.string('SiStripClusterChargeCutNone')),
-         vectorRecHits = cms.InputTag("siPhase2VectorHits", 'accepted'),
-         maxRing = cms.int32(8)
+         clusterChargeCut = dict(refToPSet_ = 'SiStripClusterChargeCutNone'),
+         vectorRecHits    = cms.InputTag("siPhase2VectorHits", 'accepted'),
+         maxRing          = 8
     ),
-    TEC = None,
+    TEC  = None,
     MTIB = None,
     MTID = None,
     MTEC = None,
 )
 # TrackingRegion
 from RecoTracker.TkTrackingRegions.globalTrackingRegionFromBeamSpotFixedZ_cfi import globalTrackingRegionFromBeamSpotFixedZ as _globalTrackingRegionFromBeamSpotFixedZ
-pixelLessStepTrackingRegions = _globalTrackingRegionFromBeamSpotFixedZ.clone(RegionPSet = dict(
-    ptMin            = 0.4,
-    originHalfLength = 12.0,
-    originRadius     = 1.0
-))
+pixelLessStepTrackingRegions = _globalTrackingRegionFromBeamSpotFixedZ.clone(
+    RegionPSet = dict(
+        ptMin            = 0.4,
+        originHalfLength = 12.0,
+        originRadius     = 1.0)
+)
 trackingLowPU.toModify(pixelLessStepTrackingRegions, RegionPSet = dict(
     ptMin            = 0.7,
     originHalfLength = 10.0,
@@ -271,10 +284,13 @@ pixelLessStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuil
     maxDPhiForLooperReconstruction = cms.double(2.0),
     maxPtForLooperReconstruction   = cms.double(0.7)
 )
+trackingNoLoopers.toModify(pixelLessStepTrajectoryBuilder,
+                           maxPtForLooperReconstruction = 0.0)
 
 # MAKING OF TRACK CANDIDATES
 import RecoTracker.CkfPattern.CkfTrackCandidates_cfi
-pixelLessStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTrackCandidates.clone(
+# Give handle for CKF for HI
+_pixelLessStepTrackCandidatesCkf = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTrackCandidates.clone(
     src                   = 'pixelLessStepSeeds',
     clustersToSkip        = cms.InputTag('pixelLessStepClusters'),
     ### these two parameters are relevant only for the CachingSeedCleanerBySharedInput
@@ -283,6 +299,31 @@ pixelLessStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckf
     TrajectoryBuilderPSet = cms.PSet(refToPSet_ = cms.string('pixelLessStepTrajectoryBuilder')),
     TrajectoryCleaner     = 'pixelLessStepTrajectoryCleanerBySharedHits'
 )
+pixelLessStepTrackCandidates = _pixelLessStepTrackCandidatesCkf.clone()
+
+from Configuration.ProcessModifiers.trackingMkFitPixelLessStep_cff import trackingMkFitPixelLessStep
+import RecoTracker.MkFit.mkFitSeedConverter_cfi as mkFitSeedConverter_cfi
+import RecoTracker.MkFit.mkFitIterationConfigESProducer_cfi as mkFitIterationConfigESProducer_cfi
+import RecoTracker.MkFit.mkFitProducer_cfi as mkFitProducer_cfi
+import RecoTracker.MkFit.mkFitOutputConverter_cfi as mkFitOutputConverter_cfi
+pixelLessStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConverter.clone(
+    seeds = 'pixelLessStepSeeds',
+)
+pixelLessStepTrackCandidatesMkFitConfig = mkFitIterationConfigESProducer_cfi.mkFitIterationConfigESProducer.clone(
+    ComponentName = 'pixelLessStepTrackCandidatesMkFitConfig',
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-pixelLessStep.json',
+)
+pixelLessStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
+    seeds = 'pixelLessStepTrackCandidatesMkFitSeeds',
+    config = ('', 'pixelLessStepTrackCandidatesMkFitConfig'),
+    clustersToSkip = 'pixelLessStepClusters',
+)
+trackingMkFitPixelLessStep.toReplaceWith(pixelLessStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(
+    seeds = 'pixelLessStepSeeds',
+    mkFitSeeds = 'pixelLessStepTrackCandidatesMkFitSeeds',
+    tracks = 'pixelLessStepTrackCandidatesMkFit',
+))
+
 import FastSimulation.Tracking.TrackCandidateProducer_cfi
 fastSim.toReplaceWith(pixelLessStepTrackCandidates,
                       FastSimulation.Tracking.TrackCandidateProducer_cfi.trackCandidateProducer.clone(
@@ -344,11 +385,12 @@ trackingPhase1.toReplaceWith(pixelLessStep, pixelLessStepClassifier1.clone(
     qualityCuts = [-0.4,0.0,0.4]
 ))
 
-from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
-from RecoTracker.FinalTrackSelectors.trackSelectionLwtnn_cfi import *
-trackdnn.toReplaceWith(pixelLessStep, TrackLwtnnClassifier.clone(
+from RecoTracker.FinalTrackSelectors.trackTfClassifier_cfi import *
+from RecoTracker.FinalTrackSelectors.trackSelectionTf_cfi import *
+from RecoTracker.FinalTrackSelectors.trackSelectionTf_CKF_cfi import *
+trackdnn.toReplaceWith(pixelLessStep, trackTfClassifier.clone(
     src         = 'pixelLessStepTracks',
-    qualityCuts = [-0.6, -0.05, 0.5]
+    qualityCuts = qualityCutDictionary.PixelLessStep.value()
 ))
 (trackdnn & fastSim).toModify(pixelLessStep,vertices = 'firstStepPrimaryVerticesBeforeMixing')
 
@@ -463,6 +505,10 @@ PixelLessStepTask = cms.Task(pixelLessStepClusters,
                              pixelLessStepClassifier1,pixelLessStepClassifier2,
                              pixelLessStep)
 PixelLessStep = cms.Sequence(PixelLessStepTask)
+
+_PixelLessStepTask_trackingMkFit = PixelLessStepTask.copy()
+_PixelLessStepTask_trackingMkFit.add(pixelLessStepTrackCandidatesMkFitSeeds, pixelLessStepTrackCandidatesMkFit, pixelLessStepTrackCandidatesMkFit)
+trackingMkFitPixelLessStep.toReplaceWith(PixelLessStepTask, _PixelLessStepTask_trackingMkFit)
 
 _PixelLessStepTask_LowPU = PixelLessStepTask.copyAndExclude([pixelLessStepHitTriplets, pixelLessStepClassifier1, pixelLessStepClassifier2])
 _PixelLessStepTask_LowPU.replace(pixelLessStep, pixelLessStepSelector)

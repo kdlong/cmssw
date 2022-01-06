@@ -30,9 +30,8 @@
 #include "DataFormats/Math/interface/deltaR.h"
 #include "RecoTauTag/RecoTau/interface/PFRecoTauClusterVariables.h"
 
-#include "CondFormats/EgammaObjects/interface/GBRForest.h"
+#include "CondFormats/GBRForest/interface/GBRForest.h"
 #include "CondFormats/DataRecord/interface/GBRWrapperRcd.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 
 #include <TFile.h>
 
@@ -60,12 +59,6 @@ namespace {
 
     return mva;
   }
-
-  const GBRForest* loadMVAfromDB(const edm::EventSetup& es, const std::string& mvaName) {
-    edm::ESHandle<GBRForest> mva;
-    es.get<GBRWrapperRcd>().get(mvaName, mva);
-    return mva.product();
-  }
 }  // namespace
 
 namespace reco {
@@ -82,6 +75,8 @@ namespace reco {
         loadMVAfromDB_ = cfg.getParameter<bool>("loadMVAfromDB");
         if (!loadMVAfromDB_) {
           inputFileName_ = cfg.getParameter<edm::FileInPath>("inputFileName");
+        } else {
+          mvaToken_ = esConsumes(edm::ESInputTag{"", mvaName_});
         }
         std::string mvaOpt_string = cfg.getParameter<std::string>("mvaOpt");
         if (mvaOpt_string == "oldDMwoLT")
@@ -147,6 +142,7 @@ namespace reco {
       std::string moduleLabel_;
 
       std::string mvaName_;
+      edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_;
       bool loadMVAfromDB_;
       edm::FileInPath inputFileName_;
       const GBRForest* mvaReader_;
@@ -178,7 +174,7 @@ namespace reco {
     void PFRecoTauDiscriminationByMVAIsolationRun2::beginEvent(const edm::Event& evt, const edm::EventSetup& es) {
       if (!mvaReader_) {
         if (loadMVAfromDB_) {
-          mvaReader_ = loadMVAfromDB(es, mvaName_);
+          mvaReader_ = &es.getData(mvaToken_);
         } else {
           mvaReader_ = loadMVAfromFile(inputFileName_, mvaName_, inputFilesToDelete_);
         }
@@ -196,7 +192,7 @@ namespace reco {
         phID_ = evt.processHistoryID();
         const edm::Provenance* prov = basicTauDiscriminators_.provenance();
         const std::vector<edm::ParameterSet> psetsFromProvenance =
-            edm::parameterSet(*prov, evt.processHistory())
+            edm::parameterSet(prov->stable(), evt.processHistory())
                 .getParameter<std::vector<edm::ParameterSet>>("IDdefinitions");
         for (uint i = 0; i < psetsFromProvenance.size(); i++) {
           if (psetsFromProvenance[i].getParameter<std::string>("IDname") == "ChargedIsoPtSum" + input_id_name_suffix_)

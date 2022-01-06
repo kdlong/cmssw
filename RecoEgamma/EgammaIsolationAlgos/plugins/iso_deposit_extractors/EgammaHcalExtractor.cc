@@ -63,6 +63,7 @@ namespace egammaisolation {
     double etLow_;
 
     edm::EDGetTokenT<HBHERecHitCollection> hcalRecHitProducerToken_;
+    edm::ESGetToken<CaloGeometry, CaloGeometryRecord> geometryToken_;
   };
 }  // namespace egammaisolation
 
@@ -79,7 +80,8 @@ EgammaHcalExtractor::EgammaHcalExtractor(const edm::ParameterSet& par, edm::Cons
     : extRadius_(par.getParameter<double>("extRadius")),
       intRadius_(par.getParameter<double>("intRadius")),
       etLow_(par.getParameter<double>("etMin")),
-      hcalRecHitProducerToken_(iC.consumes<HBHERecHitCollection>(par.getParameter<edm::InputTag>("hcalRecHits"))) {}
+      hcalRecHitProducerToken_(iC.consumes<HBHERecHitCollection>(par.getParameter<edm::InputTag>("hcalRecHits"))),
+      geometryToken_(iC.esConsumes()) {}
 
 EgammaHcalExtractor::~EgammaHcalExtractor() {}
 
@@ -87,13 +89,10 @@ reco::IsoDeposit EgammaHcalExtractor::deposit(const edm::Event& iEvent,
                                               const edm::EventSetup& iSetup,
                                               const reco::Candidate& emObject) const {
   //Get MetaRecHit collection
-  edm::Handle<HBHERecHitCollection> hcalRecHitHandle;
-  iEvent.getByToken(hcalRecHitProducerToken_, hcalRecHitHandle);
+  auto const& hcalRecHits = iEvent.get(hcalRecHitProducerToken_);
 
   //Get Calo Geometry
-  edm::ESHandle<CaloGeometry> pG;
-  iSetup.get<CaloGeometryRecord>().get(pG);
-  const CaloGeometry* caloGeom = pG.product();
+  const CaloGeometry* caloGeom = &iSetup.getData(geometryToken_);
   CaloDualConeSelector<HBHERecHit> coneSel(intRadius_, extRadius_, caloGeom, DetId::Hcal);
 
   //Take the SC position
@@ -109,7 +108,7 @@ reco::IsoDeposit EgammaHcalExtractor::deposit(const edm::Event& iEvent,
   deposit.addCandEnergy(sc->energy() * sinTheta);
 
   //Compute the HCAL energy behind ECAL
-  coneSel.selectCallback(point, *hcalRecHitHandle, [&](const HBHERecHit& i) {
+  coneSel.selectCallback(point, hcalRecHits, [&](const HBHERecHit& i) {
     const GlobalPoint& hcalHit_position = caloGeom->getPosition(i.detid());
     double hcalHit_eta = hcalHit_position.eta();
     double hcalHit_Et = i.energy() * sin(2 * atan(exp(-hcalHit_eta)));

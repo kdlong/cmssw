@@ -1,4 +1,4 @@
-<use name="roofit"/>
+<use name="roofitcore"/>
 <use name="FWCore/MessageLogger"/>
 <use name="FWCore/ParameterSet"/>
 <use name="DataFormats/METReco"/>
@@ -8,7 +8,6 @@
 <use name="CommonTools/Utils"/>
 <use name="CommonTools/UtilAlgos"/>
 <use name="DataFormats/BeamSpot"/>
-<use name="DataFormats/EgammaCandidates"/>
 <use name="DataFormats/HLTReco"/>
 <use name="DataFormats/PatCandidates"/>
 <use name="DataFormats/VertexReco"/>

@@ -21,7 +21,6 @@
 #include "SimDataFormats/CrossingFrame/interface/CrossingFrame.h"
 #include "SimDataFormats/CrossingFrame/interface/MixCollection.h"
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
-#include "SimDataFormats/TrackerDigiSimLink/interface/StripDigiSimLink.h"
 #include "SimDataFormats/GEMDigiSimLink/interface/GEMDigiSimLink.h"
 
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
@@ -38,8 +37,6 @@ namespace CLHEP {
 
 class GEMDigiProducer : public edm::stream::EDProducer<> {
 public:
-  typedef edm::DetSetVector<StripDigiSimLink> StripDigiSimLinks;
-
   typedef edm::DetSetVector<GEMDigiSimLink> GEMDigiSimLinks;
 
   explicit GEMDigiProducer(const edm::ParameterSet& ps);
@@ -64,7 +61,6 @@ private:
 
 GEMDigiProducer::GEMDigiProducer(const edm::ParameterSet& ps) : gemDigiModule_(std::make_unique<GEMDigiModule>(ps)) {
   produces<GEMDigiCollection>();
-  produces<StripDigiSimLinks>("GEM");
   produces<GEMDigiSimLinks>("GEM");
 
   edm::Service<edm::RandomNumberGenerator> rng;
@@ -109,6 +105,7 @@ void GEMDigiProducer::fillDescriptions(edm::ConfigurationDescriptions& descripti
   desc.add<bool>("simulateElectronBkg", true);
   // flase == simulate only neutral bkg
   desc.add<bool>("simulateIntrinsicNoise", false);
+  desc.add<bool>("bx0filter", false);
 
   desc.add<double>("instLumi", 7.5);
   // in units of 1E34 cm^-2 s^-1. Internally the background is parmetrized from FLUKA+GEANT result at 5E+34 (PU 140). We are adding a 1.5 factor for PU 200
@@ -156,7 +153,6 @@ void GEMDigiProducer::produce(edm::Event& e, const edm::EventSetup& eventSetup) 
 
   // Create empty output
   auto digis = std::make_unique<GEMDigiCollection>();
-  auto stripDigiSimLinks = std::make_unique<StripDigiSimLinks>();
   auto gemDigiSimLinks = std::make_unique<GEMDigiSimLinks>();
 
   // arrange the hits by eta partition
@@ -177,13 +173,11 @@ void GEMDigiProducer::produce(edm::Event& e, const edm::EventSetup& eventSetup) 
 
     gemDigiModule_->simulate(roll, simHits, engine);
     gemDigiModule_->fillDigis(rawId, *digis);
-    (*stripDigiSimLinks).insert(gemDigiModule_->stripDigiSimLinks());
     (*gemDigiSimLinks).insert(gemDigiModule_->gemDigiSimLinks());
   }
 
   // store them in the event
   e.put(std::move(digis));
-  e.put(std::move(stripDigiSimLinks), "GEM");
   e.put(std::move(gemDigiSimLinks), "GEM");
 }
 

@@ -20,11 +20,10 @@
 #include <memory>
 
 // user include files
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 
 #include "CalibFormats/HcalObjects/interface/HcalDbService.h"
 
@@ -52,7 +51,7 @@ using namespace std;
 // class decleration
 //
 
-class HcalLuttoDB : public edm::EDAnalyzer {
+class HcalLuttoDB : public edm::one::EDAnalyzer<> {
 public:
   explicit HcalLuttoDB(const edm::ParameterSet&);
   ~HcalLuttoDB() override;
@@ -68,28 +67,34 @@ private:
                     HcalElectronicsId eid,
                     const std::vector<unsigned char>& lut,
                     std::ostream& os);
-  bool filePerCrate_;
+  const std::string creationtag_;
+  const std::string targetfirmware_;
+  const bool filePerCrate_;
+  const std::string fileformat_;
   std::string creationstamp_;
-  std::string fileformat_;
   std::ostream* openPerCrate(int crate);
   std::ostream* openPerLut1(HcalElectronicsId eid);
   std::ostream* openPerLut2(HcalElectronicsId eid);
   std::ostream* openChecksums();
+  edm::ESGetToken<HcalDbService, HcalDbRecord> tokdb_;
+  edm::ESGetToken<HcalTPGCoder, HcalTPGRecord> tokhcalCode_;
+  edm::ESGetToken<CaloTPGTranscoder, CaloTPGRecord> tokcaloCode_;
   std::ostream* oc_;
 };
 // ----------member data ---------------------------
 
-std::string creationtag_;
-std::string targetfirmware_;
 static const int formatRevision_ = 1;
 
 // constructors and destructor
 //
-HcalLuttoDB::HcalLuttoDB(const edm::ParameterSet& iConfig) {
-  creationtag_ = iConfig.getParameter<std::string>("creationtag");
-  targetfirmware_ = iConfig.getParameter<std::string>("targetfirmware");
-  filePerCrate_ = iConfig.getUntrackedParameter<bool>("filePerCrate", true);
-  fileformat_ = iConfig.getParameter<std::string>("filePrefix");
+HcalLuttoDB::HcalLuttoDB(const edm::ParameterSet& iConfig)
+    : creationtag_(iConfig.getParameter<std::string>("creationtag")),
+      targetfirmware_(iConfig.getParameter<std::string>("targetfirmware")),
+      filePerCrate_(iConfig.getUntrackedParameter<bool>("filePerCrate", true)),
+      fileformat_(iConfig.getParameter<std::string>("filePrefix")) {
+  tokdb_ = esConsumes<HcalDbService, HcalDbRecord>();
+  tokhcalCode_ = esConsumes<HcalTPGCoder, HcalTPGRecord>();
+  tokcaloCode_ = esConsumes<CaloTPGTranscoder, CaloTPGRecord>();
 }
 
 HcalLuttoDB::~HcalLuttoDB() {}
@@ -269,14 +274,11 @@ void HcalLuttoDB::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   edm::LogInfo("Hcal") << "Beginning dump of Hcal TPG LUTS (this may take a minute or two)";
 
   const HcalElectronicsMap* Map_;
-  ESHandle<HcalDbService> pSetup;
-  iSetup.get<HcalDbRecord>().get(pSetup);
+  const HcalDbService* pSetup = &iSetup.getData(tokdb_);
   Map_ = pSetup->getHcalMapping();
   // get the conditions, for the decoding
-  edm::ESHandle<HcalTPGCoder> inputCoder;
-  iSetup.get<HcalTPGRecord>().get(inputCoder);
-  edm::ESHandle<CaloTPGTranscoder> outTranscoder;
-  iSetup.get<CaloTPGRecord>().get(outTranscoder);
+  const HcalTPGCoder* inputCoder = &iSetup.getData(tokhcalCode_);
+  const CaloTPGTranscoder* outTranscoder = &iSetup.getData(tokcaloCode_);
 
   std::vector<HcalElectronicsId> allEID = Map_->allElectronicsId();
   std::vector<HcalElectronicsId>::iterator itreid;

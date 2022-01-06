@@ -23,15 +23,15 @@
 #include "TROOT.h"
 #include "TFile.h"
 #include "TTree.h"
-#include "TBranchObject.h"
+#include "TBranch.h"
 
-//#define DebugLog
+//#define EDM_ML_DEBUG
 
 CastorShowerLibrary::CastorShowerLibrary(const std::string& name, edm::ParameterSet const& p)
     : hf(nullptr),
-      evtInfo(nullptr),
       emBranch(nullptr),
       hadBranch(nullptr),
+      verbose(false),
       nMomBin(0),
       totEvents(0),
       evtPerBin(0),
@@ -91,9 +91,9 @@ void CastorShowerLibrary::initFile(edm::ParameterSet const& p) {
   }
 
   // Check for the TBranch holding EventVerbatim in "Events" TTree
-  TTree* event = (TTree*)hf->Get("CastorCherenkovPhotons");
+  TTree* event = hf->Get<TTree>("CastorCherenkovPhotons");
   if (event) {
-    evtInfo = (TBranchObject*)event->GetBranch(branchEvInfo.c_str());
+    auto evtInfo = event->GetBranch(branchEvInfo.c_str());
     if (evtInfo) {
       loadEventInfo(evtInfo);
     } else {
@@ -107,10 +107,10 @@ void CastorShowerLibrary::initFile(edm::ParameterSet const& p) {
   }
 
   // Get EM and HAD Branchs
-  emBranch = (TBranchObject*)event->GetBranch(branchEM.c_str());
+  emBranch = event->GetBranch(branchEM.c_str());
   if (verbose)
     emBranch->Print();
-  hadBranch = (TBranchObject*)event->GetBranch(branchHAD.c_str());
+  hadBranch = event->GetBranch(branchHAD.c_str());
   if (verbose)
     hadBranch->Print();
   edm::LogVerbatim("CastorShower") << "CastorShowerLibrary: Branch " << branchEM << " has " << emBranch->GetEntries()
@@ -120,7 +120,7 @@ void CastorShowerLibrary::initFile(edm::ParameterSet const& p) {
 
 //=============================================================================================
 
-void CastorShowerLibrary::loadEventInfo(TBranchObject* branch) {
+void CastorShowerLibrary::loadEventInfo(TBranch* branch) {
   //////////////////////////////////////////////////////////
   //
   //  Get EventInfo from the "TBranch* branch" of Root file
@@ -130,7 +130,8 @@ void CastorShowerLibrary::loadEventInfo(TBranchObject* branch) {
   //
   //////////////////////////////////////////////////////////
 
-  eventInfo = new CastorShowerLibraryInfo();
+  CastorShowerLibraryInfo tempInfo;
+  auto* eventInfo = &tempInfo;
   branch->SetAddress(&eventInfo);
   branch->GetEntry(0);
   // Initialize shower library general parameters
@@ -215,18 +216,17 @@ CastorShowerEvent CastorShowerLibrary::getShowerHits(const G4Step* aStep, bool& 
   // "showerEvent" instance of class CastorShowerEvent
 
   if (isEM) {
-    select(0, pin, etain, phiin);
+    hit = select(0, pin, etain, phiin);
   } else {
-    select(1, pin, etain, phiin);
+    hit = select(1, pin, etain, phiin);
   }
 
-  hit = (*showerEvent);
   return hit;
 }
 
 //=============================================================================================
 
-void CastorShowerLibrary::getRecord(int type, int record) {
+CastorShowerEvent CastorShowerLibrary::getRecord(int type, int record) {
   //////////////////////////////////////////////////////////////
   //
   //  Retrieve event # "record" from the library and stores it
@@ -238,11 +238,12 @@ void CastorShowerLibrary::getRecord(int type, int record) {
   //
   //////////////////////////////////////////////////////////////
 
-#ifdef DebugLog
+#ifdef EDM_ML_DEBUG
   LogDebug("CastorShower") << "CastorShowerLibrary::getRecord: ";
 #endif
   int nrc = record;
-  showerEvent = new CastorShowerEvent();
+  CastorShowerEvent retValue;
+  CastorShowerEvent* showerEvent = &retValue;
   if (type > 0) {
     hadBranch->SetAddress(&showerEvent);
     hadBranch->GetEntry(nrc);
@@ -251,17 +252,18 @@ void CastorShowerLibrary::getRecord(int type, int record) {
     emBranch->GetEntry(nrc);
   }
 
-#ifdef DebugLog
+#ifdef EDM_ML_DEBUG
   int nHit = showerEvent->getNhit();
   LogDebug("CastorShower") << "CastorShowerLibrary::getRecord: Record " << record << " of type " << type << " with "
                            << nHit << " CastorShowerHits";
 
 #endif
+  return retValue;
 }
 
 //=======================================================================================
 
-void CastorShowerLibrary::select(int type, double pin, double etain, double phiin) {
+CastorShowerEvent CastorShowerLibrary::select(int type, double pin, double etain, double phiin) {
   ////////////////////////////////////////////////////////
   //
   //  Selects an event from the library based on
@@ -284,7 +286,7 @@ void CastorShowerLibrary::select(int type, double pin, double etain, double phii
 
   int ienergy = FindEnergyBin(pin);
   int ieta = FindEtaBin(etain);
-#ifdef DebugLog
+#ifdef EDM_ML_DEBUG
   if (verbose)
     edm::LogVerbatim("CastorShower") << " ienergy = " << ienergy;
   if (verbose)
@@ -303,7 +305,7 @@ void CastorShowerLibrary::select(int type, double pin, double etain, double phii
     phiin = phiMin + remainder;
     iphi = FindPhiBin(phiin);
   }
-#ifdef DebugLog
+#ifdef EDM_ML_DEBUG
   if (verbose)
     edm::LogVerbatim("CastorShower") << " iphi = " << iphi;
 #endif
@@ -316,12 +318,12 @@ void CastorShowerLibrary::select(int type, double pin, double etain, double phii
   else
     irec = int(nEvtPerBinE * (ienergy + r));
 
-#ifdef DebugLog
+#ifdef EDM_ML_DEBUG
   edm::LogVerbatim("CastorShower") << "CastorShowerLibrary:: Select record " << irec << " of type " << type;
 #endif
 
   //  Retrieve record number "irec" from the library
-  getRecord(type, irec);
+  return getRecord(type, irec);
 }
 
 //=======================================================================================

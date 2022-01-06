@@ -17,7 +17,7 @@ namespace trklet {
 
   class TrackletCalculatorBase : public ProcessBase {
   public:
-    TrackletCalculatorBase(std::string name, Settings const& settings, Globals* global, unsigned int iSector);
+    TrackletCalculatorBase(std::string name, Settings const& settings, Globals* global);
 
     ~TrackletCalculatorBase() override = default;
 
@@ -131,10 +131,8 @@ namespace trklet {
 
     int TCIndex_;
 
-    double phioffset_;
-
-    int layer_;
-    int disk_;
+    unsigned int iSector_;
+    double phimin_, phimax_;
 
     TrackletParametersMemory* trackletpars_;
 

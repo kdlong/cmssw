@@ -10,74 +10,20 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
+#include <filesystem>
+
 using namespace std;
 using namespace trklet;
 
-MatchEngine::MatchEngine(string name, Settings const& settings, Globals* global, unsigned int iSector)
-    : ProcessBase(name, settings, global, iSector) {
-  layer_ = 0;
-  disk_ = 0;
-  string subname = name.substr(3, 2);
-  if (subname.substr(0, 1) == "L")
-    layer_ = stoi(subname.substr(1, 1));
-  else if (subname.substr(0, 1) == "D")
-    disk_ = stoi(subname.substr(1, 1));
-  else
-    throw cms::Exception("BadConfig") << __FILE__ << " " << __LINE__ << " " << name << " subname = " << subname << " "
-                                      << layer_ << " " << disk_;
+MatchEngine::MatchEngine(string name, Settings const& settings, Globals* global)
+    : ProcessBase(name, settings, global), luttable_(settings) {
+  layerdisk_ = initLayerDisk(3);
 
-  if (layer_ > 0) {
-    unsigned int nbits = 3;
-    if (layer_ >= 4)
-      nbits = 4;
+  barrel_ = layerdisk_ < N_LAYER;
 
-    for (unsigned int irinv = 0; irinv < 32; irinv++) {
-      double rinv = (irinv - 15.5) * (1 << (settings_.nbitsrinv() - 5)) * settings_.krinvpars();
+  luttable_.initBendMatch(layerdisk_);
 
-      double stripPitch =
-          (settings_.rmean(layer_ - 1) < settings_.rcrit()) ? settings_.stripPitch(true) : settings_.stripPitch(false);
-      double projbend = bend(settings_.rmean(layer_ - 1), rinv, stripPitch);
-      for (unsigned int ibend = 0; ibend < (unsigned int)(1 << nbits); ibend++) {
-        double stubbend = benddecode(ibend, layer_ <= 3);
-        bool pass = std::abs(stubbend - projbend) < settings_.bendcutme(layer_ - 1);
-        table_.push_back(pass);
-      }
-    }
-
-    if (settings_.writeTable()) {
-      ofstream out;
-      char layer = '0' + layer_;
-      string fname = "METable_L";
-      fname += layer;
-      fname += ".tab";
-      out.open(fname.c_str());
-      out << "{" << endl;
-      for (unsigned int i = 0; i < table_.size(); i++) {
-        if (i != 0) {
-          out << "," << endl;
-        }
-        out << table_[i];
-      }
-      out << "};" << endl;
-      out.close();
-    }
-  }
-
-  if (disk_ > 0) {
-    for (unsigned int iprojbend = 0; iprojbend < 32; iprojbend++) {
-      double projbend = 0.5 * (iprojbend - 15.0);
-      for (unsigned int ibend = 0; ibend < 8; ibend++) {
-        double stubbend = benddecode(ibend, true);
-        bool pass = std::abs(stubbend - projbend) < settings_.bendcutme(disk_ + 5);
-        tablePS_.push_back(pass);
-      }
-      for (unsigned int ibend = 0; ibend < 16; ibend++) {
-        double stubbend = benddecode(ibend, false);
-        bool pass = std::abs(stubbend - projbend) < settings_.bendcutme(disk_ + 5);
-        table2S_.push_back(pass);
-      }
-    }
-  }
+  nrinv_ = NRINVBITS;
 }
 
 void MatchEngine::addOutput(MemoryBase* memory, string output) {
@@ -115,10 +61,11 @@ void MatchEngine::addInput(MemoryBase* memory, string input) {
 }
 
 void MatchEngine::execute() {
-  bool barrel = layer_ > 0;
-
   unsigned int countall = 0;
   unsigned int countpass = 0;
+
+  bool print = (getName() == "ME_L3PHIC20");
+  print = false;
 
   constexpr unsigned int kNBitsBuffer = 3;
 
@@ -135,6 +82,7 @@ void MatchEngine::execute() {
   int rzbin = 0;
   int projfinerz = 0;
   int projfinerzadj = 0;
+  unsigned int projfinephi = 0;
 
   int projindex = 0;
   int projrinv = 0;
@@ -173,9 +121,11 @@ void MatchEngine::execute() {
       iproj++;
       moreproj = iproj < nproj;
 
-      unsigned int rzfirst = barrel ? proj->zbin1projvm(layer_) : proj->rbin1projvm(disk_);
+      unsigned int rzfirst = proj->proj(layerdisk_).fpgarzbin1projvm().value();
       unsigned int rzlast = rzfirst;
-      bool second = (barrel ? proj->zbin2projvm(layer_) : proj->rbin2projvm(disk_)) == 1;
+
+      bool second = proj->proj(layerdisk_).fpgarzbin2projvm().value();
+
       if (second)
         rzlast += 1;
 
@@ -225,28 +175,31 @@ void MatchEngine::execute() {
 
         Tracklet* proj = vmprojs_->getTracklet(projindex);
 
+        FPGAWord fpgafinephi = proj->proj(layerdisk_).fpgafinephivm();
+
+        projfinephi = fpgafinephi.value();
+
         nstubs = vmstubs_->nStubsBin(rzbin);
 
-        projfinerz = barrel ? proj->finezvm(layer_) : proj->finervm(disk_);
+        projfinerz = proj->proj(layerdisk_).fpgafinerzvm().value();
 
-        projrinv =
-            barrel
-                ? (16 + (((-2) * proj->fpgaphiprojder(layer_).value()) >> (proj->fpgaphiprojder(layer_).nbits() - 4)))
-                : proj->getBendIndex(disk_).value();
+        projrinv = barrel_ ? ((1 << (nrinv_ - 1)) + ((-2 * proj->proj(layerdisk_).fpgaphiprojder().value()) >>
+                                                     (proj->proj(layerdisk_).fpgaphiprojder().nbits() - (nrinv_ - 1))))
+                           : proj->proj(layerdisk_).getBendIndex().value();
         assert(projrinv >= 0);
-        if (settings_.extended() && projrinv == 32) {
+        if (settings_.extended() && projrinv == (1 << nrinv_)) {
           if (settings_.debugTracklet()) {
             edm::LogVerbatim("Tracklet") << "Extended tracking, projrinv:" << projrinv;
           }
-          projrinv = 31;
+          projrinv = (1 << nrinv_) - 1;
         }
-        assert(projrinv < 32);
+        assert(projrinv < (1 << nrinv_));
 
-        isPSseed = proj->PSseed() == 1;
+        isPSseed = proj->PSseed();
 
         //Calculate fine z position
         if (second) {
-          projfinerzadj = projfinerz - 8;
+          projfinerzadj = projfinerz - (1 << NFINERZBITS);
         } else {
           projfinerzadj = projfinerz;
         }
@@ -273,38 +226,55 @@ void MatchEngine::execute() {
 
       int stubfinerz = vmstub.finerz().value();
 
-      int nbits = isPSmodule ? 3 : 4;
+      int nbits = isPSmodule ? N_BENDBITS_PS : N_BENDBITS_2S;
 
-      //TODO - should use finephi information to reduce combinatorics
+      int deltaphi = projfinephi - vmstub.finephi().value();
+
+      constexpr int mindeltaphicut = 3;
+      constexpr int maxdeltaphicut = 5;
+      bool passphi = (std::abs(deltaphi) < mindeltaphicut) || (std::abs(deltaphi) > maxdeltaphicut);
 
       unsigned int index = (projrinv << nbits) + vmstub.bend().value();
+      if (!barrel_ && isPSmodule) {
+        index += (1 << (nrinv_ + N_BENDBITS_2S));
+      }
 
       //Check if stub z position consistent
       int idrz = stubfinerz - projfinerzadj;
-      bool pass;
+      bool passz;
 
-      if (barrel) {
+      if (barrel_) {
         if (isPSseed) {
-          pass = idrz >= -2 && idrz <= 2;
+          constexpr int drzcut = 1;
+          passz = std::abs(idrz) <= drzcut;
         } else {
-          pass = idrz >= -5 && idrz <= 5;
+          constexpr int drzcut = 5;
+          passz = std::abs(idrz) <= drzcut;
         }
       } else {
         if (isPSmodule) {
-          pass = idrz >= -1 && idrz <= 1;
+          constexpr int drzcut = 1;
+          passz = std::abs(idrz) <= drzcut;
         } else {
-          pass = idrz >= -5 && idrz <= 5;
+          constexpr int drzcut = 3;
+          passz = std::abs(idrz) <= drzcut;
         }
       }
 
+      if (print) {
+        edm::LogVerbatim("Tracklet") << "istep index : " << istep << " " << index << " " << vmstub.bend().value()
+                                     << " rzbin istubtmp : " << rzbin << " " << istubtmp << " dz " << stubfinerz << " "
+                                     << projfinerzadj << "  dphi: " << deltaphi;
+      }
+
       //Check if stub bend and proj rinv consistent
-      if (pass) {
-        if (barrel ? table_[index] : (isPSmodule ? tablePS_[index] : table2S_[index])) {
+      if (passz && passphi) {
+        if (luttable_.lookup(index)) {
           Tracklet* proj = vmprojs_->getTracklet(projindex);
           std::pair<Tracklet*, int> tmp(proj, vmprojs_->getAllProjIndex(projindex));
           if (settings_.writeMonitorData("Seeds")) {
             ofstream fout("seeds.txt", ofstream::app);
-            fout << __FILE__ << ":" << __LINE__ << " " << name_ << "_" << iSector_ << " " << proj->getISeed() << endl;
+            fout << __FILE__ << ":" << __LINE__ << " " << name_ << " " << proj->getISeed() << endl;
             fout.close();
           }
           candmatches_->addMatch(tmp, vmstub.stub());

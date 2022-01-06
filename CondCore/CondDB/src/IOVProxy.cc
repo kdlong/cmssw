@@ -45,11 +45,17 @@ namespace cond {
       retVal.since = std::get<0>(*m_current);
       auto next = m_current;
       next++;
-
+      if (next == m_parent->m_array->end()) {
+        retVal.till = cond::time::MAX_VAL;
+      } else {
+        retVal.till = cond::time::tillTimeFromNextSince(std::get<0>(*next), m_parent->m_tagInfo.timeType);
+      }
       // default is the end of validity when set...
-      retVal.till = m_parent->m_tagInfo.endOfValidity;
-      retVal.till = cond::time::tillTimeFromNextSince(std::get<0>(*next), m_parent->m_tagInfo.timeType);
+      if (retVal.till > m_parent->m_tagInfo.endOfValidity) {
+        retVal.till = m_parent->m_tagInfo.endOfValidity;
+      }
       retVal.payloadId = std::get<1>(*m_current);
+
       return retVal;
     }
 
@@ -144,12 +150,14 @@ namespace cond {
 
       checkTransaction("IOVProxyNew::load");
 
+      int dummy;
       if (!m_session->iovSchema().tagTable().select(tagName,
                                                     m_data->tagInfo.timeType,
                                                     m_data->tagInfo.payloadType,
                                                     m_data->tagInfo.synchronizationType,
                                                     m_data->tagInfo.endOfValidity,
-                                                    m_data->tagInfo.lastValidatedTime)) {
+                                                    m_data->tagInfo.lastValidatedTime,
+                                                    dummy)) {
         throwException("Tag \"" + tagName + "\" has not been found in the database.", "IOVProxy::load");
       }
       m_data->tagInfo.name = tagName;

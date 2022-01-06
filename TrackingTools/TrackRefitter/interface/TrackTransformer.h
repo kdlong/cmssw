@@ -45,9 +45,6 @@ class TransientRecHitRecord;
 
 class TrackTransformer final : public TrackTransformerBase {
 public:
-  /// Constructor (for modules not yet migrated to ES-consumes)
-  explicit TrackTransformer(const edm::ParameterSet&);
-
   /// Constructor (for modules migrated to ES-consumes)
   explicit TrackTransformer(const edm::ParameterSet&, edm::ConsumesCollector&);
   explicit TrackTransformer(const edm::ParameterSet& parameterSet, edm::ConsumesCollector&& iC)
@@ -58,15 +55,15 @@ public:
 
   /// fillDescriptions
   static void fillPSetDescription(edm::ParameterSetDescription& descriptions,
-                                  bool DoPredictionsOnly = false,
-                                  const std::string& Fitter = "KFFitterForRefitInsideOut",
-                                  const std::string& Smoother = "KFSmootherForRefitInsideOut",
-                                  const std::string& Propagator = "SmartPropagatorAnyRK",
-                                  const std::string& RefitDirection = "alongMomentum",
-                                  bool RefitRPCHits = true,
-                                  const std::string& TrackerRecHitBuilder = "WithTrackAngle",
-                                  const std::string& MuonRecHitBuilder = "MuonRecHitBuilder",
-                                  const std::string& MTDRecHitBuilder = "MTDRecHitBuilder");
+                                  bool doPredictionsOnly = false,
+                                  const std::string& fitter = "KFFitterForRefitInsideOut",
+                                  const std::string& smoother = "KFSmootherForRefitInsideOut",
+                                  const std::string& propagator = "SmartPropagatorAnyRK",
+                                  const std::string& refitDirection = "alongMomentum",
+                                  bool refitRPCHits = true,
+                                  const std::string& trackerRecHitBuilder = "WithTrackAngle",
+                                  const std::string& muonRecHitBuilder = "MuonRecHitBuilder",
+                                  const std::string& mtdRecHitBuilder = "MTDRecHitBuilder");
 
   // Operations
 

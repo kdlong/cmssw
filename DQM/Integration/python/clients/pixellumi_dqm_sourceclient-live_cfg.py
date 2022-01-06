@@ -52,7 +52,7 @@ if not unitTest:
 #if (process.runType.getRunType() == process.runType.hi_run):
 
 if (process.runType.getRunType() == process.runType.cosmic_run and not unitTest):
-    process.source.SelectEvents = cms.untracked.vstring('HLT*SingleMu*')
+    process.source.SelectEvents = ['HLT*SingleMu*']
 
 #----------------------------
 # Magnetic Field
@@ -79,7 +79,7 @@ process.load("DQM.Integration.config.FrontierCondition_GT_cfi")
 #-----------------------
 # Real data raw to digi
 process.load("EventFilter.SiPixelRawToDigi.SiPixelRawToDigi_cfi")
-process.siPixelDigis.IncludeErrors = True
+process.siPixelDigis.cpu.IncludeErrors = True
 
 # Local Reconstruction
 process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
@@ -92,16 +92,16 @@ process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
 #        SelectEvents = cms.vstring('HLT_600Tower*','HLT_L1*','HLT_Jet*','HLT_*Cosmic*','HLT_HT*','HLT_MinBias_*','HLT_Physics*', 'HLT_ZeroBias*','HLT_HcalNZS*'))
 
 
-process.siPixelDigis.InputLabel   = cms.InputTag("rawDataCollector")
+process.siPixelDigis.cpu.InputLabel = cms.InputTag("rawDataCollector")
 #--------------------------------
 # Heavy Ion Configuration Changes
 #--------------------------------
 if (process.runType.getRunType() == process.runType.hi_run):
     process.load('Configuration.StandardSequences.RawToDigi_Repacked_cff')
-    process.siPixelDigis.InputLabel   = cms.InputTag("rawDataRepacker")
+    process.siPixelDigis.cpu.InputLabel = "rawDataRepacker"
 
     if not unitTest:
-        process.source.SelectEvents = cms.untracked.vstring('HLT_HIL1MinimumBiasHF2AND*')
+        process.source.SelectEvents = ['HLT_HIL1MinimumBiasHF2AND*']
 
 
 #    process.DQMEventStreamHttpReader.SelectEvents = cms.untracked.PSet(
@@ -112,10 +112,10 @@ if (process.runType.getRunType() == process.runType.hi_run):
 #----------------------
 process.load("DQM.PixelLumi.PixelLumiDQM_cfi") 
 
-if process.dqmRunConfig.type.value() is "playback":
-    process.pixel_lumi_dqm.logFileName = cms.untracked.string("pixel_lumi.txt")
+if process.dqmRunConfig.type.value() == "playback":
+    process.pixel_lumi_dqm.logFileName = "pixel_lumi.txt"
 else:
-    process.pixel_lumi_dqm.logFileName = cms.untracked.string("/nfshome0/dqmpro/pixel_lumi.txt")
+    process.pixel_lumi_dqm.logFileName = "/nfshome0/dqmpro/pixel_lumi.txt"
 
 print(process.pixel_lumi_dqm.logFileName)
     
@@ -142,3 +142,4 @@ process.p = cms.Path(process.Reco*process.DQMmodules)
 ### process customizations included here
 from DQM.Integration.config.online_customizations_cfi import *
 process = customise(process)
+print("Final Source settings:", process.source)

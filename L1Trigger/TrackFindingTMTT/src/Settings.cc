@@ -42,10 +42,12 @@ namespace tmtt {
         //kalmanDebugLevel_(2), // Good for debugging
         kalmanMinNumStubs_(4),
         kalmanMaxNumStubs_(6),
+        kalmanAddBeamConstr_(false),  // Apply post-fit beam-spot constraint to 5-param fit
         kalmanRemove2PScut_(true),
         kalmanMaxSkipLayersHard_(1),  // On "hard" input tracks
         kalmanMaxSkipLayersEasy_(2),  // On "easy" input tracks
         kalmanMaxStubsEasy_(10),      // Max. #stubs an input track can have to be defined "easy"
+        kfUseMaybeLayers_(true),
         kfLayerVsPtToler_({999., 999., 0.1, 0.1, 0.05, 0.05, 0.05}),
         kfLayerVsD0Cut5_({999., 999., 999., 10., 10., 10., 10.}),
         kfLayerVsZ0Cut5_({999., 999., 25.5, 25.5, 25.5, 25.5, 25.5}),
@@ -273,6 +275,7 @@ namespace tmtt {
         kalmanMaxSkipLayersHard_(trackFitSettings_.getParameter<unsigned>("KalmanMaxSkipLayersHard")),
         kalmanMaxSkipLayersEasy_(trackFitSettings_.getParameter<unsigned>("KalmanMaxSkipLayersEasy")),
         kalmanMaxStubsEasy_(trackFitSettings_.getParameter<unsigned>("KalmanMaxStubsEasy")),
+        kfUseMaybeLayers_(trackFitSettings_.getParameter<bool>("KFUseMaybeLayers")),
 
         kfLayerVsPtToler_(trackFitSettings_.getParameter<vector<double>>("KFLayerVsPtToler")),
         kfLayerVsD0Cut5_(trackFitSettings_.getParameter<vector<double>>("KFLayerVsD0Cut5")),

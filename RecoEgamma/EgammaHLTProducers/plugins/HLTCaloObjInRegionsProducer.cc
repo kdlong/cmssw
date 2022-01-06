@@ -213,7 +213,7 @@ std::unique_ptr<CaloObjCollType> HLTCaloObjInRegionsProducer<CaloObjType, CaloOb
   if (!inputColl->empty()) {
     const CaloSubdetectorGeometry* subDetGeom = caloGeomHandle.getSubdetectorGeometry(inputColl->begin()->id());
     if (!regions.empty()) {
-      for (const CaloObjType& obj : *inputColl) {
+      for (auto const& obj : *inputColl) {
         auto objGeom = subDetGeom->getGeometry(obj.id());
         if (objGeom == nullptr) {
           //wondering what to do here
@@ -331,3 +331,16 @@ DEFINE_FWK_MODULE(HLTEcalRecHitsInRegionsProducer);
 #include "DataFormats/EcalRecHit/interface/EcalUncalibratedRecHit.h"
 using HLTEcalUnCalibRecHitsInRegionsProducer = HLTCaloObjInRegionsProducer<EcalUncalibratedRecHit>;
 DEFINE_FWK_MODULE(HLTEcalUnCalibRecHitsInRegionsProducer);
+
+// HGCAL Digis
+#include "DataFormats/HGCDigi/interface/HGCDigiCollections.h"
+using HLTHGCalDigisInRegionsProducer = HLTCaloObjInRegionsProducer<HGCalDataFrame, HGCalDigiCollection>;
+DEFINE_FWK_MODULE(HLTHGCalDigisInRegionsProducer);
+
+// HGCAL RecHits
+#include "DataFormats/HGCRecHit/interface/HGCRecHit.h"
+using HLTHGCalRecHitsInRegionsProducer = HLTCaloObjInRegionsProducer<HGCRecHit>;
+DEFINE_FWK_MODULE(HLTHGCalRecHitsInRegionsProducer);
+#include "DataFormats/HGCRecHit/interface/HGCUncalibratedRecHit.h"
+using HLTHGCalUncalibratedRecHitsInRegionsProducer = HLTCaloObjInRegionsProducer<HGCUncalibratedRecHit>;
+DEFINE_FWK_MODULE(HLTHGCalUncalibratedRecHitsInRegionsProducer);

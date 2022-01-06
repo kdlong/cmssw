@@ -14,10 +14,12 @@ namespace trklet {
   class MemoryBase;
   class AllStubsMemory;
   class StubPairsMemory;
+  class VarInv;
+  class VarBase;
 
   class TrackletCalculator : public TrackletCalculatorBase {
   public:
-    TrackletCalculator(std::string name, Settings const& settings, Globals* globals, unsigned int iSector);
+    TrackletCalculator(std::string name, Settings const& settings, Globals* globals);
 
     ~TrackletCalculator() override = default;
 
@@ -25,7 +27,7 @@ namespace trklet {
     void addOutput(MemoryBase* memory, std::string output) override;
     void addInput(MemoryBase* memory, std::string input) override;
 
-    void execute();
+    void execute(unsigned int iSector, double phimin, double phimax);
 
   private:
     int iTC_;
@@ -33,6 +35,9 @@ namespace trklet {
     std::vector<AllStubsMemory*> innerallstubs_;
     std::vector<AllStubsMemory*> outerallstubs_;
     std::vector<StubPairsMemory*> stubpairs_;
+
+    void writeInvTable(void (*writeLUT)(const VarInv&, const std::string&));
+    void writeFirmwareDesign(void (*writeDesign)(const std::vector<VarBase*>&, const std::string&));
   };
 };  // namespace trklet
 #endif

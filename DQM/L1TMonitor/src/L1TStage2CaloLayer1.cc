@@ -5,6 +5,7 @@
  */
 //Modified by Bhawna Gomber <bhawna.gomber@cern.ch>
 //Modified by Andrew Loeliger <andrew.loeliger@cern.ch>
+//Modified by Ho-Fung Tsoi <ho.fung.tsoi@cern.ch>
 
 #include "DQM/L1TMonitor/interface/L1TStage2CaloLayer1.h"
 
@@ -21,6 +22,16 @@
 L1TStage2CaloLayer1::L1TStage2CaloLayer1(const edm::ParameterSet& ps)
     : ecalTPSourceRecd_(consumes<EcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("ecalTPSourceRecd"))),
       ecalTPSourceRecdLabel_(ps.getParameter<edm::InputTag>("ecalTPSourceRecd").label()),
+      ecalTPSourceRecdBx1_(consumes<EcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx1"))),
+      ecalTPSourceRecdBx1Label_(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx1").label()),
+      ecalTPSourceRecdBx2_(consumes<EcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx2"))),
+      ecalTPSourceRecdBx2Label_(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx2").label()),
+      ecalTPSourceRecdBx3_(consumes<EcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx3"))),
+      ecalTPSourceRecdBx3Label_(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx3").label()),
+      ecalTPSourceRecdBx4_(consumes<EcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx4"))),
+      ecalTPSourceRecdBx4Label_(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx4").label()),
+      ecalTPSourceRecdBx5_(consumes<EcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx5"))),
+      ecalTPSourceRecdBx5Label_(ps.getParameter<edm::InputTag>("ecalTPSourceRecdBx5").label()),
       hcalTPSourceRecd_(consumes<HcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("hcalTPSourceRecd"))),
       hcalTPSourceRecdLabel_(ps.getParameter<edm::InputTag>("hcalTPSourceRecd").label()),
       ecalTPSourceSent_(consumes<EcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("ecalTPSourceSent"))),
@@ -30,6 +41,7 @@ L1TStage2CaloLayer1::L1TStage2CaloLayer1(const edm::ParameterSet& ps)
       fedRawData_(consumes<FEDRawDataCollection>(ps.getParameter<edm::InputTag>("fedRawDataLabel"))),
       histFolder_(ps.getParameter<std::string>("histFolder")),
       tpFillThreshold_(ps.getUntrackedParameter<int>("etDistributionsFillThreshold", 0)),
+      tpFillThreshold5Bx_(ps.getUntrackedParameter<int>("etDistributionsFillThreshold5Bx", 1)),
       ignoreHFfbs_(ps.getUntrackedParameter<bool>("ignoreHFfbs", false)) {}
 
 L1TStage2CaloLayer1::~L1TStage2CaloLayer1() {}
@@ -194,6 +206,63 @@ void L1TStage2CaloLayer1::dqmAnalyze(const edm::Event& event,
   if (nEcalMismatch > streamCache(event.streamID())->streamNumMaxEvtMismatchECAL)
     streamCache(event.streamID())->streamNumMaxEvtMismatchECAL = nEcalMismatch;
 
+  edm::Handle<EcalTrigPrimDigiCollection> ecalTPsRecdBx1;
+  event.getByToken(ecalTPSourceRecdBx1_, ecalTPsRecdBx1);
+  edm::Handle<EcalTrigPrimDigiCollection> ecalTPsRecdBx2;
+  event.getByToken(ecalTPSourceRecdBx2_, ecalTPsRecdBx2);
+  edm::Handle<EcalTrigPrimDigiCollection> ecalTPsRecdBx3;
+  event.getByToken(ecalTPSourceRecdBx3_, ecalTPsRecdBx3);
+  edm::Handle<EcalTrigPrimDigiCollection> ecalTPsRecdBx4;
+  event.getByToken(ecalTPSourceRecdBx4_, ecalTPsRecdBx4);
+  edm::Handle<EcalTrigPrimDigiCollection> ecalTPsRecdBx5;
+  event.getByToken(ecalTPSourceRecdBx5_, ecalTPsRecdBx5);
+
+  for (const auto& tp : (*ecalTPsRecdBx1)) {
+    if (tp.compressedEt() > tpFillThreshold5Bx_) {
+      const int ieta = tp.id().ieta();
+      const int iphi = tp.id().iphi();
+      eventMonitors.ecalOccRecdBx1_->Fill(ieta, iphi);
+      eventMonitors.ecalOccRecd5Bx_->Fill(1);
+      eventMonitors.ecalOccRecd5BxEtWgt_->Fill(1, tp.compressedEt());
+    }
+  }
+  for (const auto& tp : (*ecalTPsRecdBx2)) {
+    if (tp.compressedEt() > tpFillThreshold5Bx_) {
+      const int ieta = tp.id().ieta();
+      const int iphi = tp.id().iphi();
+      eventMonitors.ecalOccRecdBx2_->Fill(ieta, iphi);
+      eventMonitors.ecalOccRecd5Bx_->Fill(2);
+      eventMonitors.ecalOccRecd5BxEtWgt_->Fill(2, tp.compressedEt());
+    }
+  }
+  for (const auto& tp : (*ecalTPsRecdBx3)) {
+    if (tp.compressedEt() > tpFillThreshold5Bx_) {
+      const int ieta = tp.id().ieta();
+      const int iphi = tp.id().iphi();
+      eventMonitors.ecalOccRecdBx3_->Fill(ieta, iphi);
+      eventMonitors.ecalOccRecd5Bx_->Fill(3);
+      eventMonitors.ecalOccRecd5BxEtWgt_->Fill(3, tp.compressedEt());
+    }
+  }
+  for (const auto& tp : (*ecalTPsRecdBx4)) {
+    if (tp.compressedEt() > tpFillThreshold5Bx_) {
+      const int ieta = tp.id().ieta();
+      const int iphi = tp.id().iphi();
+      eventMonitors.ecalOccRecdBx4_->Fill(ieta, iphi);
+      eventMonitors.ecalOccRecd5Bx_->Fill(4);
+      eventMonitors.ecalOccRecd5BxEtWgt_->Fill(4, tp.compressedEt());
+    }
+  }
+  for (const auto& tp : (*ecalTPsRecdBx5)) {
+    if (tp.compressedEt() > tpFillThreshold5Bx_) {
+      const int ieta = tp.id().ieta();
+      const int iphi = tp.id().iphi();
+      eventMonitors.ecalOccRecdBx5_->Fill(ieta, iphi);
+      eventMonitors.ecalOccRecd5Bx_->Fill(5);
+      eventMonitors.ecalOccRecd5BxEtWgt_->Fill(5, tp.compressedEt());
+    }
+  }
+
   edm::Handle<HcalTrigPrimDigiCollection> hcalTPsSent;
   event.getByToken(hcalTPSourceSent_, hcalTPsSent);
   edm::Handle<HcalTrigPrimDigiCollection> hcalTPsRecd;
@@ -346,12 +415,38 @@ void L1TStage2CaloLayer1::dqmAnalyze(const edm::Event& event,
 void L1TStage2CaloLayer1::updateMismatch(
     const edm::Event& e,
     int mismatchType,
-    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>>& streamMismatches) const {
-  std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int> mismatchToInsert = {
-      e.getRun().id(), e.getLuminosityBlock().id(), e.id(), mismatchType};
+    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>>& streamMismatches)
+    const {
+  //check if this combination of Run/Lumi/Event already exists in the stream mismatch list
+  //if it does, update that entry, otherwise insert a new one with this particular combination.
+  for (auto mismatchIterator = streamMismatches.begin(); mismatchIterator != streamMismatches.end();
+       ++mismatchIterator) {
+    if (e.getRun().id() == std::get<0>(*mismatchIterator) &&
+        e.getLuminosityBlock().id() == std::get<1>(*mismatchIterator) && e.id() == std::get<2>(*mismatchIterator)) {
+      //the run, lumi and event exist. Check if this kind of mismatch has been reported before
+      std::vector<int>& mismatchTypeVector = std::get<3>(*mismatchIterator);
+      for (auto mismatchTypeIterator = mismatchTypeVector.begin(); mismatchTypeIterator != mismatchTypeVector.end();
+           ++mismatchTypeIterator) {
+        if (mismatchType == *mismatchTypeIterator) {
+          //this has already been reported
+          return;
+        }
+      }
+      //A mismatch exists, but it is not a type that has been previously reported.
+      //Insert it into the vector of types of mismatches reported
+      mismatchTypeVector.push_back(mismatchType);
+      return;
+    }
+  }
+
+  //The run/lumi/event does not exist in the list, construct an entry
+  std::vector<int> newMismatchTypeVector;
+  newMismatchTypeVector.push_back(mismatchType);
+  std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>> mismatchToInsert = {
+      e.getRun().id(), e.getLuminosityBlock().id(), e.id(), newMismatchTypeVector};
   streamMismatches.push_back(mismatchToInsert);
-  //This 20 is potentially a non-obvious constant "magic number"
-  //this matches the mismatch detail histogram, but should be upgraded to not use the constant in this manner.
+
+  //maintain the mismatch vector size at 20.
   if (streamMismatches.size() > 20)
     streamMismatches.erase(streamMismatches.begin());
 }
@@ -415,6 +510,13 @@ void L1TStage2CaloLayer1::bookHistograms(DQMStore::IBooker& ibooker,
   eventMonitors.ecalTPRawEtRecd_ = bookEt("ecalTPRawEtRecd", "ECal Raw Et Layer1 Readout");
   eventMonitors.ecalTPRawEtSentAndRecd_ = bookEt("ecalTPRawEtMatch", "ECal Raw Et FULL MATCH");
   eventMonitors.ecalTPRawEtSent_ = bookEt("ecalTPRawEtSent", "ECal Raw Et TCC Readout");
+  eventMonitors.ecalOccRecd5Bx_ = ibooker.book1D("ecalOccRecd5Bx", "ECal TP Values Averaged vs BX", 5, 1, 6);
+  eventMonitors.ecalOccRecd5BxEtWgt_ = ibooker.book1D("ecalOccRecd5BxEtWgt", "ECal TP*Et Averaged vs BX", 5, 1, 6);
+  eventMonitors.ecalOccRecdBx1_ = bookEcalOccupancy("ecalOccRecdBx1", "ECal TP Occupancy for BX1");
+  eventMonitors.ecalOccRecdBx2_ = bookEcalOccupancy("ecalOccRecdBx2", "ECal TP Occupancy for BX2");
+  eventMonitors.ecalOccRecdBx3_ = bookEcalOccupancy("ecalOccRecdBx3", "ECal TP Occupancy for BX3");
+  eventMonitors.ecalOccRecdBx4_ = bookEcalOccupancy("ecalOccRecdBx4", "ECal TP Occupancy for BX4");
+  eventMonitors.ecalOccRecdBx5_ = bookEcalOccupancy("ecalOccRecdBx5", "ECal TP Occupancy for BX5");
 
   ibooker.setCurrentFolder(histFolder_ + "/ECalDetail/TCCDebug");
   eventMonitors.ecalOccSentNotRecd_ =
@@ -607,8 +709,8 @@ void L1TStage2CaloLayer1::globalEndLuminosityBlockSummary(
 // based on Run, Lumisection, and event number
 //false otherwise
 bool L1TStage2CaloLayer1::isLaterMismatch(
-    std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>& candidateMismatch,
-    std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>& comparisonMismatch) const {
+    std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>& candidateMismatch,
+    std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>& comparisonMismatch) const {
   //check the run. If the run ID of the candidate mismatch is less than the run ID of the comparison mismatch, it is earlier,
   if (std::get<0>(candidateMismatch) < std::get<0>(comparisonMismatch))
     return false;
@@ -637,8 +739,8 @@ bool L1TStage2CaloLayer1::isLaterMismatch(
 //will find an interger we add to the iterator to get the proper location to find the insertion location
 //will return -1 if the mismatch should not be inserted into the list
 int L1TStage2CaloLayer1::findIndex(
-    std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int> candidateMismatch,
-    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>> comparisonList,
+    std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>> candidateMismatch,
+    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>> comparisonList,
     int lowerIndexToSearch,
     int upperIndexToSearch) const {
   //Start by getting the spot in the the vector to start searching
@@ -697,8 +799,9 @@ int L1TStage2CaloLayer1::findIndex(
 
 //will shuffle the candidate mismatch list into the comparison mismatch list.
 void L1TStage2CaloLayer1::mergeMismatchVectors(
-    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>>& candidateMismatchList,
-    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>>& comparisonMismatchList) const {
+    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>>& candidateMismatchList,
+    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>>& comparisonMismatchList)
+    const {
   //okay now we loop over our candidate mismatches
   for (auto candidateIterator = candidateMismatchList.begin(); candidateIterator != candidateMismatchList.end();
        ++candidateIterator) {
@@ -748,7 +851,17 @@ void L1TStage2CaloLayer1::globalEndRunSummary(
                            std::to_string(std::get<1>(*mismatchIterator).luminosityBlock()) + ":" +
                            std::to_string(std::get<2>(*mismatchIterator).event());
     theRunCache->last20Mismatches_->setBinLabel(ibin, binLabel, 2);
-    theRunCache->last20Mismatches_->setBinContent(std::get<3>(*mismatchIterator) + 1, ibin, 1);
+    //Get the vector of mismatches for this particular event and iterate through it.
+    //Set the bin content to 1 for each type of mismatch seen
+    std::vector<int> mismatchTypeVector = std::get<3>(*mismatchIterator);
+    for (auto mismatchTypeIterator = mismatchTypeVector.begin(); mismatchTypeIterator != mismatchTypeVector.end();
+         ++mismatchTypeIterator) {
+      theRunCache->last20Mismatches_->setBinContent(*mismatchTypeIterator + 1, ibin, 1);
+    }
     ++ibin;
+  }
+  //remove the remaining empty string labels to prevent overlap
+  for (int emptyBinIndex = ibin; emptyBinIndex <= 20; ++emptyBinIndex) {
+    theRunCache->last20Mismatches_->setBinLabel(emptyBinIndex, std::to_string(emptyBinIndex), 2);
   }
 }

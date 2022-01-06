@@ -1,5 +1,6 @@
 #include "CondCore/CondDB/interface/ConnectionPool.h"
 #include "DbConnectionString.h"
+#include "IDbAuthentication.h"
 #include "SessionImpl.h"
 #include "IOVSchema.h"
 #include "CoralMsgReporter.h"
@@ -10,6 +11,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 // coral includes
 #include "RelationalAccess/ConnectionService.h"
+#include "RelationalAccess/IAuthenticationService.h"
 #include "RelationalAccess/IWebCacheControl.h"
 #include "RelationalAccess/ISessionProxy.h"
 #include "RelationalAccess/IConnectionServiceConfiguration.h"
@@ -65,6 +67,7 @@ namespace cond {
           level = coral::Error;
       }
       setMessageVerbosity(level);
+      setConnectionTimeout(connectionPset.getUntrackedParameter<int>("connectionTimeout", m_connectionTimeout));
       setLogging(connectionPset.getUntrackedParameter<bool>("logging", m_loggingEnabled));
     }
 
@@ -73,12 +76,13 @@ namespace cond {
     void ConnectionPool::configure(coral::IConnectionServiceConfiguration& coralConfig) {
       coralConfig.disablePoolAutomaticCleanUp();
       coralConfig.disableConnectionSharing();
+      coralConfig.setConnectionTimeOut(m_connectionTimeout);
       // message streaming
       coral::MessageStream::setMsgVerbosity(m_messageLevel);
       m_msgReporter->setOutputLevel(m_messageLevel);
 
       // authentication
-      std::string authServiceName("CORAL/Services/EnvironmentAuthenticationService");
+      m_authenticationService = std::string("CORAL/Services/EnvironmentAuthenticationService");
       std::string authPath = m_authPath;
       // authentication
       if (authPath.empty()) {
@@ -114,12 +118,12 @@ namespace cond {
         servName = "COND/Services/XMLAuthenticationService";
       }
       if (!authPath.empty()) {
-        authServiceName = servName;
+        m_authenticationService = servName;
         coral::Context::instance().PropertyManager().property(cond::auth::COND_AUTH_PATH_PROPERTY)->set(authPath);
-        coral::Context::instance().loadComponent(authServiceName, m_pluginManager);
+        coral::Context::instance().loadComponent(m_authenticationService, m_pluginManager);
       }
 
-      coralConfig.setAuthenticationService(authServiceName);
+      coralConfig.setAuthenticationService(m_authenticationService);
     }
 
     void ConnectionPool::configure() {
@@ -152,7 +156,19 @@ namespace cond {
                                           bool writeCapable) {
       std::shared_ptr<coral::ISessionProxy> coralSession =
           createCoralSession(connectionString, transactionId, writeCapable);
-      return Session(std::make_shared<SessionImpl>(coralSession, connectionString));
+
+      std::string principalName("");
+      if (!m_authenticationService.empty()) {
+        // need to hard-code somewhere the target name...
+        if (m_authenticationService == "COND/Services/RelationalAuthenticationService") {
+          coral::IHandle<coral::IAuthenticationService> authSvc =
+              coral::Context::instance().query<coral::IAuthenticationService>(m_authenticationService);
+          IDbAuthentication* dbAuth = dynamic_cast<IDbAuthentication*>(authSvc.get());
+          principalName = dbAuth->principalName();
+        }
+      }
+
+      return Session(std::make_shared<SessionImpl>(coralSession, connectionString, principalName));
     }
 
     Session ConnectionPool::createSession(const std::string& connectionString, bool writeCapable) {
@@ -170,6 +186,8 @@ namespace cond {
     }
 
     void ConnectionPool::setMessageVerbosity(coral::MsgLevel level) { m_messageLevel = level; }
+
+    void ConnectionPool::setConnectionTimeout(int seconds) { m_connectionTimeout = seconds; }
 
     void ConnectionPool::setLogDestination(Logger& logger) { m_msgReporter->subscribe(logger); }
 

@@ -1,5 +1,6 @@
 #include "DQMOffline/CalibTracker/plugins/SiStripDQMPopConSourceHandler.h"
 #include "CondFormats/SiStripObjects/interface/SiStripBadStrip.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
 
 /**
   @class SiStripBadComponentsDQMService
@@ -12,7 +13,7 @@ public:
   typedef dqm::legacy::MonitorElement MonitorElement;
   typedef dqm::legacy::DQMStore DQMStore;
 
-  explicit SiStripPopConBadComponentsHandlerFromDQM(const edm::ParameterSet& iConfig);
+  explicit SiStripPopConBadComponentsHandlerFromDQM(const edm::ParameterSet& iConfig, edm::ConsumesCollector&& iC);
   ~SiStripPopConBadComponentsHandlerFromDQM() override;
   // interface methods: implemented in template
   void initES(const edm::EventSetup&) override;
@@ -25,20 +26,21 @@ protected:
 private:
   edm::FileInPath fp_;
   SiStripBadStrip m_obj;
+  edm::ESGetToken<TrackerTopology, TrackerTopologyRcd> tTopoToken_;
   const TrackerTopology* trackerTopo_;
 };
 
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
-#include "Geometry/Records/interface/TrackerTopologyRcd.h"
 
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "CalibTracker/SiStripCommon/interface/SiStripDetInfoFileReader.h"
 
-SiStripPopConBadComponentsHandlerFromDQM::SiStripPopConBadComponentsHandlerFromDQM(const edm::ParameterSet& iConfig)
+SiStripPopConBadComponentsHandlerFromDQM::SiStripPopConBadComponentsHandlerFromDQM(const edm::ParameterSet& iConfig,
+                                                                                   edm::ConsumesCollector&& iC)
     : SiStripDQMPopConSourceHandler<SiStripBadStrip>(iConfig),
-      fp_{iConfig.getUntrackedParameter<edm::FileInPath>(
-          "file", edm::FileInPath("CalibTracker/SiStripCommon/data/SiStripDetInfo.dat"))} {
+      fp_{iConfig.getUntrackedParameter<edm::FileInPath>("file",
+                                                         edm::FileInPath(SiStripDetInfoFileReader::kDefaultFile))},
+      tTopoToken_(iC.esConsumes<TrackerTopology, TrackerTopologyRcd, edm::Transition::BeginRun>()) {
   edm::LogInfo("SiStripBadComponentsDQMService") << "[SiStripBadComponentsDQMService::SiStripBadComponentsDQMService]";
 }
 
@@ -47,9 +49,7 @@ SiStripPopConBadComponentsHandlerFromDQM::~SiStripPopConBadComponentsHandlerFrom
 }
 
 void SiStripPopConBadComponentsHandlerFromDQM::initES(const edm::EventSetup& setup) {
-  edm::ESHandle<TrackerTopology> tTopo;
-  setup.get<TrackerTopologyRcd>().get(tTopo);
-  trackerTopo_ = tTopo.product();
+  trackerTopo_ = &setup.getData(tTopoToken_);
 }
 
 std::string SiStripPopConBadComponentsHandlerFromDQM::getMetaDataString() const {
@@ -82,7 +82,7 @@ void SiStripPopConBadComponentsHandlerFromDQM::dqmEndJob(DQMStore::IBooker&, DQM
 
   m_obj = SiStripBadStrip();
 
-  SiStripDetInfoFileReader reader(fp_.fullPath());
+  const auto detInfo = SiStripDetInfoFileReader::read(fp_.fullPath());
 
   getter.cd();
 
@@ -123,7 +123,7 @@ void SiStripPopConBadComponentsHandlerFromDQM::dqmEndJob(DQMStore::IBooker&, DQM
         // for(std::vector<uint32_t>::const_iterator is=BadApvList_.begin(); is!=BadApvList_.end(); ++is){
 
         //   firstBadStrip=(*is)*128;
-        NconsecutiveBadStrips = reader.getNumberOfApvsAndStripLength(detId).first * 128;
+        NconsecutiveBadStrips = detInfo.getNumberOfApvsAndStripLength(detId).first * 128;
 
         theBadStripRange = m_obj.encode(firstBadStrip, NconsecutiveBadStrips, flag);
 

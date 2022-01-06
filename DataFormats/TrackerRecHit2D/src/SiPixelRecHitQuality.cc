@@ -52,3 +52,25 @@ SiPixelRecHitQuality::Packing::Packing() {
 
 //  Initialize the packing format singleton
 const SiPixelRecHitQuality::Packing SiPixelRecHitQuality::thePacking;
+
+void SiPixelRecHitQuality::warningObsolete() {
+  edm::LogWarning("ObsoleteVariable")
+      << "Since 39x, probabilityX and probabilityY have been replaced by probabilityXY and probabilityQ";
+}
+
+void SiPixelRecHitQuality::warningOutOfBoundQbin(int iValue, QualWordType const& iQualWord) {
+  edm::LogWarning("OutOfBounds") << "Qbin outside the bounds of the quality word: Qbin = " << iValue
+                                 << " and QualityWord = " << iQualWord << " --> Now defaulting to Qbin = 0.0";
+}
+
+void SiPixelRecHitQuality::warningOutOfBoundProb(const char* iName, float iProb, QualWordType const& iQualWord) {
+  edm::LogWarning("OutOfBounds") << "Prob" << iName << " outside the bounds of the quality word: Prob" << iName
+                                 << " = 1+" << iProb - 1 << " and QualityWord = " << iQualWord
+                                 << " --> Now defaulting to Prob" << iName << " = 0.0";
+}
+
+void SiPixelRecHitQuality::warningOutOfBoundRaw(const char* iName, int iRaw, QualWordType const& iQualWord) {
+  edm::LogWarning("OutOfBounds") << "Probability" << iName << " outside the bounds of the quality word: Raw = " << iRaw
+                                 << " and QualityWord = " << iQualWord << " --> Now defaulting to Prob" << iName
+                                 << " = 0.0";
+}

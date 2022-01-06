@@ -113,7 +113,7 @@
 // ecal / hcal
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "Geometry/CaloGeometry/interface/CaloSubdetectorGeometry.h"
-#include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
+#include "Geometry/Records/interface/CaloTopologyRecord.h"
 #include "Geometry/CaloTopology/interface/CaloSubdetectorTopology.h"
 #include "Geometry/CaloTopology/interface/EcalTrigTowerConstituentsMap.h"
 #include "Geometry/CaloTopology/interface/HcalTopology.h"
@@ -134,7 +134,6 @@
 #include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
 
 // track associator
-#include "SimTracker/Records/interface/TrackAssociatorRecord.h"
 #include "SimTracker/TrackerHitAssociation/interface/TrackerHitAssociator.h"
 #include "TrackingTools/TrajectoryState/interface/FreeTrajectoryState.h"
 #include "TrackingTools/TrackAssociator/interface/TrackDetectorAssociator.h"

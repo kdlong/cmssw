@@ -203,7 +203,7 @@ void GenericTriggerEventFlag::initRun(const edm::Run& run, const edm::EventSetup
     if (stage2_) {
       l1uGt_->retrieveL1Setup(setup);
 
-      const std::vector<std::pair<std::string, int> > prescales = l1uGt_->prescales();
+      const std::vector<std::pair<std::string, double> > prescales = l1uGt_->prescales();
       for (const auto& ip : prescales)
         algoNames.push_back(ip.first);
     } else {
@@ -717,7 +717,7 @@ std::vector<std::string> GenericTriggerEventFlag::expressionsFromDB(const std::s
           << "Label " << dbLabel_ << " not found in DB for 'AlCaRecoTriggerBitsRcd'";
     return std::vector<std::string>(1, configError_);
   }
-  AlCaRecoTriggerBits const& alCaRecoTriggerBits = setup.get<AlCaRecoTriggerBitsRcd>().get(alCaRecoTriggerBitsToken_);
+  auto const& alCaRecoTriggerBits = setup.getData(alCaRecoTriggerBitsToken_);
   const std::map<std::string, std::string>& expressionMap = alCaRecoTriggerBits.m_alcarecoToTrig;
   std::map<std::string, std::string>::const_iterator listIter = expressionMap.find(key);
   if (listIter == expressionMap.end()) {

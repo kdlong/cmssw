@@ -4,7 +4,7 @@
 //  Description: CSC ESModule for DD4hep
 //              
 //
-// \author Sergio Lo Meo (sergio.lo.meo@cern.ch) following what Ianna Osborne made for DTs (DD4HEP migration)
+// \author Sergio Lo Meo (sergio.lo.meo@cern.ch) following what Ianna Osborne made for DTs (DD4hep migration)
 //         Created:  Thu, 05 March 2020 
 //         Modified: Thu, 04 June 2020, following what made in PR #30047               
 //
@@ -205,6 +205,7 @@ std::shared_ptr<CSCGeometry> CSCGeometryESModule::produce(const MuonGeometryReco
 
 void CSCGeometryESModule::initCSCGeometry_(const MuonGeometryRecord& record, std::shared_ptr<HostType>& host) {
   if (fromDDD_) {
+    edm::LogVerbatim("CSCGeoemtryESModule") << "(0) CSCGeometryESModule  - DDD ";
     host->ifRecordChanges<IdealGeometryRecord>(record, [&host, &record, this](auto const& rec) {
       host->clear();
       edm::ESTransientHandle<DDCompactView> cpv = record.getTransientHandle(cpvToken_);
@@ -213,6 +214,7 @@ void CSCGeometryESModule::initCSCGeometry_(const MuonGeometryRecord& record, std
       builder.build(*host, cpv.product(), mdc);
     });
   } else if (fromDD4hep_) {
+    edm::LogVerbatim("CSCGeoemtryESModule") << "(0) CSCGeometryESModule  - DD4hep ";
     host->ifRecordChanges<IdealGeometryRecord>(record, [&host, &record, this](auto const& rec) {
       host->clear();
       edm::ESTransientHandle<cms::DDCompactView> cpv = record.getTransientHandle(cpvTokendd4hep_);
@@ -228,8 +230,9 @@ void CSCGeometryESModule::initCSCGeometry_(const MuonGeometryRecord& record, std
 
     host->ifRecordChanges<CSCRecoDigiParametersRcd>(record,
                                                     [&recreateGeometry](auto const& rec) { recreateGeometry = true; });
-
+    edm::LogVerbatim("CSCGeoemtryESModule") << "(0) CSCGeometryESModule  - DB recreateGeometry=false ";
     if (recreateGeometry) {
+      edm::LogVerbatim("CSCGeoemtryESModule") << "(0) CSCGeometryESModule  - DB recreateGeometry=true ";
       host->clear();
       const auto& rig = record.get(rigToken_);
       const auto& rdp = record.get(rdpToken_);

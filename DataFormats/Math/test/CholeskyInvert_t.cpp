@@ -94,16 +94,23 @@ void go(bool soa) {
   for (int kk = 0; kk < NKK; ++kk) {
     delta -= (std::chrono::high_resolution_clock::now() - start);
     if (soa)
+#ifdef USE_VECTORIZATION_PRAGMA
 #pragma GCC ivdep
 #ifdef __clang__
 #pragma clang loop vectorize(enable) interleave(enable)
+#endif
 #endif
       for (unsigned int i = 0; i < SIZE; ++i) {
         MapMX<N> m(p + i);
         math::cholesky::invert(m, m);
       }
     else
+#ifdef USE_VECTORIZATION_PRAGMA
 #pragma GCC ivdep
+#ifdef __clang__
+#pragma clang loop vectorize(enable) interleave(enable)
+#endif
+#endif
       for (auto& m : mm) {
         math::cholesky::invert(m, m);
       }
@@ -131,6 +138,7 @@ int main() {
   go<5>(true);
   go<6>(true);
 
-  // go<10>();
+  go<10>(false);
+  go<10>(true);
   return 0;
 }

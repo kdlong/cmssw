@@ -22,14 +22,13 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
 #include "CalibFormats/HcalObjects/interface/HcalDbService.h"
@@ -78,15 +77,16 @@ namespace {
   }
 }  // namespace
 
-class HcalDbAnalyzer : public edm::EDAnalyzer {
+class HcalDbAnalyzer : public edm::one::EDAnalyzer<> {
 public:
   explicit HcalDbAnalyzer(const edm::ParameterSet&);
-  ~HcalDbAnalyzer();
+  ~HcalDbAnalyzer() override = default;
 
-  virtual void analyze(const edm::Event&, const edm::EventSetup&);
+  void analyze(const edm::Event&, const edm::EventSetup&) override;
 
 private:
   // ----------member data ---------------------------
+  edm::ESGetToken<HcalDbService, HcalDbRecord> tok_setup_;
 };
 
 //
@@ -101,13 +101,10 @@ private:
 // constructors and destructor
 //
 HcalDbAnalyzer::HcalDbAnalyzer(const edm::ParameterSet& iConfig) {
+  tok_setup_ = esConsumes<HcalDbService, HcalDbRecord>();
+
   std::cout << "HcalDbAnalyzer::HcalDbAnalyzer->..." << std::endl;
   //now do what ever initialization is needed
-}
-
-HcalDbAnalyzer::~HcalDbAnalyzer() {
-  // do anything here that needs to be done at desctruction time
-  // (e.g. close files, deallocate resources etc.)
 }
 
 //
@@ -117,8 +114,7 @@ HcalDbAnalyzer::~HcalDbAnalyzer() {
 // ------------ method called to produce the data  ------------
 void HcalDbAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   std::cout << "HcalDbAnalyzer::analyze->..." << std::endl;
-  edm::ESHandle<HcalDbService> pSetup;
-  iSetup.get<HcalDbRecord>().get(pSetup);
+  const HcalDbService* pSetup = &iSetup.getData(tok_setup_);
   std::cout << "HcalDbAnalyzer::analyze-> got HcalDbRecord: " << std::endl;
   std::cout << "HcalDbAnalyzer::analyze-> getting information for HB channel eta=1, phi=1, depth=1..." << std::endl;
   HcalDetId cell(HcalBarrel, 1, 1, 1);

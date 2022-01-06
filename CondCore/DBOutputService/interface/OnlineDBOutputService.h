@@ -37,11 +37,11 @@ namespace cond {
 
       //
       template <typename PayloadType>
-      bool writeForNextLumisection(const PayloadType* payload, const std::string& recordName) {
+      bool writeIOVForNextLumisection(const PayloadType& payload, const std::string& recordName) {
         cond::Time_t targetTime = getLastLumiProcessed() + m_latencyInLumisections;
         auto t0 = std::chrono::high_resolution_clock::now();
         logger().logInfo() << "Updating lumisection " << targetTime;
-        cond::Hash payloadId = PoolDBOutputService::writeOne<PayloadType>(payload, targetTime, recordName);
+        cond::Hash payloadId = PoolDBOutputService::writeOneIOV<PayloadType>(payload, targetTime, recordName);
         bool ret = true;
         if (payloadId.empty()) {
           return false;
@@ -73,6 +73,15 @@ namespace cond {
         return ret;
       }
 
+      //
+      template <typename PayloadType>
+      bool writeForNextLumisection(const PayloadType* payloadPtr, const std::string& recordName) {
+        if (!payloadPtr)
+          throwException("Provided payload pointer is invalid.", "OnlineDBOutputService::writeForNextLumisection");
+        std::unique_ptr<const PayloadType> payload(payloadPtr);
+        return writeForNextLumisection<PayloadType>(*payload, recordName);
+      }
+
     private:
       cond::Time_t getLastLumiProcessed();
 
@@ -82,9 +91,9 @@ namespace cond {
       cond::Time_t m_runNumber;
       size_t m_latencyInLumisections;
       std::string m_omsServiceUrl;
-      std::string m_lastLumiUrl;
       std::string m_lastLumiFile;
       std::string m_preLoadConnectionString;
+      std::string m_frontierKey;
       bool m_debug;
 
     };  //OnlineDBOutputService

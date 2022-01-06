@@ -7,6 +7,8 @@
 #include "CondCore/SiPixelPlugins/plugins/SiPixelTemplateDBObject_PayloadInspector.cc"
 #include "CondCore/SiPixelPlugins/plugins/SiPixelGenErrorDBObject_PayloadInspector.cc"
 #include "CondCore/SiPixelPlugins/plugins/SiPixelVCal_PayloadInspector.cc"
+#include "CondCore/SiPixelPlugins/plugins/SiPixelQualityProbabilities_PayloadInspector.cc"
+#include "CondCore/SiPixelPlugins/plugins/SiPixelDynamicInefficiency_PayloadInspector.cc"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
@@ -31,8 +33,8 @@ int main(int argc, char** argv) {
   // Lorentz Angle
 
   std::string tag = "SiPixelLorentzAngle_v11_offline";
-  cond::Time_t start = boost::lexical_cast<unsigned long long>(303790);
-  cond::Time_t end = boost::lexical_cast<unsigned long long>(324245);
+  cond::Time_t start = static_cast<unsigned long long>(303790);
+  cond::Time_t end = static_cast<unsigned long long>(324245);
 
   edm::LogPrint("testSiPixelPayloadInspector") << "## Exercising Lorentz Angle plots " << std::endl;
 
@@ -66,7 +68,7 @@ int main(int argc, char** argv) {
   // 2 tags comparisons
 
   std::string tag2 = "SiPixelLorentzAngle_2016_ultralegacymc_v2";
-  cond::Time_t start2 = boost::lexical_cast<unsigned long long>(1);
+  cond::Time_t start2 = static_cast<unsigned long long>(1);
 
   SiPixelLorentzAngleValueComparisonTwoTags histo6;
   histo6.process(connectionString, PI::mk_input(tag, start, start, tag2, start2, start2));
@@ -79,44 +81,44 @@ int main(int argc, char** argv) {
   // SiPixelQuality
 
   tag = "SiPixelQuality_forDigitizer_phase1_2018_permanentlyBad";
-  start = boost::lexical_cast<unsigned long long>(1);
-  end = boost::lexical_cast<unsigned long long>(1);
+  start = static_cast<unsigned long long>(1);
+  end = static_cast<unsigned long long>(1);
 
   edm::LogPrint("testSiPixelPayloadInspector") << "## Exercising SiPixelQuality plots " << std::endl;
 
   SiPixelBPixQualityMap histo8;
-  histo8.process(connectionString, PI::mk_input(tag, start, start));
+  histo8.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo8.data() << std::endl;
 
   SiPixelFPixQualityMap histo9;
-  histo9.process(connectionString, PI::mk_input(tag, start, start));
+  histo9.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo9.data() << std::endl;
 
   // SiPixelGainCalibrationOffline
 
   tag = "SiPixelGainCalibration_2009runs_express";
-  start = boost::lexical_cast<unsigned long long>(312203);
-  end = boost::lexical_cast<unsigned long long>(312203);
+  start = static_cast<unsigned long long>(312203);
+  end = static_cast<unsigned long long>(312203);
 
   edm::LogPrint("testSiPixelPayloadInspector") << "## Exercising SiPixelGainCalibrationOffline plots " << std::endl;
 
   SiPixelGainCalibrationOfflineGainsValues histo10;
-  histo10.process(connectionString, PI::mk_input(tag, start, start));
+  histo10.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo10.data() << std::endl;
 
   SiPixelGainCalibrationOfflinePedestalsValues histo11;
-  histo11.process(connectionString, PI::mk_input(tag, start, start));
+  histo11.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo11.data() << std::endl;
 
   SiPixelGainCalibrationOfflineGainsByPart histo12;
-  histo12.process(connectionString, PI::mk_input(tag, start, start));
+  histo12.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo12.data() << std::endl;
 
   SiPixelGainCalibrationOfflinePedestalsByPart histo13;
-  histo13.process(connectionString, PI::mk_input(tag, start, start));
+  histo13.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo13.data() << std::endl;
 
-  end = boost::lexical_cast<unsigned long long>(326851);
+  end = static_cast<unsigned long long>(326851);
 
   SiPixelGainCalibOfflinePedestalComparisonSingleTag histo14;
   histo14.process(connectionString, PI::mk_input(tag, start, end));
@@ -130,7 +132,7 @@ int main(int argc, char** argv) {
   histo16.process(connectionString, PI::mk_input(tag, end, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo16.data() << std::endl;
 
-  boost::python::dict inputs;
+  py::dict inputs;
   inputs["SetLog"] = "True";  // sets to true, 1,True,Yes will work
 
   SiPixelGainCalibrationOfflineGainsValuesBarrel histo17;
@@ -141,17 +143,17 @@ int main(int argc, char** argv) {
   // SiPixelTemplates
 
   tag = "SiPixelTemplateDBObject38Tv3_express";
-  start = boost::lexical_cast<unsigned long long>(326083);
-  end = boost::lexical_cast<unsigned long long>(326083);
+  start = static_cast<unsigned long long>(326083);
+  end = static_cast<unsigned long long>(326083);
 
   edm::LogPrint("testSiPixelPayloadInspector") << "## Exercising SiPixelTemplates plots " << std::endl;
 
   SiPixelTemplateIDsBPixMap histo18;
-  histo18.process(connectionString, PI::mk_input(tag, end, end));
+  histo18.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo18.data() << std::endl;
 
   SiPixelTemplateLAFPixMap histo19;
-  histo19.process(connectionString, PI::mk_input(tag, end, end));
+  histo19.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo19.data() << std::endl;
 
   // SiPixelVCal
@@ -175,18 +177,49 @@ int main(int argc, char** argv) {
   // SiPixelGenErrors
 
   tag = "SiPixelGenErrorDBObject_phase1_BoR3_HV350_Tr2000";
-  start = boost::lexical_cast<unsigned long long>(1);
-  end = boost::lexical_cast<unsigned long long>(1);
+  start = static_cast<unsigned long long>(1);
+  end = static_cast<unsigned long long>(1);
 
   edm::LogPrint("testSiPixelPayloadInspector") << "## Exercising SiPixelGenErrors plots " << std::endl;
 
   SiPixelGenErrorHeaderTable histo23;
-  histo23.process(connectionString, PI::mk_input(tag, end, end));
+  histo23.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo23.data() << std::endl;
 
   SiPixelGenErrorIDsBPixMap histo24;
-  histo24.process(connectionString, PI::mk_input(tag, end, end));
+  histo24.process(connectionString, PI::mk_input(tag, start, end));
   edm::LogPrint("testSiPixelPayloadInspector") << histo24.data() << std::endl;
+
+  // SiPixelQualityProbabilities
+
+  tag = "SiPixelQualityProbabilities_UltraLegacy2018_v0_mc";
+  start = static_cast<unsigned long long>(1);
+  end = static_cast<unsigned long long>(1);
+
+  edm::LogPrint("testSiPixelPayloadInspector") << "## Exercising SiPixelQualityProbabilities plots " << std::endl;
+
+  SiPixelQualityProbabilitiesScenariosCount histo25;
+  histo25.process(connectionString, PI::mk_input(tag, start, end));
+  edm::LogPrint("testSiPixelPayloadInspector") << histo25.data() << std::endl;
+
+  // SiPixelDynamicInefficiency
+
+  tag = "SiPixelDynamicInefficiency_PhaseI_v9";
+  start = static_cast<unsigned long long>(1);
+  end = static_cast<unsigned long long>(1);
+
+  edm::LogPrint("testSiPixelPayloadInspector") << "## Exercising SiPixeDynamicInefficiency plots " << std::endl;
+
+  SiPixelFullIneffROCfromDynIneffMap histo26;
+  histo26.process(connectionString, PI::mk_input(tag, start, end));
+  edm::LogPrint("testSiPixelPayloadInspector") << histo26.data() << std::endl;
+
+  tag2 = "SiPixelDynamicInefficiency_PhaseI_v6";
+  start2 = static_cast<unsigned long long>(1);
+
+  SiPixelFullIneffROCsMapCompareTwoTags histo27;
+  histo27.process(connectionString, PI::mk_input(tag, start, start, tag2, start2, start2));
+  edm::LogPrint("testSiPixelPayloadInspector") << histo27.data() << std::endl;
 
   inputs.clear();
 #if PY_MAJOR_VERSION >= 3

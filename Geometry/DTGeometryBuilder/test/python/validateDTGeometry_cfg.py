@@ -1,3 +1,7 @@
+# This config does not work with the version of DD4hep that uses Geant4 units. This config performs a comparison
+# with a reference geometry which might use the ROOT units convention. This mismatch somehow triggers a ROOT exception.
+# We don't currently have a fix for this problem.
+
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process('VALID')
@@ -38,7 +42,7 @@ process.DDSpecParRegistryESProducer = cms.ESProducer("DDSpecParRegistryESProduce
                                                      appendToDataLabel = cms.string('')
                                                      )
 
-process.muonGeometryConstants.fromDD4Hep = True
+process.muonGeometryConstants.fromDD4hep = True
 
 
 process.valid = cms.EDAnalyzer("DTGeometryValidate",

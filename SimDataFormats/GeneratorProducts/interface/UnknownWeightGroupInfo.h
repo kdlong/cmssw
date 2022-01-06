@@ -16,7 +16,6 @@ namespace gen {
       isWellFormed_ = false;
     }
     ~UnknownWeightGroupInfo() override {}
-    UnknownWeightGroupInfo(const UnknownWeightGroupInfo& other) : WeightGroupInfo(other) { copy(other); }
     UnknownWeightGroupInfo* clone() const override;
   };
 }  // namespace gen

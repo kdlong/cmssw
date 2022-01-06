@@ -52,6 +52,12 @@ public:
   void bookHistograms(DQMStore::IBooker&, edm::Run const&, edm::EventSetup const&, Histograms&) const override;
 
 protected:
+  // ES Tokens
+  const edm::ESGetToken<TrackerTopology, TrackerTopologyRcd> tTopoEsToken;
+
+  std::unique_ptr<ParametersDefinerForTP> parametersDefinerTP_;
+  const bool parametersDefinerIsCosmic_;
+
   //these are used by MTVGenPs
   // MTV-specific data members
   std::vector<edm::InputTag> associators;
@@ -72,9 +78,6 @@ protected:
   edm::EDGetTokenT<edm::ValueMap<reco::DeDxData>> m_dEdx1Tag;
   edm::EDGetTokenT<edm::ValueMap<reco::DeDxData>> m_dEdx2Tag;
 
-  std::string parametersDefiner;
-
-  const bool parametersDefinerIsCosmic_;
   const bool ignoremissingtkcollection_;
   const bool useAssociators_;
   const bool calculateDrSingleCollection_;
@@ -99,7 +102,6 @@ private:
   void tpParametersAndSelection(
       const Histograms& histograms,
       const TrackingParticleRefVector& tPCeff,
-      const ParametersDefinerForTP& parametersDefinerTP,
       const edm::Event& event,
       const edm::EventSetup& setup,
       const reco::BeamSpot& bs,

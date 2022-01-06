@@ -2,15 +2,16 @@
 #include "L1Trigger/TrackFindingTracklet/interface/Settings.h"
 #include "L1Trigger/TrackFindingTracklet/interface/Tracklet.h"
 #include "L1Trigger/TrackFindingTracklet/interface/Stub.h"
-#include <iomanip>
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
+
+#include <iomanip>
+#include <filesystem>
 
 using namespace std;
 using namespace trklet;
 
-CandidateMatchMemory::CandidateMatchMemory(string name, Settings const& settings, unsigned int iSector)
-    : MemoryBase(name, settings, iSector) {}
+CandidateMatchMemory::CandidateMatchMemory(string name, Settings const& settings) : MemoryBase(name, settings) {}
 
 void CandidateMatchMemory::addMatch(std::pair<Tracklet*, int> tracklet, const Stub* stub) {
   std::pair<std::pair<Tracklet*, int>, const Stub*> tmp(tracklet, stub);
@@ -26,18 +27,16 @@ void CandidateMatchMemory::addMatch(std::pair<Tracklet*, int> tracklet, const St
   matches_.push_back(tmp);
 }
 
-void CandidateMatchMemory::writeCM(bool first) {
+void CandidateMatchMemory::writeCM(bool first, unsigned int iSector) {
+  iSector_ = iSector;
+  const string dirM = settings_.memPath() + "Matches/";
+
   std::ostringstream oss;
-  oss << "../data/MemPrints/Matches/CandidateMatches_" << getName() << "_" << std::setfill('0') << std::setw(2)
-      << (iSector_ + 1) << ".dat";
+  oss << dirM << "CandidateMatches_" << getName() << "_" << std::setfill('0') << std::setw(2) << (iSector_ + 1)
+      << ".dat";
   auto const& fname = oss.str();
 
-  if (first) {
-    bx_ = 0;
-    event_ = 1;
-    out_.open(fname.c_str());
-  } else
-    out_.open(fname.c_str(), std::ofstream::app);
+  openfile(out_, first, dirM, fname, __FILE__, __LINE__);
 
   out_ << "BX = " << (bitset<3>)bx_ << " Event : " << event_ << endl;
 

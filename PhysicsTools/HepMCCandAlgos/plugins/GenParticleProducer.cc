@@ -10,6 +10,7 @@
 #include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/Utilities/interface/ESGetToken.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "SimDataFormats/CrossingFrame/interface/CrossingFrame.h"
@@ -146,7 +147,7 @@ static const double mmToCm = 0.1;
 static const double mmToNs = 1.0 / 299792458e-6;
 
 GenParticleProducer::GenParticleProducer(const ParameterSet& cfg)
-    : abortOnUnknownPDGCode_(cfg.getUntrackedParameter<bool>("abortOnUnknownPDGCode", true)),
+    : abortOnUnknownPDGCode_(false),
       saveBarCodes_(cfg.getUntrackedParameter<bool>("saveBarCodes", false)),
       doSubEvent_(cfg.getUntrackedParameter<bool>("doSubEvent", false)),
       useCF_(cfg.getUntrackedParameter<bool>("useCrossingFrame", false)) {

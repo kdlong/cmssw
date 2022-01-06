@@ -14,9 +14,8 @@
 #include <vector>
 #include <algorithm>
 
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -44,7 +43,7 @@
 #include "TH1.h"
 #include "TH2.h"
 
-class HcalGainsCheck : public edm::EDAnalyzer {
+class HcalGainsCheck : public edm::one::EDAnalyzer<> {
 public:
   HcalGainsCheck(edm::ParameterSet const& ps);
 
@@ -65,6 +64,9 @@ private:
   bool emapflag;
   bool validategainsflag;
   double epsilon;
+  edm::ESGetToken<HcalGains, HcalGainsRcd> m_tok1;
+  edm::ESGetToken<HcalGains, HcalGainsRcd> m_tok2;
+  edm::ESGetToken<HcalElectronicsMap, HcalElectronicsMapRcd> m_tokmap;
 
   TFile* f;
   //plots:

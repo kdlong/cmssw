@@ -1,3 +1,4 @@
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "Fireworks/Calo/interface/FWHeatmapProxyBuilderTemplate.h"
 #include "Fireworks/Core/interface/FWEventItem.h"
 #include "Fireworks/Core/interface/FWGeometry.h"
@@ -5,6 +6,9 @@
 #include "DataFormats/HGCalReco/interface/Trackster.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/ForwardDetId/interface/HGCSiliconDetId.h"
+#include "DataFormats/ForwardDetId/interface/HGCScintillatorDetId.h"
+#include "DataFormats/DetId/interface/DetId.h"
 
 #include "TEveBoxSet.h"
 #include "TEveStraightLineSet.h"
@@ -16,22 +20,22 @@ public:
 
   REGISTER_PROXYBUILDER_METHODS();
 
-private:
-  edm::Handle<edm::ValueMap<std::pair<float, float>>> TimeValueMapHandle;
-  edm::Handle<std::vector<reco::CaloCluster>> layerClustersHandle;
-  double timeLowerBound, timeUpperBound;
-  long layer;
-  double saturation_energy;
-  bool heatmap;
-  bool z_plus;
-  bool z_minus;
-  bool enableTimeFilter;
-  bool enableSeedLines;
-  bool enablePositionLines;
-  bool enableEdges;
-
   FWTracksterHitsProxyBuilder(const FWTracksterHitsProxyBuilder &) = delete;                   // stop default
   const FWTracksterHitsProxyBuilder &operator=(const FWTracksterHitsProxyBuilder &) = delete;  // stop default
+
+private:
+  edm::Handle<edm::ValueMap<std::pair<float, float>>> TimeValueMapHandle_;
+  edm::Handle<std::vector<reco::CaloCluster>> layerClustersHandle_;
+  double timeLowerBound_, timeUpperBound_;
+  long layer_;
+  double saturation_energy_;
+  bool heatmap_;
+  bool z_plus_;
+  bool z_minus_;
+  bool enableTimeFilter_;
+  bool enableSeedLines_;
+  bool enablePositionLines_;
+  bool enableEdges_;
 
   void setItem(const FWEventItem *iItem) override;
 
@@ -56,30 +60,32 @@ void FWTracksterHitsProxyBuilder::setItem(const FWEventItem *iItem) {
 }
 
 void FWTracksterHitsProxyBuilder::build(const FWEventItem *iItem, TEveElementList *product, const FWViewContext *vc) {
-  iItem->getEvent()->getByLabel(edm::InputTag("hgcalLayerClusters", "timeLayerCluster"), TimeValueMapHandle);
-  iItem->getEvent()->getByLabel(edm::InputTag("hgcalLayerClusters"), layerClustersHandle);
-  if (TimeValueMapHandle.isValid()) {
-    timeLowerBound = std::min(item()->getConfig()->value<double>("TimeLowerBound(ns)"),
-                              item()->getConfig()->value<double>("TimeUpperBound(ns)"));
-    timeUpperBound = std::max(item()->getConfig()->value<double>("TimeLowerBound(ns)"),
-                              item()->getConfig()->value<double>("TimeUpperBound(ns)"));
+  iItem->getEvent()->getByLabel(edm::InputTag("hgcalLayerClusters", "timeLayerCluster"), TimeValueMapHandle_);
+  iItem->getEvent()->getByLabel(edm::InputTag("hgcalLayerClusters"), layerClustersHandle_);
+  if (TimeValueMapHandle_.isValid()) {
+    timeLowerBound_ = item()->getConfig()->value<double>("TimeLowerBound(ns)");
+    timeUpperBound_ = item()->getConfig()->value<double>("TimeUpperBound(ns)");
+    if (timeLowerBound_ > timeUpperBound_) {
+      edm::LogWarning("InvalidParameters")
+          << "lower time bound is larger than upper time bound. Maybe opposite is desired?";
+    }
   } else {
-    std::cerr << "Warning: couldn't locate 'timeLayerCluster' ValueMap in root file." << std::endl;
+    edm::LogWarning("DataNotFound|InvalidData") << "couldn't locate 'timeLayerCluster' ValueMap in root file.";
   }
 
-  if (!layerClustersHandle.isValid()) {
-    std::cerr << "Warning: couldn't locate 'hgcalLayerClusters' collection in root file." << std::endl;
+  if (!layerClustersHandle_.isValid()) {
+    edm::LogWarning("DataNotFound|InvalidData") << "couldn't locate 'timeLayerCluster' ValueMap in root file.";
   }
 
-  layer = item()->getConfig()->value<long>("Layer");
-  saturation_energy = item()->getConfig()->value<double>("EnergyCutOff");
-  heatmap = item()->getConfig()->value<bool>("Heatmap");
-  z_plus = item()->getConfig()->value<bool>("Z+");
-  z_minus = item()->getConfig()->value<bool>("Z-");
-  enableTimeFilter = item()->getConfig()->value<bool>("EnableTimeFilter");
-  enableSeedLines = item()->getConfig()->value<bool>("EnableSeedLines");
-  enablePositionLines = item()->getConfig()->value<bool>("EnablePositionLines");
-  enableEdges = item()->getConfig()->value<bool>("EnableEdges");
+  layer_ = item()->getConfig()->value<long>("Layer");
+  saturation_energy_ = item()->getConfig()->value<double>("EnergyCutOff");
+  heatmap_ = item()->getConfig()->value<bool>("Heatmap");
+  z_plus_ = item()->getConfig()->value<bool>("Z+");
+  z_minus_ = item()->getConfig()->value<bool>("Z-");
+  enableTimeFilter_ = item()->getConfig()->value<bool>("EnableTimeFilter");
+  enableSeedLines_ = item()->getConfig()->value<bool>("EnableSeedLines");
+  enablePositionLines_ = item()->getConfig()->value<bool>("EnablePositionLines");
+  enableEdges_ = item()->getConfig()->value<bool>("EnableEdges");
 
   FWHeatmapProxyBuilderTemplate::build(iItem, product, vc);
 }
@@ -88,31 +94,43 @@ void FWTracksterHitsProxyBuilder::build(const ticl::Trackster &iData,
                                         unsigned int iIndex,
                                         TEveElement &oItemHolder,
                                         const FWViewContext *) {
-  if (enableTimeFilter && TimeValueMapHandle.isValid()) {
-    const float time = TimeValueMapHandle->get(iIndex).first;
-    if (time < timeLowerBound || time > timeUpperBound)
+  if (enableTimeFilter_ && TimeValueMapHandle_.isValid()) {
+    const float time = TimeValueMapHandle_->get(iIndex).first;
+    if (time < timeLowerBound_ || time > timeUpperBound_)
       return;
   }
 
   const ticl::Trackster &trackster = iData;
   const size_t N = trackster.vertices().size();
-  const std::vector<reco::CaloCluster> &layerClusters = *layerClustersHandle;
+  const std::vector<reco::CaloCluster> &layerClusters = *layerClustersHandle_;
 
-  bool h_hex(false);
   TEveBoxSet *hex_boxset = new TEveBoxSet();
-  if (!heatmap)
+  if (!heatmap_)
     hex_boxset->UseSingleColor();
   hex_boxset->SetPickable(true);
   hex_boxset->Reset(TEveBoxSet::kBT_Hex, true, 64);
-  hex_boxset->SetAntiFlick(true);
 
-  bool h_box(false);
   TEveBoxSet *boxset = new TEveBoxSet();
-  if (!heatmap)
+  if (!heatmap_)
     boxset->UseSingleColor();
   boxset->SetPickable(true);
   boxset->Reset(TEveBoxSet::kBT_FreeBox, true, 64);
-  boxset->SetAntiFlick(true);
+
+  TEveStraightLineSet *seed_marker = nullptr;
+  if (enableSeedLines_) {
+    seed_marker = new TEveStraightLineSet("seeds");
+    seed_marker->SetLineWidth(2);
+    seed_marker->SetLineColor(kOrange + 10);
+    seed_marker->GetLinePlex().Reset(sizeof(TEveStraightLineSet::Line_t), 2 * N);
+  }
+
+  TEveStraightLineSet *position_marker = nullptr;
+  if (enablePositionLines_) {
+    position_marker = new TEveStraightLineSet("positions");
+    position_marker->SetLineWidth(2);
+    position_marker->SetLineColor(kOrange);
+    position_marker->GetLinePlex().Reset(sizeof(TEveStraightLineSet::Line_t), 2 * N);
+  }
 
   for (size_t i = 0; i < N; ++i) {
     const reco::CaloCluster layerCluster = layerClusters[trackster.vertices(i)];
@@ -121,19 +139,11 @@ void FWTracksterHitsProxyBuilder::build(const ticl::Trackster &iData,
     for (std::vector<std::pair<DetId, float>>::iterator it = clusterDetIds.begin(), itEnd = clusterDetIds.end();
          it != itEnd;
          ++it) {
-      const uint8_t type = ((it->first >> 28) & 0xF);
-
       const float *corners = item()->getGeom()->getCorners(it->first);
       if (corners == nullptr)
         continue;
 
-      if (heatmap && hitmap->find(it->first) == hitmap->end())
-        continue;
-
-      const bool z = (it->first >> 25) & 0x1;
-
-      // discard everything thats not at the side that we are intersted in
-      if (((z_plus & z_minus) != 1) && (((z_plus | z_minus) == 0) || !(z == z_minus || z == !z_plus)))
+      if (heatmap_ && hitmap->find(it->first) == hitmap->end())
         continue;
 
       const float *parameters = item()->getGeom()->getParameters(it->first);
@@ -143,69 +153,59 @@ void FWTracksterHitsProxyBuilder::build(const ticl::Trackster &iData,
         continue;
 
       const int total_points = parameters[0];
-      const bool isScintillator = (total_points == 4);
+      const int layer = parameters[1];
+      const int zside = parameters[2];
+      const bool isSilicon = parameters[3];
 
-      uint8_t ll = layer;
-      if (layer > 0) {
-        if (layer > 28) {
-          if (type == 8) {
-            continue;
-          }
-          ll -= 28;
-        } else {
-          if (type != 8) {
-            continue;
-          }
-        }
+      // discard everything that's not at the side that we are intersted in
+      auto const z_selection_is_on = z_plus_ ^ z_minus_;
+      auto const z_plus_selection_ok = z_plus_ && (zside == 1);
+      auto const z_minus_selection_ok = z_minus_ && (zside == -1);
+      if (!z_minus_ && !z_plus_)
+        break;
+      if (z_selection_is_on && !(z_plus_selection_ok || z_minus_selection_ok))
+        break;
 
-        if (ll != ((it->first >> (isScintillator ? 17 : 20)) & 0x1F))
-          continue;
-      }
+      if (layer_ > 0 && layer != layer_)
+        break;
 
       // seed and cluster position
       if (layerCluster.seed().rawId() == it->first.rawId()) {
-        const float crossScale = 1.0f + fmin(layerCluster.energy(), 5.0f);
-        if (enableSeedLines) {
-          TEveStraightLineSet *marker = new TEveStraightLineSet;
-          marker->SetLineWidth(1);
-
+        const float crossScale = 0.2f + fmin(layerCluster.energy(), 5.0f);
+        if (enableSeedLines_) {
           // center of RecHit
           const float center[3] = {corners[total_points * 3 + 0],
                                    corners[total_points * 3 + 1],
                                    corners[total_points * 3 + 2] + shapes[3] * 0.5f};
 
           // draw 3D cross
-          marker->AddLine(center[0] - crossScale, center[1], center[2], center[0] + crossScale, center[1], center[2]);
-          marker->AddLine(center[0], center[1] - crossScale, center[2], center[0], center[1] + crossScale, center[2]);
-          marker->AddLine(center[0], center[1], center[2] - crossScale, center[0], center[1], center[2] + crossScale);
-
-          oItemHolder.AddElement(marker);
+          seed_marker->AddLine(
+              center[0] - crossScale, center[1], center[2], center[0] + crossScale, center[1], center[2]);
+          seed_marker->AddLine(
+              center[0], center[1] - crossScale, center[2], center[0], center[1] + crossScale, center[2]);
         }
 
-        if (enablePositionLines) {
-          TEveStraightLineSet *position_marker = new TEveStraightLineSet;
-          position_marker->SetLineWidth(2);
-          position_marker->SetLineColor(kOrange);
+        if (enablePositionLines_) {
           auto const &pos = layerCluster.position();
           const float position_crossScale = crossScale * 0.5;
           position_marker->AddLine(
               pos.x() - position_crossScale, pos.y(), pos.z(), pos.x() + position_crossScale, pos.y(), pos.z());
           position_marker->AddLine(
               pos.x(), pos.y() - position_crossScale, pos.z(), pos.x(), pos.y() + position_crossScale, pos.z());
-
-          oItemHolder.AddElement(position_marker);
         }
       }
 
       const float energy =
           fmin((item()->getConfig()->value<bool>("Cluster(0)/RecHit(1)") ? hitmap->at(it->first)->energy()
                                                                          : layerCluster.energy()) /
-                   saturation_energy,
+                   saturation_energy_,
                1.0f);
       const uint8_t colorFactor = gradient_steps * energy;
+      auto transparency = item()->modelInfo(iIndex).displayProperties().transparency();
+      UChar_t alpha = (255 * (100 - transparency)) / 100;
 
       // Scintillator
-      if (isScintillator) {
+      if (!isSilicon) {
         const int total_vertices = 3 * total_points;
 
         std::vector<float> pnts(24);
@@ -219,12 +219,11 @@ void FWTracksterHitsProxyBuilder::build(const ticl::Trackster &iData,
           pnts[(i * 3 + 2) + total_vertices] = corners[i * 3 + 2] + shapes[3];
         }
         boxset->AddBox(&pnts[0]);
-        if (heatmap) {
-          energy ? boxset->DigitColor(gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor])
-                 : boxset->DigitColor(64, 64, 64);
+        if (heatmap_) {
+          energy
+              ? boxset->DigitColor(gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor], alpha)
+              : boxset->DigitColor(64, 64, 64, alpha);
         }
-
-        h_box = true;
       }
       // Silicon
       else {
@@ -234,61 +233,72 @@ void FWTracksterHitsProxyBuilder::build(const ticl::Trackster &iData,
         float centerY = (corners[7] + corners[7 + offset]) / 2;
         float radius = fabs(corners[6] - corners[6 + offset]) / 2;
         hex_boxset->AddHex(TEveVector(centerX, centerY, corners[2]), radius, 90.0, shapes[3]);
-        if (heatmap) {
-          energy ? hex_boxset->DigitColor(gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor])
-                 : hex_boxset->DigitColor(64, 64, 64);
+        if (heatmap_) {
+          energy ? hex_boxset->DigitColor(
+                       gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor], alpha)
+                 : hex_boxset->DigitColor(64, 64, 64, alpha);
+        } else {
+          hex_boxset->CSCApplyMainColorToMatchingChildren();
+          hex_boxset->CSCApplyMainTransparencyToMatchingChildren();
+          hex_boxset->SetMainColor(item()->modelInfo(iIndex).displayProperties().color());
+          hex_boxset->SetMainTransparency(item()->defaultDisplayProperties().transparency());
         }
-
-        h_hex = true;
       }
-    }
-  }
+    }  // End of loop over rechits of a single layercluster
+  }    // End loop over the layerclusters of the trackster
 
-  if (enableEdges) {
+  hex_boxset->RefitPlex();
+  boxset->RefitPlex();
+  setupAddElement(hex_boxset, &oItemHolder);
+  setupAddElement(boxset, &oItemHolder);
+
+  if (enableSeedLines_)
+    oItemHolder.AddElement(seed_marker);
+
+  if (enablePositionLines_)
+    oItemHolder.AddElement(position_marker);
+
+  if (enableEdges_) {
     auto &edges = trackster.edges();
+
+    TEveStraightLineSet *adjacent_marker = new TEveStraightLineSet("adj_edges");
+    adjacent_marker->SetLineWidth(2);
+    adjacent_marker->SetLineColor(kYellow);
+    adjacent_marker->GetLinePlex().Reset(sizeof(TEveStraightLineSet::Line_t), edges.size());
+
+    TEveStraightLineSet *non_adjacent_marker = new TEveStraightLineSet("non_adj_edges");
+    non_adjacent_marker->SetLineWidth(2);
+    non_adjacent_marker->SetLineColor(kRed);
+    non_adjacent_marker->GetLinePlex().Reset(sizeof(TEveStraightLineSet::Line_t), edges.size());
 
     for (auto edge : edges) {
       auto doublet = std::make_pair(layerClusters[edge[0]], layerClusters[edge[1]]);
-      TEveStraightLineSet *marker = new TEveStraightLineSet;
-      marker->SetLineWidth(2);
-      marker->SetLineColor(kRed);
+
+      int layerIn = item()->getGeom()->getParameters(doublet.first.seed())[1];
+      int layerOut = item()->getGeom()->getParameters(doublet.second.seed())[1];
+
+      const bool isAdjacent = std::abs(layerOut - layerIn) == 1;
 
       // draw 3D cross
-      marker->AddLine(doublet.first.x(),
-                      doublet.first.y(),
-                      doublet.first.z(),
-                      doublet.second.x(),
-                      doublet.second.y(),
-                      doublet.second.z());
-
-      oItemHolder.AddElement(marker);
-    }
-  }
-
-  if (h_hex) {
-    hex_boxset->RefitPlex();
-
-    hex_boxset->CSCTakeAnyParentAsMaster();
-    if (!heatmap) {
-      hex_boxset->CSCApplyMainColorToMatchingChildren();
-      hex_boxset->CSCApplyMainTransparencyToMatchingChildren();
-      hex_boxset->SetMainColor(item()->modelInfo(iIndex).displayProperties().color());
-      hex_boxset->SetMainTransparency(item()->defaultDisplayProperties().transparency());
-    }
-    oItemHolder.AddElement(hex_boxset);
-  }
-
-  if (h_box) {
-    boxset->RefitPlex();
-
-    boxset->CSCTakeAnyParentAsMaster();
-    if (!heatmap) {
-      boxset->CSCApplyMainColorToMatchingChildren();
-      boxset->CSCApplyMainTransparencyToMatchingChildren();
-      boxset->SetMainColor(item()->modelInfo(iIndex).displayProperties().color());
-      boxset->SetMainTransparency(item()->defaultDisplayProperties().transparency());
-    }
-    oItemHolder.AddElement(boxset);
+      if (layer_ == 0 || std::abs(layerIn - layer_) == 0 || std::abs(layerOut - layer_) == 0) {
+        if (isAdjacent)
+          adjacent_marker->AddLine(doublet.first.x(),
+                                   doublet.first.y(),
+                                   doublet.first.z(),
+                                   doublet.second.x(),
+                                   doublet.second.y(),
+                                   doublet.second.z());
+        else
+          non_adjacent_marker->AddLine(doublet.first.x(),
+                                       doublet.first.y(),
+                                       doublet.first.z(),
+                                       doublet.second.x(),
+                                       doublet.second.y(),
+                                       doublet.second.z());
+      }
+    }  // End of loop over all edges of the trackster
+    oItemHolder.AddElement(adjacent_marker);
+    oItemHolder.AddElement(non_adjacent_marker);
   }
 }
 

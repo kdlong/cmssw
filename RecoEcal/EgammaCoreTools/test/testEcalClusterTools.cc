@@ -23,12 +23,11 @@ Implementation:
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 #include "DataFormats/EgammaReco/interface/BasicClusterFwd.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "Geometry/CaloTopology/interface/CaloTopology.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
-#include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
+#include "Geometry/Records/interface/CaloTopologyRecord.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
 
 #include <memory>
@@ -36,16 +35,19 @@ Implementation:
 class testEcalClusterTools : public edm::one::EDAnalyzer<> {
 public:
   explicit testEcalClusterTools(const edm::ParameterSet&);
+  ~testEcalClusterTools() override = default;
+
+  void analyze(const edm::Event&, const edm::EventSetup&) override;
 
 private:
-  virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
-
   using ClusterTools = noZS::EcalClusterTools;  // alternatively just EcalClusterTools
 
   const edm::EDGetToken barrelClusterToken_;
   const edm::EDGetToken endcapClusterToken_;
   const edm::EDGetToken barrelRecHitToken_;
   const edm::EDGetToken endcapRecHitToken_;
+  const edm::ESGetToken<CaloGeometry, CaloGeometryRecord> geometryToken_;
+  const edm::ESGetToken<CaloTopology, CaloTopologyRecord> topologyToken_;
 };
 
 testEcalClusterTools::testEcalClusterTools(const edm::ParameterSet& ps)
@@ -54,7 +56,9 @@ testEcalClusterTools::testEcalClusterTools(const edm::ParameterSet& ps)
       endcapClusterToken_(
           consumes<reco::BasicClusterCollection>(ps.getParameter<edm::InputTag>("endcapClusterCollection"))),
       barrelRecHitToken_(consumes<EcalRecHitCollection>(ps.getParameter<edm::InputTag>("barrelRecHitCollection"))),
-      endcapRecHitToken_(consumes<EcalRecHitCollection>(ps.getParameter<edm::InputTag>("endcapRecHitCollection"))) {}
+      endcapRecHitToken_(consumes<EcalRecHitCollection>(ps.getParameter<edm::InputTag>("endcapRecHitCollection"))),
+      geometryToken_(esConsumes()),
+      topologyToken_(esConsumes()) {}
 
 void testEcalClusterTools::analyze(const edm::Event& ev, const edm::EventSetup& es) {
   edm::Handle<EcalRecHitCollection> pEBRecHits;
@@ -73,13 +77,8 @@ void testEcalClusterTools::analyze(const edm::Event& ev, const edm::EventSetup& 
   ev.getByToken(endcapClusterToken_, pEEClusters);
   const reco::BasicClusterCollection* eeClusters = pEEClusters.product();
 
-  edm::ESHandle<CaloGeometry> pGeometry;
-  es.get<CaloGeometryRecord>().get(pGeometry);
-  const CaloGeometry* geometry = pGeometry.product();
-
-  edm::ESHandle<CaloTopology> pTopology;
-  es.get<CaloTopologyRecord>().get(pTopology);
-  const CaloTopology* topology = pTopology.product();
+  const auto* geometry = &es.getData(geometryToken_);
+  const auto* topology = &es.getData(topologyToken_);
 
   std::cout << "========== BARREL ==========" << std::endl;
   for (auto const& clus : *ebClusters) {
@@ -116,9 +115,9 @@ void testEcalClusterTools::analyze(const edm::Event& ev, const edm::EventSetup& 
     std::cout << std::endl;
     std::vector<float> vLat = ClusterTools::lat(clus, ebRecHits, geometry);
     std::cout << "lat...................... " << vLat[0] << " " << vLat[1] << " " << vLat[2] << std::endl;
-    std::vector<float> vCov = ClusterTools::covariances(clus, ebRecHits, topology, geometry);
+    const auto& vCov = ClusterTools::covariances(clus, ebRecHits, topology, geometry);
     std::cout << "covariances.............. " << vCov[0] << " " << vCov[1] << " " << vCov[2] << std::endl;
-    std::vector<float> vLocCov = ClusterTools::localCovariances(clus, ebRecHits, topology);
+    const auto& vLocCov = ClusterTools::localCovariances(clus, ebRecHits, topology);
     std::cout << "local covariances........ " << vLocCov[0] << " " << vLocCov[1] << " " << vLocCov[2] << std::endl;
     std::cout << "zernike20................ " << ClusterTools::zernike20(clus, ebRecHits, geometry) << std::endl;
     std::cout << "zernike42................ " << ClusterTools::zernike42(clus, ebRecHits, geometry) << std::endl;
@@ -150,9 +149,9 @@ void testEcalClusterTools::analyze(const edm::Event& ev, const edm::EventSetup& 
     std::cout << "e2nd..................... " << ClusterTools::e2nd(clus, eeRecHits) << std::endl;
     std::vector<float> vLat = ClusterTools::lat(clus, eeRecHits, geometry);
     std::cout << "lat...................... " << vLat[0] << " " << vLat[1] << " " << vLat[2] << std::endl;
-    std::vector<float> vCov = ClusterTools::covariances(clus, eeRecHits, topology, geometry);
+    const auto& vCov = ClusterTools::covariances(clus, eeRecHits, topology, geometry);
     std::cout << "covariances.............. " << vCov[0] << " " << vCov[1] << " " << vCov[2] << std::endl;
-    std::vector<float> vLocCov = ClusterTools::localCovariances(clus, eeRecHits, topology);
+    const auto& vLocCov = ClusterTools::localCovariances(clus, eeRecHits, topology);
     std::cout << "local covariances........ " << vLocCov[0] << " " << vLocCov[1] << " " << vLocCov[2] << std::endl;
     std::cout << "zernike20................ " << ClusterTools::zernike20(clus, eeRecHits, geometry) << std::endl;
     std::cout << "zernike42................ " << ClusterTools::zernike42(clus, eeRecHits, geometry) << std::endl;

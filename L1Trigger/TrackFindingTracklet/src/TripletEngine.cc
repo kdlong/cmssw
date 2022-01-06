@@ -10,8 +10,8 @@
 using namespace std;
 using namespace trklet;
 
-TripletEngine::TripletEngine(string name, Settings const &settings, Globals *global, unsigned int iSector)
-    : ProcessBase(name, settings, global, iSector) {
+TripletEngine::TripletEngine(string name, Settings const &settings, Globals *global)
+    : ProcessBase(name, settings, global) {
   stubpairs_.clear();
   thirdvmstubs_.clear();
   layer1_ = 0;
@@ -65,7 +65,8 @@ TripletEngine::TripletEngine(string name, Settings const &settings, Globals *glo
     secondphibits_ = settings_.nfinephi(1, iSeed_);
     thirdphibits_ = settings_.nfinephi(2, iSeed_);
   }
-  readTables();
+  if (settings_.enableTripletTables() && !settings_.writeTripletTables())
+    readTables();
 }
 
 TripletEngine::~TripletEngine() {
@@ -201,35 +202,38 @@ void TripletEngine::execute() {
               index = (index << secondbend.nbits()) + secondbend.value();
               index = (index << thirdbend.nbits()) + thirdbend.value();
 
-              if (index >= table_.size())
-                table_.resize(index + 1, false);
-
-              if (!table_[index]) {
+              if ((settings_.enableTripletTables() && !settings_.writeTripletTables()) &&
+                  (index >= table_.size() || !table_[index])) {
                 if (settings_.debugTracklet()) {
                   edm::LogVerbatim("Tracklet")
                       << "Stub pair rejected because of stub pt cut bends : "
-                      << benddecode(secondvmstub.bend().value(), secondvmstub.isPSmodule()) << " "
-                      << benddecode(thirdvmstub.bend().value(), thirdvmstub.isPSmodule());
+                      << settings_.benddecode(secondvmstub.bend().value(), layer2_ - 1, secondvmstub.isPSmodule())
+                      << " " << settings_.benddecode(thirdvmstub.bend().value(), layer3_ - 1, thirdvmstub.isPSmodule());
                 }
-                if (!settings_.writeTripletTables())
-                  continue;
+
+                //FIXME temporarily commented out until bend table fixed
+                //if (!settings_.writeTripletTables())
+                //  continue;
               }
-              if (settings_.writeTripletTables())
+              if (settings_.writeTripletTables()) {
+                if (index >= table_.size())
+                  table_.resize(index + 1, false);
                 table_[index] = true;
 
-              const unsigned spIndex = stubpairs_.at(i)->getIndex(j);
-              const string &tedName = stubpairs_.at(i)->getTEDName(j);
-              if (!tmpSPTable_.count(tedName))
-                tmpSPTable_[tedName];
-              if (spIndex >= tmpSPTable_.at(tedName).size())
-                tmpSPTable_.at(tedName).resize(spIndex + 1);
-              tmpSPTable_.at(tedName).at(spIndex).push_back(stubpairs_.at(i)->getName());
+                const unsigned spIndex = stubpairs_.at(i)->getIndex(j);
+                const string &tedName = stubpairs_.at(i)->getTEDName(j);
+                if (!tmpSPTable_.count(tedName))
+                  tmpSPTable_[tedName];
+                if (spIndex >= tmpSPTable_.at(tedName).size())
+                  tmpSPTable_.at(tedName).resize(spIndex + 1);
+                tmpSPTable_.at(tedName).at(spIndex).push_back(stubpairs_.at(i)->getName());
+              }
 
               if (settings_.debugTracklet())
                 edm::LogVerbatim("Tracklet") << "Adding layer-layer pair in " << getName();
               if (settings_.writeMonitorData("Seeds")) {
                 ofstream fout("seeds.txt", ofstream::app);
-                fout << __FILE__ << ":" << __LINE__ << " " << name_ << "_" << iSector_ << " " << iSeed_ << endl;
+                fout << __FILE__ << ":" << __LINE__ << " " << name_ << " " << iSeed_ << endl;
                 fout.close();
               }
               stubtriplets_->addStubs(thirdvmstub.stub(),
@@ -284,33 +288,35 @@ void TripletEngine::execute() {
               index = (index << secondbend.nbits()) + secondbend.value();
               index = (index << thirdbend.nbits()) + thirdbend.value();
 
-              if (index >= table_.size())
-                table_.resize(index + 1, false);
-
-              if (!table_[index]) {
+              if ((settings_.enableTripletTables() && !settings_.writeTripletTables()) &&
+                  (index >= table_.size() || !table_[index])) {
                 if (settings_.debugTracklet()) {
                   edm::LogVerbatim("Tracklet")
                       << "Stub triplet rejected because of stub pt cut bends : "
-                      << benddecode(secondvmstub.bend().value(), secondvmstub.isPSmodule()) << " "
-                      << benddecode(thirdvmstub.bend().value(), thirdvmstub.isPSmodule());
+                      << settings_.benddecode(secondvmstub.bend().value(), disk2_ + 5, secondvmstub.isPSmodule()) << " "
+                      << settings_.benddecode(thirdvmstub.bend().value(), layer3_ - 1, thirdvmstub.isPSmodule());
                 }
+                continue;
               }
-              if (settings_.writeTripletTables())
+              if (settings_.writeTripletTables()) {
+                if (index >= table_.size())
+                  table_.resize(index + 1, false);
                 table_[index] = true;
 
-              const unsigned spIndex = stubpairs_.at(i)->getIndex(j);
-              const string &tedName = stubpairs_.at(i)->getTEDName(j);
-              if (!tmpSPTable_.count(tedName))
-                tmpSPTable_[tedName];
-              if (spIndex >= tmpSPTable_.at(tedName).size())
-                tmpSPTable_.at(tedName).resize(spIndex + 1);
-              tmpSPTable_.at(tedName).at(spIndex).push_back(stubpairs_.at(i)->getName());
+                const unsigned spIndex = stubpairs_.at(i)->getIndex(j);
+                const string &tedName = stubpairs_.at(i)->getTEDName(j);
+                if (!tmpSPTable_.count(tedName))
+                  tmpSPTable_[tedName];
+                if (spIndex >= tmpSPTable_.at(tedName).size())
+                  tmpSPTable_.at(tedName).resize(spIndex + 1);
+                tmpSPTable_.at(tedName).at(spIndex).push_back(stubpairs_.at(i)->getName());
+              }
 
               if (settings_.debugTracklet())
                 edm::LogVerbatim("Tracklet") << "Adding layer-disk pair in " << getName();
               if (settings_.writeMonitorData("Seeds")) {
                 ofstream fout("seeds.txt", ofstream::app);
-                fout << __FILE__ << ":" << __LINE__ << " " << name_ << "_" << iSector_ << " " << iSeed_ << endl;
+                fout << __FILE__ << ":" << __LINE__ << " " << name_ << " " << iSeed_ << endl;
                 fout.close();
               }
               stubtriplets_->addStubs(thirdvmstub.stub(),
@@ -366,33 +372,35 @@ void TripletEngine::execute() {
               index = (index << secondbend.nbits()) + secondbend.value();
               index = (index << thirdbend.nbits()) + thirdbend.value();
 
-              if (index >= table_.size())
-                table_.resize(index + 1, false);
-
-              if (!table_[index]) {
+              if ((settings_.enableTripletTables() && !settings_.writeTripletTables()) &&
+                  (index >= table_.size() || !table_[index])) {
                 if (settings_.debugTracklet()) {
                   edm::LogVerbatim("Tracklet")
                       << "Stub pair rejected because of stub pt cut bends : "
-                      << benddecode(secondvmstub.bend().value(), secondvmstub.isPSmodule()) << " "
-                      << benddecode(thirdvmstub.bend().value(), thirdvmstub.isPSmodule());
+                      << settings_.benddecode(secondvmstub.bend().value(), layer2_ - 1, secondvmstub.isPSmodule())
+                      << " " << settings_.benddecode(thirdvmstub.bend().value(), disk3_ + 5, thirdvmstub.isPSmodule());
                 }
+                continue;
               }
-              if (settings_.writeTripletTables())
+              if (settings_.writeTripletTables()) {
+                if (index >= table_.size())
+                  table_.resize(index + 1, false);
                 table_[index] = true;
 
-              const unsigned spIndex = stubpairs_.at(i)->getIndex(j);
-              const string &tedName = stubpairs_.at(i)->getTEDName(j);
-              if (!tmpSPTable_.count(tedName))
-                tmpSPTable_[tedName];
-              if (spIndex >= tmpSPTable_.at(tedName).size())
-                tmpSPTable_.at(tedName).resize(spIndex + 1);
-              tmpSPTable_.at(tedName).at(spIndex).push_back(stubpairs_.at(i)->getName());
+                const unsigned spIndex = stubpairs_.at(i)->getIndex(j);
+                const string &tedName = stubpairs_.at(i)->getTEDName(j);
+                if (!tmpSPTable_.count(tedName))
+                  tmpSPTable_[tedName];
+                if (spIndex >= tmpSPTable_.at(tedName).size())
+                  tmpSPTable_.at(tedName).resize(spIndex + 1);
+                tmpSPTable_.at(tedName).at(spIndex).push_back(stubpairs_.at(i)->getName());
+              }
 
               if (settings_.debugTracklet())
                 edm::LogVerbatim("Tracklet") << "Adding layer-disk pair in " << getName();
               if (settings_.writeMonitorData("Seeds")) {
                 ofstream fout("seeds.txt", ofstream::app);
-                fout << __FILE__ << ":" << __LINE__ << " " << name_ << "_" << iSector_ << " " << iSeed_ << endl;
+                fout << __FILE__ << ":" << __LINE__ << " " << name_ << " " << iSeed_ << endl;
                 fout.close();
               }
               stubtriplets_->addStubs(thirdvmstub.stub(),
@@ -455,16 +463,16 @@ void TripletEngine::writeTables() {
   ofstream fout;
   stringstream tableName;
 
-  tableName << "table/table_" << name_ << "_" << iSector_ << ".txt";
+  tableName << "table/table_" << name_ << ".txt";
 
   fout.open(tableName.str(), ofstream::out);
-  for (const auto &entry : table_)
+  for (const auto entry : table_)
     fout << entry << endl;
   fout.close();
 
   for (const auto &tedName : spTable_) {
     tableName.str("");
-    tableName << "table/table_" << tedName.first << "_" << name_ << "_" << iSector_ << ".txt";
+    tableName << "table/table_" << tedName.first << "_" << name_ << ".txt";
 
     fout.open(tableName.str(), ofstream::out);
     for (const auto &entry : tedName.second) {

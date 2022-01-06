@@ -7,13 +7,12 @@
  *
  */
 
-#include <DQM/DTMonitorClient/src/DTOccupancyTestML.h>
+#include "DQM/DTMonitorClient/src/DTOccupancyTestML.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Framework/interface/LuminosityBlock.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "Geometry/DTGeometry/interface/DTGeometry.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -27,7 +26,8 @@
 using namespace edm;
 using namespace std;
 
-DTOccupancyTestML::DTOccupancyTestML(const edm::ParameterSet& ps) {
+DTOccupancyTestML::DTOccupancyTestML(const edm::ParameterSet& ps)
+    : muonGeomToken_(esConsumes<edm::Transition::BeginRun>()) {
   LogVerbatim("DTDQM|DTMonitorClient|DTOccupancyTestML") << "[DTOccupancyTestML]: Constructor";
 
   // Get the DQM service
@@ -68,7 +68,7 @@ void DTOccupancyTestML::beginRun(const edm::Run& run, const EventSetup& context)
   LogVerbatim("DTDQM|DTMonitorClient|DTOccupancyTestML") << "[DTOccupancyTestML]: BeginRun";
 
   // Get the geometry
-  context.get<MuonGeometryRecord>().get(muonGeom);
+  muonGeom = &context.getData(muonGeomToken_);
 }
 
 void DTOccupancyTestML::dqmEndLuminosityBlock(DQMStore::IBooker& ibooker,
@@ -355,7 +355,9 @@ std::vector<float> DTOccupancyTestML::interpolateLayers(std::vector<float> const
   float step = static_cast<float>(size) / targetSize;
   std::vector<float> reshapedInput(targetSize);
 
-  for (int i = 0; i < targetSize; i++) {
+  int limitInLoop = inputs.size();
+  limitInLoop = std::min(limitInLoop, targetSize) - 1;
+  for (int i = 0; i < limitInLoop; i++) {
     interpolationFloor = static_cast<int>(std::floor(interpolationPoint));
     // Interpolating here
     reshapedInput.at(i) =

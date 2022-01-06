@@ -39,6 +39,7 @@ protected:
   edm::InputTag _tagReport;
   edm::EDGetTokenT<FEDRawDataCollection> _tokFEDs;
   edm::EDGetTokenT<HcalUnpackerReport> _tokReport;
+  edm::ESGetToken<HcalDbService, HcalDbRecord> hcalDbServiceToken_;
 
   //	flag vector
   std::vector<hcaldqm::flag::Flag> _vflags;
@@ -61,7 +62,6 @@ protected:
   hcaldqm::filter::HashFilter _filter_FEDsuTCA;
 
   //	Bad Quality
-  hcaldqm::Container2D _cBadQuality_FEDVME;
   hcaldqm::Container2D _cBadQuality_FEDuTCA;
   hcaldqm::Container2D _cBadQuality_depth;
   hcaldqm::Container2D _cBadQualityLS_depth;  // online only
@@ -70,9 +70,6 @@ protected:
   hcaldqm::ContainerProf1D _cDataSizevsLS_FED;  // online only
 
   //	Mismatches
-  hcaldqm::Container2D _cEvnMsm_ElectronicsVME;
-  hcaldqm::Container2D _cBcnMsm_ElectronicsVME;
-  hcaldqm::Container2D _cOrnMsm_ElectronicsVME;
   hcaldqm::Container2D _cEvnMsm_ElectronicsuTCA;
   hcaldqm::Container2D _cBcnMsm_ElectronicsuTCA;
   hcaldqm::Container2D _cOrnMsm_ElectronicsuTCA;

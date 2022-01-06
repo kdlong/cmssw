@@ -11,7 +11,7 @@ namespace trklet {
 
   class ProcessBase {
   public:
-    ProcessBase(std::string name, Settings const& settings, Globals* global, unsigned int iSector);
+    ProcessBase(std::string name, Settings const& settings, Globals* global);
 
     virtual ~ProcessBase() = default;
 
@@ -32,14 +32,10 @@ namespace trklet {
     //This function processes the name of a TE module to determine the layerdisks and iseed
     void initLayerDisksandISeed(unsigned int& layerdisk1, unsigned int& layerdisk2, unsigned int& iSeed);
 
-    unsigned int getISeed(std::string name);
+    unsigned int getISeed(const std::string& name);
 
   protected:
     std::string name_;
-    unsigned int iSector_;
-
-    double phimin_;
-    double phimax_;
 
     Settings const& settings_;
     Globals* globals_;

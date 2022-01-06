@@ -19,6 +19,10 @@ simEmtfDigisMC = cms.EDProducer("L1TMuonEndCapTrackProducer",
     # Era (options: 'Run2_2016', 'Run2_2017', 'Run2_2018')
     Era = cms.string('Run2_2018'),
 
+    # New Run 3 CSC TPs using CCLUT algorithm
+    UseRun3CCLUT_OTMB = cms.bool(False),
+    UseRun3CCLUT_TMB  = cms.bool(False),
+
     # Input collections
     # Three options for CSCInput
     #   * 'simCscTriggerPrimitiveDigis','MPCSORTED' : simulated trigger primitives (LCTs) from re-emulating CSC digis
@@ -121,6 +125,8 @@ simEmtfDigisMC = cms.EDProducer("L1TMuonEndCapTrackProducer",
         BugGMTPhi       = cms.bool(False), # Some drift in uGMT phi conversion, off by up to a few degrees
         PromoteMode7    = cms.bool(False), # Assign station 2-3-4 tracks with |eta| > 1.6 SingleMu quality
         ModeQualVer     = cms.int32(2),    # Version 2 contains modified mode-quality mapping for 2018
+
+        ProtobufFileName = cms.string('model_graph.displ.5.pb'), # Protobuf file name to be used by NN based pT assignment
     ),
 
 )
@@ -155,3 +161,7 @@ stage2L1Trigger_2017.toModify(simEmtfDigis, RPCEnable = cms.bool(True), Era = cm
 ## Era: Run2_2018
 from Configuration.Eras.Modifier_stage2L1Trigger_2018_cff import stage2L1Trigger_2018
 stage2L1Trigger_2018.toModify(simEmtfDigis, RPCEnable = cms.bool(True), Era = cms.string('Run2_2018'))
+
+## Era: Run3_2021
+from Configuration.Eras.Modifier_stage2L1Trigger_2021_cff import stage2L1Trigger_2021
+stage2L1Trigger_2021.toModify(simEmtfDigis, RPCEnable = cms.bool(True), UseRun3CCLUT_OTMB = cms.bool(False), Era = cms.string('Run3_2021'))

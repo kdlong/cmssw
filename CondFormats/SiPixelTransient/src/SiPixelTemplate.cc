@@ -104,8 +104,9 @@
 #ifndef SI_PIXEL_TEMPLATE_STANDALONE
 #include "CondFormats/SiPixelTransient/interface/SiPixelTemplate.h"
 #include "CondFormats/SiPixelTransient/interface/SimplePixel.h"
-#include "FWCore/ParameterSet/interface/FileInPath.h"
+#include "FWCore/Utilities/interface/FileInPath.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Utilities/interface/isFinite.h"
 #define LOGERROR(x) LogError(x)
 #define LOGINFO(x) LogInfo(x)
 #define LOGWARNING(x) LogWarning(x)
@@ -235,9 +236,9 @@ bool SiPixelTemplate::pushfile(int filenum, std::vector<SiPixelTemplateStore>& p
 
     // next, layout the 1-d/2-d structures needed to store template
 
-    theCurrentTemp.cotbetaY = new float[theCurrentTemp.head.NTy];
-    theCurrentTemp.cotbetaX = new float[theCurrentTemp.head.NTyx];
-    theCurrentTemp.cotalphaX = new float[theCurrentTemp.head.NTxx];
+    theCurrentTemp.cotbetaY = std::vector<float>(theCurrentTemp.head.NTy);
+    theCurrentTemp.cotbetaX = std::vector<float>(theCurrentTemp.head.NTyx);
+    theCurrentTemp.cotalphaX = std::vector<float>(theCurrentTemp.head.NTxx);
 
     theCurrentTemp.enty.resize(boost::extents[theCurrentTemp.head.NTy]);
 
@@ -814,9 +815,9 @@ bool SiPixelTemplate::pushfile(const SiPixelTemplateDBObject& dbobject, std::vec
 #ifdef SI_PIXEL_TEMPLATE_USE_BOOST
 
     // next, layout the 1-d/2-d structures needed to store template
-    theCurrentTemp.cotbetaY = new float[theCurrentTemp.head.NTy];
-    theCurrentTemp.cotbetaX = new float[theCurrentTemp.head.NTyx];
-    theCurrentTemp.cotalphaX = new float[theCurrentTemp.head.NTxx];
+    theCurrentTemp.cotbetaY = std::vector<float>(theCurrentTemp.head.NTy);
+    theCurrentTemp.cotbetaX = std::vector<float>(theCurrentTemp.head.NTyx);
+    theCurrentTemp.cotalphaX = std::vector<float>(theCurrentTemp.head.NTxx);
     theCurrentTemp.enty.resize(boost::extents[theCurrentTemp.head.NTy]);
     theCurrentTemp.entx.resize(boost::extents[theCurrentTemp.head.NTyx][theCurrentTemp.head.NTxx]);
 
@@ -1391,6 +1392,12 @@ bool SiPixelTemplate::interpolate(int id, float cotalpha, float cotbeta, float l
     if (index_id_ < 0 || index_id_ >= (int)thePixelTemp_.size()) {
       throw cms::Exception("DataCorrupt")
           << "SiPixelTemplate::interpolate can't find needed template ID = " << id << std::endl;
+    }
+
+    //check for nan's
+    if (!edm::isFinite(cotalpha) || !edm::isFinite(cotbeta)) {
+      success_ = false;
+      return success_;
     }
 #else
     assert(index_id_ >= 0 && index_id_ < (int)thePixelTemp_.size());
@@ -3153,18 +3160,18 @@ int SiPixelTemplate::qbin(int id,
   auto yxratio = 0.f;
 
   {
-    auto j = std::lower_bound(templ.cotbetaX, templ.cotbetaX + Nyx, acotb);
-    if (j == templ.cotbetaX + Nyx) {
+    auto j = std::lower_bound(templ.cotbetaX.begin(), templ.cotbetaX.begin() + Nyx, acotb);
+    if (j == templ.cotbetaX.begin() + Nyx) {
       --j;
       yxratio = 1.f;
-    } else if (j == templ.cotbetaX) {
+    } else if (j == templ.cotbetaX.begin()) {
       ++j;
       yxratio = 0.f;
     } else {
       yxratio = (acotb - (*(j - 1))) / ((*j) - (*(j - 1)));
     }
 
-    iyhigh = j - templ.cotbetaX;
+    iyhigh = j - templ.cotbetaX.begin();
     iylow = iyhigh - 1;
   }
 
@@ -3173,18 +3180,18 @@ int SiPixelTemplate::qbin(int id,
   auto xxratio = 0.f;
 
   {
-    auto j = std::lower_bound(templ.cotalphaX, templ.cotalphaX + Nxx, cota);
-    if (j == templ.cotalphaX + Nxx) {
+    auto j = std::lower_bound(templ.cotalphaX.begin(), templ.cotalphaX.begin() + Nxx, cota);
+    if (j == templ.cotalphaX.begin() + Nxx) {
       --j;
       xxratio = 1.f;
-    } else if (j == templ.cotalphaX) {
+    } else if (j == templ.cotalphaX.begin()) {
       ++j;
       xxratio = 0.f;
     } else {
       xxratio = (cota - (*(j - 1))) / ((*j) - (*(j - 1)));
     }
 
-    ihigh = j - templ.cotalphaX;
+    ihigh = j - templ.cotalphaX.begin();
     ilow = ihigh - 1;
   }
 

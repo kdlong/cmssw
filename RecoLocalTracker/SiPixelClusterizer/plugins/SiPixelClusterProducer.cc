@@ -14,6 +14,7 @@
 // Our own stuff
 #include "SiPixelClusterProducer.h"
 #include "PixelThresholdClusterizer.h"
+#include "PixelThresholdClusterizerForBricked.h"
 
 // Geometry
 #include "Geometry/CommonDetUnit/interface/PixelGeomDetUnit.h"
@@ -59,11 +60,11 @@ SiPixelClusterProducer::SiPixelClusterProducer(edm::ParameterSet const& conf)
 
   const auto& payloadType = conf.getParameter<std::string>("payloadType");
   if (payloadType == "HLT")
-    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationForHLTService>(conf);
+    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationForHLTService>(conf, consumesCollector());
   else if (payloadType == "Offline")
-    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationOfflineService>(conf);
+    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationOfflineService>(conf, consumesCollector());
   else if (payloadType == "Full")
-    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationService>(conf);
+    theSiPixelGainCalibration_ = std::make_unique<SiPixelGainCalibrationService>(conf, consumesCollector());
 
   //--- Make the algorithm(s) according to what the user specified
   //--- in the ParameterSet.
@@ -122,6 +123,14 @@ void SiPixelClusterProducer::produce(edm::Event& e, const edm::EventSetup& es) {
 
   // Step D: write output to file
   output->shrink_to_fit();
+
+  // set sequential identifier
+  for (auto& clusters : *output) {
+    uint16_t id = 0;
+    for (auto& cluster : clusters) {
+      cluster.setOriginalId(id++);
+    }
+  }
   e.put(tPutPixelClusters, std::move(output));
 }
 
@@ -133,6 +142,9 @@ void SiPixelClusterProducer::produce(edm::Event& e, const edm::EventSetup& es) {
 void SiPixelClusterProducer::setupClusterizer(const edm::ParameterSet& conf) {
   if (clusterMode_ == "PixelThresholdReclusterizer" || clusterMode_ == "PixelThresholdClusterizer") {
     clusterizer_ = std::make_unique<PixelThresholdClusterizer>(conf);
+    clusterizer_->setSiPixelGainCalibrationService(theSiPixelGainCalibration_.get());
+  } else if (clusterMode_ == "PixelThresholdClusterizerForBricked") {
+    clusterizer_ = std::make_unique<PixelThresholdClusterizerForBricked>(conf);
     clusterizer_->setSiPixelGainCalibrationService(theSiPixelGainCalibration_.get());
   } else {
     throw cms::Exception("Configuration") << "[SiPixelClusterProducer]:"
@@ -153,15 +165,14 @@ void SiPixelClusterProducer::run(const T& input,
   int numberOfClusters = 0;
 
   // Iterate on detector units
-  typename T::const_iterator DSViter = input.begin();
-  for (; DSViter != input.end(); DSViter++) {
+  for (auto const& dsv : input) {
     ++numberOfDetUnits;
 
     //  LogDebug takes very long time, get rid off.
-    //LogDebug("SiStripClusterizer") << "[SiPixelClusterProducer::run] DetID" << DSViter->id;
+    //LogDebug("SiStripClusterizer") << "[SiPixelClusterProducer::run] DetID" << dsv.id;
 
     std::vector<short> badChannels;
-    DetId detIdObject(DSViter->detId());
+    DetId detIdObject(dsv.detId());
 
     // Comment: At the moment the clusterizer depends on geometry
     // to access information as the pixel topology (number of columns
@@ -177,8 +188,8 @@ void SiPixelClusterProducer::run(const T& input,
     {
       // Produce clusters for this DetUnit and store them in
       // a DetSet
-      edmNew::DetSetVector<SiPixelCluster>::FastFiller spc(output, DSViter->detId());
-      clusterizer_->clusterizeDetUnit(*DSViter, pixDet, tTopo_, badChannels, spc);
+      edmNew::DetSetVector<SiPixelCluster>::FastFiller spc(output, dsv.detId());
+      clusterizer_->clusterizeDetUnit(dsv, pixDet, tTopo_, badChannels, spc);
       if (spc.empty()) {
         spc.abort();
       } else {

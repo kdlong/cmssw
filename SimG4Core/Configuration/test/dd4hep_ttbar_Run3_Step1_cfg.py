@@ -10,7 +10,7 @@ process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
-process.load('Configuration.Geometry.GeometryDD4hepExtended2021_cff')
+process.load('Configuration.Geometry.GeometryDD4hepExtended2021Reco_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.Generator_cff')
 process.load('IOMC.EventVertexGenerators.VtxSmearedHLLHC14TeV_cfi')
@@ -123,7 +123,6 @@ process.generator = cms.EDFilter("Pythia8GeneratorFilter",
             'Main:timesAllowErrors = 10000', 
             'Check:epTolErr = 0.01', 
             'Beams:setProductionScalesFromLHEF = off', 
-            'SLHA:keepSM = on', 
             'SLHA:minMassSM = 1000.', 
             'ParticleDecays:limitTau0 = on', 
             'ParticleDecays:tau0Max = 10', 

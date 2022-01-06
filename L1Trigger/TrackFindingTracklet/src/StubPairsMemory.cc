@@ -1,25 +1,22 @@
 #include "L1Trigger/TrackFindingTracklet/interface/StubPairsMemory.h"
 #include "L1Trigger/TrackFindingTracklet/interface/VMStubTE.h"
 #include <iomanip>
+#include <filesystem>
 
 using namespace std;
 using namespace trklet;
 
-StubPairsMemory::StubPairsMemory(string name, Settings const& settings, unsigned int iSector)
-    : MemoryBase(name, settings, iSector) {}
+StubPairsMemory::StubPairsMemory(string name, Settings const& settings) : MemoryBase(name, settings) {}
 
-void StubPairsMemory::writeSP(bool first) {
+void StubPairsMemory::writeSP(bool first, unsigned int iSector) {
+  iSector_ = iSector;
+  const string dirSP = settings_.memPath() + "StubPairs/";
+
   std::ostringstream oss;
-  oss << "../data/MemPrints/StubPairs/StubPairs_" << getName() << "_" << std::setfill('0') << std::setw(2)
-      << (iSector_ + 1) << ".dat";
+  oss << dirSP << "StubPairs_" << getName() << "_" << std::setfill('0') << std::setw(2) << (iSector_ + 1) << ".dat";
   auto const& fname = oss.str();
 
-  if (first) {
-    bx_ = 0;
-    event_ = 1;
-    out_.open(fname.c_str());
-  } else
-    out_.open(fname.c_str(), std::ofstream::app);
+  openfile(out_, first, dirSP, fname, __FILE__, __LINE__);
 
   out_ << "BX = " << (bitset<3>)bx_ << " Event : " << event_ << endl;
 

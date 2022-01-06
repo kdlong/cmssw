@@ -3,13 +3,13 @@
 
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Common/interface/Ref.h"
-#include "DataFormats/RecoCandidate/interface/TrackAssociation.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "SimDataFormats/Associations/interface/TrackAssociation.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
 #include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
@@ -36,6 +36,21 @@ public:
   MuonAssociatorByHitsHelper(const edm::ParameterSet &conf);
 
   struct Resources {
+    Resources(TrackerTopology const *tTopo,
+              TrackerHitAssociator const *trackerHitAssoc,
+              CSCHitAssociator const *cscHitAssoc,
+              DTHitAssociator const *dtHitAssoc,
+              RPCHitAssociator const *rpcHitAssoc,
+              GEMHitAssociator const *gemHitAssoc,
+              std::function<void(const TrackHitsCollection &, const TrackingParticleCollection &)> diagnostics)
+        : tTopo_(tTopo),
+          trackerHitAssoc_(trackerHitAssoc),
+          cscHitAssoc_(cscHitAssoc),
+          dtHitAssoc_(dtHitAssoc),
+          rpcHitAssoc_(rpcHitAssoc),
+          gemHitAssoc_(gemHitAssoc),
+          diagnostics_(diagnostics) {}
+
     TrackerTopology const *tTopo_;
     TrackerHitAssociator const *trackerHitAssoc_;
     CSCHitAssociator const *cscHitAssoc_;
@@ -100,6 +115,7 @@ private:
 
   const bool includeZeroHitMuons;
   const bool acceptOneStubMatchings;
+  const bool rejectBadGlobal;
   bool UseTracker;
   bool UseMuon;
   const bool AbsoluteNumberOfHits_track;

@@ -17,7 +17,7 @@ process.load('GeneratorInterface.Core.genFilterSummary_cff')
 process.load('Configuration.StandardSequences.SimIdeal_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.load('Configuration.Geometry.GeometryExtended2021_cff') # there w
+process.load('Configuration.Geometry.GeometryExtended2021Reco_cff')
 
 if hasattr(process,'MessageLogger'):
     process.MessageLogger.EcalGeom=dict()
@@ -93,60 +93,57 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2021_realistic', '')
 
 process.generator = cms.EDFilter("Pythia8GeneratorFilter",
-    PythiaParameters = cms.PSet(
-        parameterSets = cms.vstring(
-            'pythia8CommonSettings', 
-            'pythia8CP5Settings', 
-            'processParameters'
-        ),
-        processParameters = cms.vstring(
-            'WeakSingleBoson:ffbar2gmZ = on', 
-            '23:onMode = off', 
-            '23:onIfAny = 13', 
-            'PhaseSpace:mHatMin = 75.'
-        ),
-        pythia8CP5Settings = cms.vstring(
-            'Tune:pp 14', 
-            'Tune:ee 7', 
-            'MultipartonInteractions:ecmPow=0.03344', 
-            'MultipartonInteractions:bProfile=2', 
-            'MultipartonInteractions:pT0Ref=1.41', 
-            'MultipartonInteractions:coreRadius=0.7634', 
-            'MultipartonInteractions:coreFraction=0.63', 
-            'ColourReconnection:range=5.176', 
-            'SigmaTotal:zeroAXB=off', 
-            'SpaceShower:alphaSorder=2', 
-            'SpaceShower:alphaSvalue=0.118', 
-            'SigmaProcess:alphaSvalue=0.118', 
-            'SigmaProcess:alphaSorder=2', 
-            'MultipartonInteractions:alphaSvalue=0.118', 
-            'MultipartonInteractions:alphaSorder=2', 
-            'TimeShower:alphaSorder=2', 
-            'TimeShower:alphaSvalue=0.118', 
-            'SigmaTotal:mode = 0', 
-            'SigmaTotal:sigmaEl = 21.89', 
-            'SigmaTotal:sigmaTot = 100.309', 
-            'PDF:pSet=LHAPDF6:NNPDF31_nnlo_as_0118'
-        ),
-        pythia8CommonSettings = cms.vstring(
-            'Tune:preferLHAPDF = 2', 
-            'Main:timesAllowErrors = 10000', 
-            'Check:epTolErr = 0.01', 
-            'Beams:setProductionScalesFromLHEF = off', 
-            'SLHA:keepSM = on', 
-            'SLHA:minMassSM = 1000.', 
-            'ParticleDecays:limitTau0 = on', 
-            'ParticleDecays:tau0Max = 10', 
-            'ParticleDecays:allowPhotonRadiation = on'
-        )
-    ),
-    comEnergy = cms.double(14000.0),
-    filterEfficiency = cms.untracked.double(1.0),
-    maxEventsToPrint = cms.untracked.int32(0),
-    pythiaHepMCVerbosity = cms.untracked.bool(False),
-    pythiaPylistVerbosity = cms.untracked.int32(0)
+                                 pythiaHepMCVerbosity = cms.untracked.bool(False),
+                                 maxEventsToPrint = cms.untracked.int32(0),
+                                 pythiaPylistVerbosity = cms.untracked.int32(0),
+                                 filterEfficiency = cms.untracked.double(1.0),
+                                 comEnergy = cms.double(14000.0),
+                                 PythiaParameters = cms.PSet(
+                                     pythia8CommonSettings = cms.vstring(
+                                         'Tune:preferLHAPDF = 2',
+                                         'Main:timesAllowErrors = 10000',
+                                         'Check:epTolErr = 0.01',
+                                         'Beams:setProductionScalesFromLHEF = off',
+                                         'SLHA:minMassSM = 1000.',
+                                         'ParticleDecays:limitTau0 = on',
+                                         'ParticleDecays:tau0Max = 10',
+                                        'ParticleDecays:allowPhotonRadiation = on',
+                                     ),
+                                     pythia8CP5Settings = cms.vstring(
+                                         'Tune:pp 14',
+                                         'Tune:ee 7',
+                                         'MultipartonInteractions:ecmPow=0.03344',
+                                         'MultipartonInteractions:bProfile=2',
+                                         'MultipartonInteractions:pT0Ref=1.41',
+                                         'MultipartonInteractions:coreRadius=0.7634',
+                                         'MultipartonInteractions:coreFraction=0.63',
+                                         'ColourReconnection:range=5.176',
+                                         'SigmaTotal:zeroAXB=off',
+                                         'SpaceShower:alphaSorder=2',
+                                         'SpaceShower:alphaSvalue=0.118',
+                                         'SigmaProcess:alphaSvalue=0.118',
+                                         'SigmaProcess:alphaSorder=2',
+                                         'MultipartonInteractions:alphaSvalue=0.118',
+                                         'MultipartonInteractions:alphaSorder=2',
+                                         'TimeShower:alphaSorder=2',
+                                         'TimeShower:alphaSvalue=0.118',
+                                         'SigmaTotal:mode = 0',
+                                         'SigmaTotal:sigmaEl = 21.89',
+                                         'SigmaTotal:sigmaTot = 100.309',
+                                         'PDF:pSet=LHAPDF6:NNPDF31_nnlo_as_0118',
+                                     ),
+                                     processParameters = cms.vstring(
+                                         'WeakSingleBoson:ffbar2gmZ = on',
+                                         '23:onMode = off',
+                                         '23:onIfAny = 13',
+                                         'PhaseSpace:mHatMin = 75.',
+                                     ),
+                                     parameterSets = cms.vstring('pythia8CommonSettings',
+                                                                 'pythia8CP5Settings',
+                                                                 'processParameters',
+                                                             )
+                                 )
 )
-
 
 process.mumugenfilter = cms.EDFilter("MCParticlePairFilter",
     MaxEta = cms.untracked.vdouble(4.0, 4.0),

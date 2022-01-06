@@ -3,12 +3,13 @@
 #include "L1Trigger/TrackFindingTracklet/interface/Globals.h"
 #include "L1Trigger/TrackFindingTracklet/interface/Tracklet.h"
 #include <iomanip>
+#include <filesystem>
 
 using namespace std;
 using namespace trklet;
 
-TrackletParametersMemory::TrackletParametersMemory(string name, Settings const& settings, unsigned int iSector)
-    : MemoryBase(name, settings, iSector) {}
+TrackletParametersMemory::TrackletParametersMemory(string name, Settings const& settings)
+    : MemoryBase(name, settings) {}
 
 void TrackletParametersMemory::clean() {
   for (auto& tracklet : tracklets_) {
@@ -17,34 +18,16 @@ void TrackletParametersMemory::clean() {
   tracklets_.clear();
 }
 
-void TrackletParametersMemory::writeMatches(Globals* globals, int& matchesL1, int& matchesL3, int& matchesL5) {
-  ofstream& out = globals->ofstream("nmatches.txt");
-  for (auto& tracklet : tracklets_) {
-    if ((tracklet->nMatches() + tracklet->nMatchesDisk()) > 0) {
-      if (tracklet->layer() == 1)
-        matchesL1++;
-      if (tracklet->layer() == 3)
-        matchesL3++;
-      if (tracklet->layer() == 5)
-        matchesL5++;
-    }
-    out << tracklet->layer() << " " << tracklet->disk() << " " << tracklet->nMatches() << " "
-        << tracklet->nMatchesDisk() << endl;
-  }
-}
+void TrackletParametersMemory::writeTPAR(bool first, unsigned int iSector) {
+  iSector_ = iSector;
+  const string dirTP = settings_.memPath() + "TrackletParameters/";
 
-void TrackletParametersMemory::writeTPAR(bool first) {
   std::ostringstream oss;
-  oss << "../data/MemPrints/TrackletParameters/TrackletParameters_" << getName() << "_" << std::setfill('0')
-      << std::setw(2) << (iSector_ + 1) << ".dat";
+  oss << dirTP << "TrackletParameters_" << getName() << "_" << std::setfill('0') << std::setw(2) << (iSector_ + 1)
+      << ".dat";
   auto const& fname = oss.str();
 
-  if (first) {
-    bx_ = 0;
-    event_ = 1;
-    out_.open(fname.c_str());
-  } else
-    out_.open(fname.c_str(), std::ofstream::app);
+  openfile(out_, first, dirTP, fname, __FILE__, __LINE__);
 
   out_ << "BX = " << (bitset<3>)bx_ << " Event : " << event_ << endl;
 

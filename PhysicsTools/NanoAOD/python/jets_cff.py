@@ -70,6 +70,8 @@ tightJetIdLepVeto = cms.EDProducer("PatJetIDValueMapProducer",
 			  ),
                           src = cms.InputTag("updatedJets")
 )
+run2_jme_2016.toModify( tightJetId.filterParams, version = "RUN2UL16CHS" )
+run2_jme_2016.toModify( tightJetIdLepVeto.filterParams, version = "RUN2UL16CHS" )
 for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
   modifier.toModify( tightJetId.filterParams, version = "WINTER16" )
   modifier.toModify( tightJetIdLepVeto.filterParams, version = "WINTER16" )
@@ -101,6 +103,8 @@ tightJetIdLepVetoAK8 = cms.EDProducer("PatJetIDValueMapProducer",
 			  ),
                           src = cms.InputTag("updatedJetsAK8")
 )
+run2_jme_2016.toModify( tightJetIdAK8.filterParams, version = "RUN2UL16PUPPI" )
+run2_jme_2016.toModify( tightJetIdLepVetoAK8.filterParams, version = "RUN2UL16PUPPI" )
 for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
   modifier.toModify( tightJetIdAK8.filterParams, version = "WINTER16" )
   modifier.toModify( tightJetIdLepVetoAK8.filterParams, version = "WINTER16" )
@@ -147,18 +151,21 @@ updatedJetsWithUserData = cms.EDProducer("PATJetUserDataEmbedder",
          qgl = cms.InputTag('qgtagger:qgLikelihood'),
          puId94XDisc = cms.InputTag('pileupJetId94X:fullDiscriminant'),
          puId102XDisc = cms.InputTag('pileupJetId102X:fullDiscriminant'),
+         puId106XUL16Disc = cms.InputTag('pileupJetId106XUL16:fullDiscriminant'),
+         puId106XUL16APVDisc = cms.InputTag('pileupJetId106XUL16APV:fullDiscriminant'),
          puId106XUL17Disc = cms.InputTag('pileupJetId106XUL17:fullDiscriminant'),
+         puId106XUL18Disc = cms.InputTag('pileupJetId106XUL18:fullDiscriminant'),
          chFPV0EF = cms.InputTag("jercVars:chargedFromPV0EnergyFraction"),
-         chFPV1EF = cms.InputTag("jercVars:chargedFromPV1EnergyFraction"),
-         chFPV2EF = cms.InputTag("jercVars:chargedFromPV2EnergyFraction"),
-         chFPV3EF = cms.InputTag("jercVars:chargedFromPV3EnergyFraction"),
          ),
      userInts = cms.PSet(
         tightId = cms.InputTag("tightJetId"),
         tightIdLepVeto = cms.InputTag("tightJetIdLepVeto"),
         vtxNtrk = cms.InputTag("bJetVars:vtxNtrk"),
         leptonPdgId = cms.InputTag("bJetVars:leptonPdgId"),
+        puId106XUL16Id = cms.InputTag('pileupJetId106XUL16:fullId'),
+        puId106XUL16APVId = cms.InputTag('pileupJetId106XUL16APV:fullId'),
         puId106XUL17Id = cms.InputTag('pileupJetId106XUL17:fullId'),
+        puId106XUL18Id = cms.InputTag('pileupJetId106XUL18:fullId'),
      ),
 )
 for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
@@ -230,15 +237,15 @@ jetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         btagDeepFlavCvL = Var("?(bDiscriminator('pfDeepFlavourJetTags:probc')+bDiscriminator('pfDeepFlavourJetTags:probuds')+bDiscriminator('pfDeepFlavourJetTags:probg'))>0?bDiscriminator('pfDeepFlavourJetTags:probc')/(bDiscriminator('pfDeepFlavourJetTags:probc')+bDiscriminator('pfDeepFlavourJetTags:probuds')+bDiscriminator('pfDeepFlavourJetTags:probg')):-1",float,doc="DeepJet c vs uds+g discriminator",precision=10),
         btagDeepFlavCvB = Var("?(bDiscriminator('pfDeepFlavourJetTags:probc')+bDiscriminator('pfDeepFlavourJetTags:probb')+bDiscriminator('pfDeepFlavourJetTags:probbb')+bDiscriminator('pfDeepFlavourJetTags:problepb'))>0?bDiscriminator('pfDeepFlavourJetTags:probc')/(bDiscriminator('pfDeepFlavourJetTags:probc')+bDiscriminator('pfDeepFlavourJetTags:probb')+bDiscriminator('pfDeepFlavourJetTags:probbb')+bDiscriminator('pfDeepFlavourJetTags:problepb')):-1",float,doc="DeepJet c vs b+bb+lepb discriminator",precision=10),
         btagDeepFlavQG = Var("?(bDiscriminator('pfDeepFlavourJetTags:probg')+bDiscriminator('pfDeepFlavourJetTags:probuds'))>0?bDiscriminator('pfDeepFlavourJetTags:probg')/(bDiscriminator('pfDeepFlavourJetTags:probg')+bDiscriminator('pfDeepFlavourJetTags:probuds')):-1",float,doc="DeepJet g vs uds discriminator",precision=10),
-        puIdDisc = Var("userFloat('puId102XDisc')",float,doc="Pileup ID discriminant with 102X (2018) training",precision=10),
-        puId = Var("userInt('pileupJetId:fullId')",int,doc="Pileup ID flags for pre-UL trainings"),
+        puIdDisc = Var("userFloat('puId106XUL18Disc')", float,doc="Pileup ID discriminant with 106X (2018) training",precision=10),
+        puId = Var("userInt('puId106XUL18Id')", int,doc="Pileup ID flags with 106X (2018) training"),
         jetId = Var("userInt('tightId')*2+4*userInt('tightIdLepVeto')",int,doc="Jet ID flags bit1 is loose (always false in 2017 since it does not exist), bit2 is tight, bit3 is tightLepVeto"),
-        qgl = Var("userFloat('qgl')",float,doc="Quark vs Gluon likelihood discriminator",precision=10),
+        qgl = Var("?userFloat('qgl')>0?userFloat('qgl'):-1",float,doc="Quark vs Gluon likelihood discriminator",precision=10),
         hfsigmaEtaEta = Var("userFloat('hfJetShowerShape:sigmaEtaEta')",float,doc="sigmaEtaEta for HF jets (noise discriminating variable)",precision=10),
         hfsigmaPhiPhi = Var("userFloat('hfJetShowerShape:sigmaPhiPhi')",float,doc="sigmaPhiPhi for HF jets (noise discriminating variable)",precision=10),
         hfcentralEtaStripSize = Var("userInt('hfJetShowerShape:centralEtaStripSize')", int, doc="eta size of the central tower strip in HF (noise discriminating variable) "),
         hfadjacentEtaStripsSize = Var("userInt('hfJetShowerShape:adjacentEtaStripsSize')", int, doc="eta size of the strips next to the central tower strip in HF (noise discriminating variable) "),
-        nConstituents = Var("numberOfDaughters()",int,doc="Number of particles in the jet"),
+        nConstituents = Var("numberOfDaughters()","uint8",doc="Number of particles in the jet"),
         rawFactor = Var("1.-jecFactor('Uncorrected')",float,doc="1 - Factor to get back to raw pT",precision=6),
         chHEF = Var("chargedHadronEnergyFraction()", float, doc="charged Hadron Energy Fraction", precision= 6),
         neHEF = Var("neutralHadronEnergyFraction()", float, doc="neutral Hadron Energy Fraction", precision= 6),
@@ -246,9 +253,6 @@ jetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         neEmEF = Var("neutralEmEnergyFraction()", float, doc="neutral Electromagnetic Energy Fraction", precision= 6),
         muEF = Var("muonEnergyFraction()", float, doc="muon Energy Fraction", precision= 6),
         chFPV0EF = Var("userFloat('chFPV0EF')", float, doc="charged fromPV==0 Energy Fraction (energy excluded from CHS jets). Previously called betastar.", precision= 6),
-        chFPV1EF = Var("userFloat('chFPV1EF')", float, doc="charged fromPV==1 Energy Fraction (component of the total charged Energy Fraction).", precision= 6),
-        chFPV2EF = Var("userFloat('chFPV2EF')", float, doc="charged fromPV==2 Energy Fraction (component of the total charged Energy Fraction).", precision= 6),
-        chFPV3EF = Var("userFloat('chFPV3EF')", float, doc="charged fromPV==3 Energy Fraction (component of the total charged Energy Fraction).", precision= 6),
     )
 )
 
@@ -265,22 +269,31 @@ for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016, run2_nanoAOD_94XMi
     )
 for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
     modifier.toModify( jetTable.variables, jetId = Var("userInt('tightIdLepVeto')*4+userInt('tightId')*2+userInt('looseId')",int,doc="Jet ID flags bit1 is loose, bit2 is tight, bit3 is tightLepVeto"))
-run2_jme_2016.toModify( jetTable.variables, puIdDisc = Var("userFloat('pileupJetId:fullDiscriminant')",float,doc="Pileup ID discriminant with 80X (2016) training",precision=10))
+run2_nanoAOD_102Xv1.toModify( jetTable.variables, puIdDisc = Var("userFloat('puId102XDisc')",float,doc="Pileup ID discriminant with 102X (2018) training",precision=10) )
+run2_nanoAOD_102Xv1.toModify( jetTable.variables, puId = Var("userInt('pileupJetId:fullId')",int,doc="Pileup ID flags for pre-UL trainings") )
+(run2_jme_2016 & ~tracker_apv_vfp30_2016 ).toModify( jetTable.variables, puId = Var("userInt('puId106XUL16Id')",int,doc="Pileup ID flags with 106X (2016) training"))
+(run2_jme_2016 & ~tracker_apv_vfp30_2016 ).toModify( jetTable.variables, puIdDisc = Var("userFloat('puId106XUL16Disc')",float,doc="Pileup ID discriminant with 106X (2016) training",precision=10))
+(run2_jme_2016 & tracker_apv_vfp30_2016 ).toModify( jetTable.variables, puId = Var("userInt('puId106XUL16APVId')",int,doc="Pileup ID flags with 106X (2016APV) training"))
+(run2_jme_2016 & tracker_apv_vfp30_2016 ).toModify( jetTable.variables, puIdDisc = Var("userFloat('puId106XUL16APVDisc')",float,doc="Pileup ID discriminant with 106X (2016APV) training",precision=10))
 run2_jme_2017.toModify( jetTable.variables, puId = Var("userInt('puId106XUL17Id')", int,doc="Pileup ID flags with 106X (2017) training"))
 run2_jme_2017.toModify( jetTable.variables, puIdDisc = Var("userFloat('puId106XUL17Disc')", float,doc="Pileup ID discriminant with 106X (2017) training",precision=10))
+for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
+    modifier.toModify( jetTable.variables, puIdDisc = Var("userFloat('pileupJetId:fullDiscriminant')",float,doc="Pileup ID discriminant with 80X (2016) training",precision=10))
+    modifier.toModify( jetTable.variables, puId = Var("userInt('pileupJetId:fullId')",int,doc="Pileup ID flags for pre-UL trainings"))
 for modifier in run2_nanoAOD_94XMiniAODv1, run2_nanoAOD_94XMiniAODv2:
     modifier.toModify( jetTable.variables, puIdDisc = Var("userFloat('puId94XDisc')", float,doc="Pileup ID discriminant with 94X (2017) training",precision=10))
     modifier.toModify( jetTable.variables, puId = Var("userInt('pileupJetId:fullId')",int,doc="Pileup ID flags for 2016/2017/2018 EOY trainings"))
 
 
 bjetNN= cms.EDProducer("BJetEnergyRegressionMVA",
-    backend = cms.string("TF"),
+    backend = cms.string("ONNX"),
+    batch_eval = cms.bool(True),
     src = cms.InputTag("linkedObjects","jets"),
     pvsrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
     svsrc = cms.InputTag("slimmedSecondaryVertices"),
     rhosrc = cms.InputTag("fixedGridRhoFastjetAll"),
 
-    weightFile =  cms.FileInPath("PhysicsTools/NanoAOD/data/breg_training_2018.pb"),
+    weightFile =  cms.FileInPath("PhysicsTools/NanoAOD/data/breg_training_2018.onnx"),
     name = cms.string("JetRegNN"),
     isClassifier = cms.bool(False),
     variablesOrder = cms.vstring(["Jet_pt","Jet_eta","rho","Jet_mt","Jet_leadTrackPt","Jet_leptonPtRel","Jet_leptonDeltaR","Jet_neHEF",
@@ -318,22 +331,22 @@ bjetNN= cms.EDProducer("BJetEnergyRegressionMVA",
     isEle = cms.string("?abs(userInt('leptonPdgId'))==11?1:0"),
     isOther = cms.string("?userInt('leptonPdgId')==0?1:0"),
     ),
-     inputTensorName = cms.string("ffwd_inp"),
-     outputTensorName = cms.string("ffwd_out/BiasAdd"),
+     inputTensorName = cms.string("ffwd_inp:0"),
+     outputTensorName = cms.string("ffwd_out/BiasAdd:0"),
      outputNames = cms.vstring(["corr","res"]),
      outputFormulas = cms.vstring(["at(0)*0.27912887930870056+1.0545977354049683","0.5*(at(2)-at(1))*0.27912887930870056"]),
-     nThreads = cms.uint32(1),
-     singleThreadPool = cms.string("no_threads"),
 )
 
 cjetNN= cms.EDProducer("BJetEnergyRegressionMVA",
-    backend = cms.string("TF"),
+    backend = cms.string("ONNX"),
+    batch_eval = cms.bool(True),
+
     src = cms.InputTag("linkedObjects","jets"),
     pvsrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
     svsrc = cms.InputTag("slimmedSecondaryVertices"),
     rhosrc = cms.InputTag("fixedGridRhoFastjetAll"),
 
-    weightFile =  cms.FileInPath("PhysicsTools/NanoAOD/data/creg_training_2018.pb"),
+    weightFile =  cms.FileInPath("PhysicsTools/NanoAOD/data/creg_training_2018.onnx"),
     name = cms.string("JetRegNN"),
     isClassifier = cms.bool(False),
     variablesOrder = cms.vstring(["Jet_pt","Jet_eta","rho","Jet_mt","Jet_leadTrackPt","Jet_leptonPtRel","Jet_leptonDeltaR",
@@ -371,12 +384,10 @@ cjetNN= cms.EDProducer("BJetEnergyRegressionMVA",
     isEle = cms.string("?abs(userInt('leptonPdgId'))==11?1:0"),
     isOther = cms.string("?userInt('leptonPdgId')==0?1:0"),
     ),
-     inputTensorName = cms.string("ffwd_inp"),
-     outputTensorName = cms.string("ffwd_out/BiasAdd"),
+     inputTensorName = cms.string("ffwd_inp:0"),
+     outputTensorName = cms.string("ffwd_out/BiasAdd:0"),
      outputNames = cms.vstring(["corr","res"]),
      outputFormulas = cms.vstring(["at(0)*0.24325256049633026+0.993854820728302","0.5*(at(2)-at(1))*0.24325256049633026"]),
-     nThreads = cms.uint32(1),
-     singleThreadPool = cms.string("no_threads"),
 )
 
 
@@ -460,6 +471,7 @@ fatJetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         particleNet_HccvsQCD = Var("bDiscriminator('pfParticleNetDiscriminatorsJetTags:HccvsQCD')",float,doc="ParticleNet tagger H(->cc) vs QCD discriminator",precision=10),
         particleNet_H4qvsQCD = Var("bDiscriminator('pfParticleNetDiscriminatorsJetTags:H4qvsQCD')",float,doc="ParticleNet tagger H(->VV->qqqq) vs QCD discriminator",precision=10),
         particleNet_QCD = Var("bDiscriminator('pfParticleNetJetTags:probQCDbb')+bDiscriminator('pfParticleNetJetTags:probQCDcc')+bDiscriminator('pfParticleNetJetTags:probQCDb')+bDiscriminator('pfParticleNetJetTags:probQCDc')+bDiscriminator('pfParticleNetJetTags:probQCDothers')",float,doc="ParticleNet tagger QCD(bb,cc,b,c,others) sum",precision=10),
+        particleNet_mass = Var("bDiscriminator('pfParticleNetMassRegressionJetTags:mass')",float,doc="ParticleNet mass regression",precision=10),
         particleNetMD_Xbb = Var("bDiscriminator('pfMassDecorrelatedParticleNetJetTags:probXbb')",float,doc="Mass-decorrelated ParticleNet tagger raw X->bb score. For X->bb vs QCD tagging, use Xbb/(Xbb+QCD)",precision=10),
         particleNetMD_Xcc = Var("bDiscriminator('pfMassDecorrelatedParticleNetJetTags:probXcc')",float,doc="Mass-decorrelated ParticleNet tagger raw X->cc score. For X->cc vs QCD tagging, use Xcc/(Xcc+QCD)",precision=10),
         particleNetMD_Xqq = Var("bDiscriminator('pfMassDecorrelatedParticleNetJetTags:probXqq')",float,doc="Mass-decorrelated ParticleNet tagger raw X->qq (uds) score. For X->qq vs QCD tagging, use Xqq/(Xqq+QCD). For W vs QCD tagging, use (Xcc+Xqq)/(Xcc+Xqq+QCD)",precision=10),
@@ -471,8 +483,7 @@ fatJetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
 
 #        btagDeepC = Var("bDiscriminator('pfDeepCSVJetTags:probc')",float,doc="CMVA V2 btag discriminator",precision=10),
 #puIdDisc = Var("userFloat('pileupJetId:fullDiscriminant')",float,doc="Pileup ID discriminant",precision=10),
-#        nConstituents = Var("numberOfDaughters()",int,doc="Number of particles in the jet"),
-#        rawFactor = Var("1.-jecFactor('Uncorrected')",float,doc="1 - Factor to get back to raw pT",precision=6),
+        nConstituents = Var("numberOfDaughters()","uint8",doc="Number of particles in the jet"),
     ),
     externalVariables = cms.PSet(
         lsf3 = ExtVar(cms.InputTag("lepInJetVars:lsf3"),float, doc="Lepton Subjet Fraction (3 subjets)",precision=10),
@@ -504,16 +515,16 @@ run2_miniAOD_80XLegacy.toModify( fatJetTable.variables, n3b1 = None)
 for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
   modifier.toModify( fatJetTable.variables, jetId = Var("userInt('tightId')*2+userInt('looseId')",int,doc="Jet ID flags bit1 is loose, bit2 is tight"))
 
-run2_jme_2016.toModify( bjetNN, weightFile = cms.FileInPath("PhysicsTools/NanoAOD/data/breg_training_2016.pb") )
+run2_jme_2016.toModify( bjetNN, weightFile = cms.FileInPath("PhysicsTools/NanoAOD/data/breg_training_2016.onnx") )
 run2_jme_2016.toModify( bjetNN,outputFormulas = cms.vstring(["at(0)*0.31976690888404846+1.047176718711853","0.5*(at(2)-at(1))*0.31976690888404846"]))
 
-run2_jme_2017.toModify( bjetNN, weightFile = cms.FileInPath("PhysicsTools/NanoAOD/data/breg_training_2017.pb") )
+run2_jme_2017.toModify( bjetNN, weightFile = cms.FileInPath("PhysicsTools/NanoAOD/data/breg_training_2017.onnx") )
 run2_jme_2017.toModify( bjetNN,outputFormulas = cms.vstring(["at(0)*0.28225210309028625+1.055067777633667","0.5*(at(2)-at(1))*0.28225210309028625"]))
 
-run2_jme_2016.toModify( cjetNN, weightFile = cms.FileInPath("PhysicsTools/NanoAOD/data/creg_training_2016.pb") )
+run2_jme_2016.toModify( cjetNN, weightFile = cms.FileInPath("PhysicsTools/NanoAOD/data/creg_training_2016.onnx") )
 run2_jme_2016.toModify( cjetNN,outputFormulas = cms.vstring(["at(0)*0.28862622380256653+0.9908722639083862","0.5*(at(2)-at(1))*0.28862622380256653"]))
 
-run2_jme_2017.toModify( cjetNN, weightFile = cms.FileInPath("PhysicsTools/NanoAOD/data/creg_training_2017.pb") )
+run2_jme_2017.toModify( cjetNN, weightFile = cms.FileInPath("PhysicsTools/NanoAOD/data/creg_training_2017.onnx") )
 run2_jme_2017.toModify( cjetNN,outputFormulas = cms.vstring(["at(0)*0.24718524515628815+0.9927206635475159","0.5*(at(2)-at(1))*0.24718524515628815"]))
 
 
@@ -599,7 +610,7 @@ genJetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
 	#anything else?
     )
 )
-patJetPartons = cms.EDProducer('HadronAndPartonSelector',
+patJetPartonsNano = cms.EDProducer('HadronAndPartonSelector',
     src = cms.InputTag("generator"),
     particles = cms.InputTag("prunedGenParticles"),
     partonMode = cms.string("Auto"),
@@ -607,10 +618,10 @@ patJetPartons = cms.EDProducer('HadronAndPartonSelector',
 )
 genJetFlavourAssociation = cms.EDProducer("JetFlavourClustering",
     jets = genJetTable.src,
-    bHadrons = cms.InputTag("patJetPartons","bHadrons"),
-    cHadrons = cms.InputTag("patJetPartons","cHadrons"),
-    partons = cms.InputTag("patJetPartons","physicsPartons"),
-    leptons = cms.InputTag("patJetPartons","leptons"),
+    bHadrons = cms.InputTag("patJetPartonsNano","bHadrons"),
+    cHadrons = cms.InputTag("patJetPartonsNano","cHadrons"),
+    partons = cms.InputTag("patJetPartonsNano","physicsPartons"),
+    leptons = cms.InputTag("patJetPartonsNano","leptons"),
     jetAlgorithm = cms.string("AntiKt"),
     rParam = cms.double(0.4),
     ghostRescaling = cms.double(1e-18),
@@ -637,10 +648,10 @@ genJetAK8Table = cms.EDProducer("SimpleCandidateFlatTableProducer",
 )
 genJetAK8FlavourAssociation = cms.EDProducer("JetFlavourClustering",
     jets = genJetAK8Table.src,
-    bHadrons = cms.InputTag("patJetPartons","bHadrons"),
-    cHadrons = cms.InputTag("patJetPartons","cHadrons"),
-    partons = cms.InputTag("patJetPartons","physicsPartons"),
-    leptons = cms.InputTag("patJetPartons","leptons"),
+    bHadrons = cms.InputTag("patJetPartonsNano","bHadrons"),
+    cHadrons = cms.InputTag("patJetPartonsNano","cHadrons"),
+    partons = cms.InputTag("patJetPartonsNano","physicsPartons"),
+    leptons = cms.InputTag("patJetPartonsNano","leptons"),
     jetAlgorithm = cms.string("AntiKt"),
     rParam = cms.double(0.8),
     ghostRescaling = cms.double(1e-18),
@@ -663,7 +674,7 @@ fatJetMCTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         nBHadrons = Var("jetFlavourInfo().getbHadrons().size()", "uint8", doc="number of b-hadrons"),
         nCHadrons = Var("jetFlavourInfo().getcHadrons().size()", "uint8", doc="number of c-hadrons"),
         hadronFlavour = Var("hadronFlavour()", int, doc="flavour from hadron ghost clustering"),
-        genJetAK8Idx = Var("?genJetFwdRef().backRef().isNonnull()?genJetFwdRef().backRef().key():-1", int, doc="index of matched gen AK8 jet"),
+        genJetAK8Idx = Var("?genJetFwdRef().backRef().isNonnull() && genJetFwdRef().backRef().pt() > 100.?genJetFwdRef().backRef().key():-1", int, doc="index of matched gen AK8 jet"),
     )
 )
 
@@ -698,20 +709,28 @@ from RecoJets.JetProducers.QGTagger_cfi import  QGTagger
 qgtagger=QGTagger.clone(srcJets="updatedJets",srcVertexCollection="offlineSlimmedPrimaryVertices")
 
 
-from RecoJets.JetProducers.PileupJetID_cfi import pileupJetId, _chsalgos_94x, _chsalgos_102x, _chsalgos_106X_UL17
+from RecoJets.JetProducers.PileupJetID_cfi import pileupJetId, _chsalgos_94x, _chsalgos_102x, _chsalgos_106X_UL16, _chsalgos_106X_UL16APV, _chsalgos_106X_UL17, _chsalgos_106X_UL18
 pileupJetId94X=pileupJetId.clone(jets="updatedJets",algos = cms.VPSet(_chsalgos_94x),inputIsCorrected=True,applyJec=False,vertexes="offlineSlimmedPrimaryVertices")
 pileupJetId102X=pileupJetId.clone(jets="updatedJets",algos = cms.VPSet(_chsalgos_102x),inputIsCorrected=True,applyJec=False,vertexes="offlineSlimmedPrimaryVertices")
+pileupJetId106XUL16=pileupJetId.clone(jets="updatedJets",algos = cms.VPSet(_chsalgos_106X_UL16),inputIsCorrected=True,applyJec=False,vertexes="offlineSlimmedPrimaryVertices")
+pileupJetId106XUL16APV=pileupJetId.clone(jets="updatedJets",algos = cms.VPSet(_chsalgos_106X_UL16APV),inputIsCorrected=True,applyJec=False,vertexes="offlineSlimmedPrimaryVertices")
 pileupJetId106XUL17=pileupJetId.clone(jets="updatedJets",algos = cms.VPSet(_chsalgos_106X_UL17),inputIsCorrected=True,applyJec=False,vertexes="offlineSlimmedPrimaryVertices")
+pileupJetId106XUL18=pileupJetId.clone(jets="updatedJets",algos = cms.VPSet(_chsalgos_106X_UL18),inputIsCorrected=True,applyJec=False,vertexes="offlineSlimmedPrimaryVertices")
 
 #before cross linking
-jetSequence = cms.Sequence(jetCorrFactorsNano+updatedJets+tightJetId+tightJetIdLepVeto+bJetVars+qgtagger+jercVars+pileupJetId94X+pileupJetId102X+pileupJetId106XUL17+updatedJetsWithUserData+jetCorrFactorsAK8+updatedJetsAK8+tightJetIdAK8+tightJetIdLepVetoAK8+updatedJetsAK8WithUserData+chsForSATkJets+softActivityJets+softActivityJets2+softActivityJets5+softActivityJets10+finalJets+finalJetsAK8)
+jetUserDataTask = cms.Task(bJetVars, qgtagger, jercVars, tightJetId, tightJetIdLepVeto, pileupJetId94X, pileupJetId102X, pileupJetId106XUL16,pileupJetId106XUL16APV,pileupJetId106XUL17,pileupJetId106XUL18)
+jetAK8UserDataTask = cms.Task(tightJetIdAK8,tightJetIdLepVetoAK8)
 
+_jetUserDataTask2016 = jetUserDataTask.copy()
+_jetUserDataTask2016.add(looseJetId)
+_jetAK8UserDataTask2016 = jetAK8UserDataTask.copy()
+_jetAK8UserDataTask2016.add(looseJetIdAK8)
 
-_jetSequence_2016 = jetSequence.copy()
-_jetSequence_2016.insert(_jetSequence_2016.index(tightJetId), looseJetId)
-_jetSequence_2016.insert(_jetSequence_2016.index(tightJetIdAK8), looseJetIdAK8)
 for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
-  modifier.toReplaceWith(jetSequence, _jetSequence_2016)
+  modifier.toReplaceWith(jetUserDataTask,_jetUserDataTask2016)
+  modifier.toReplaceWith(jetAK8UserDataTask,_jetAK8UserDataTask2016)
+
+softActivityTask = cms.Task(chsForSATkJets,softActivityJets,softActivityJets2,softActivityJets5,softActivityJets10)
 
 #HF shower shape recomputation
 #Only run if needed (i.e. if default MINIAOD info is missing or outdated because of new JECs...)
@@ -730,22 +749,26 @@ for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016, run2_nanoAOD_94XMi
   modifier.toModify( jetTable.variables, hfsigmaPhiPhi = Var("userFloat('hfsigmaPhiPhi')",float,doc="sigmaPhiPhi for HF jets (noise discriminating variable)",precision=10))
   modifier.toModify( jetTable.variables, hfcentralEtaStripSize = Var("userInt('hfcentralEtaStripSize')", int, doc="eta size of the central tower strip in HF (noise discriminating variable) "))
   modifier.toModify( jetTable.variables, hfadjacentEtaStripsSize = Var("userInt('hfadjacentEtaStripsSize')", int, doc="eta size of the strips next to the central tower strip in HF (noise discriminating variable) "))
-  _jetSequence_rerunHFshowershape = jetSequence.copy()
-  _jetSequence_rerunHFshowershape.insert(_jetSequence_rerunHFshowershape.index(updatedJetsWithUserData), hfJetShowerShapeforNanoAOD)
-  modifier.toReplaceWith(jetSequence, _jetSequence_rerunHFshowershape)
+  modifier.toModify(jetUserDataTask, jetUserDataTask.add(hfJetShowerShapeforNanoAOD))
 
+#before cross linking
+jetTask = cms.Task(jetCorrFactorsNano,updatedJets,jetUserDataTask,updatedJetsWithUserData,jetCorrFactorsAK8,updatedJetsAK8,jetAK8UserDataTask,updatedJetsAK8WithUserData,softActivityTask,finalJets,finalJetsAK8)
 
 #after lepton collections have been run
-jetLepSequence = cms.Sequence(lepInJetVars)
+jetLepTask = cms.Task(lepInJetVars)
 
 #after cross linkining
-jetTables = cms.Sequence(bjetNN+cjetNN+jetTable+fatJetTable+subJetTable+saJetTable+saTable)
+jetTablesTask = cms.Task(bjetNN,cjetNN,jetTable,fatJetTable,subJetTable,saJetTable,saTable)
 
 #MC only producers and tables
-jetMC = cms.Sequence(jetMCTable+genJetTable+patJetPartons+genJetFlavourTable+genJetAK8Table+genJetAK8FlavourAssociation+genJetAK8FlavourTable+fatJetMCTable+genSubJetAK8Table+subjetMCTable)
-_jetMC_pre94X = jetMC.copy()
-_jetMC_pre94X.insert(_jetMC_pre94X.index(genJetFlavourTable),genJetFlavourAssociation)
-_jetMC_pre94X.remove(genSubJetAK8Table)
-run2_miniAOD_80XLegacy.toReplaceWith(jetMC, _jetMC_pre94X)
+jetMCTaskak4 = cms.Task(jetMCTable,genJetTable,patJetPartonsNano,genJetFlavourTable)
+jetMCTaskak8 = cms.Task(genJetAK8Table,genJetAK8FlavourAssociation,genJetAK8FlavourTable,fatJetMCTable,genSubJetAK8Table,subjetMCTable)
+jetMCTask = jetMCTaskak4.copy()
+jetMCTask.add(jetMCTaskak8)
 
+_jetMCTaskak8 = jetMCTaskak8.copyAndExclude([genSubJetAK8Table])
 
+_jetMC_pre94XTask = jetMCTaskak4.copy()
+_jetMC_pre94XTask.add(genJetFlavourAssociation)
+_jetMC_pre94XTask.add(_jetMCTaskak8)
+run2_miniAOD_80XLegacy.toReplaceWith(jetMCTask, _jetMC_pre94XTask)

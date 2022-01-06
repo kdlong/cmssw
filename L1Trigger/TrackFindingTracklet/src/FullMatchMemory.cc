@@ -2,14 +2,14 @@
 #include "L1Trigger/TrackFindingTracklet/interface/Tracklet.h"
 #include "L1Trigger/TrackFindingTracklet/interface/Stub.h"
 #include "L1Trigger/TrackFindingTracklet/interface/L1TStub.h"
-#include <iomanip>
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include <iomanip>
+#include <filesystem>
 
 using namespace std;
 using namespace trklet;
 
-FullMatchMemory::FullMatchMemory(string name, Settings const& settings, unsigned int iSector)
-    : MemoryBase(name, settings, iSector) {
+FullMatchMemory::FullMatchMemory(string name, Settings const& settings) : MemoryBase(name, settings) {
   size_t pos = find_nth(name, 0, "_", 1);
   assert(pos != string::npos);
   initLayerDisk(pos + 1, layer_, disk_);
@@ -38,18 +38,15 @@ void FullMatchMemory::addMatch(Tracklet* tracklet, const Stub* stub) {
   matches_.push_back(tmp);
 }
 
-void FullMatchMemory::writeMC(bool first) {
+void FullMatchMemory::writeMC(bool first, unsigned int iSector) {
+  iSector_ = iSector;
+  const string dirM = settings_.memPath() + "Matches/";
+
   std::ostringstream oss;
-  oss << "../data/MemPrints/Matches/FullMatches_" << getName() << "_" << std::setfill('0') << std::setw(2)
-      << (iSector_ + 1) << ".dat";
+  oss << dirM << "FullMatches_" << getName() << "_" << std::setfill('0') << std::setw(2) << (iSector_ + 1) << ".dat";
   auto const& fname = oss.str();
 
-  if (first) {
-    bx_ = 0;
-    event_ = 1;
-    out_.open(fname.c_str());
-  } else
-    out_.open(fname.c_str(), std::ofstream::app);
+  openfile(out_, first, dirM, fname, __FILE__, __LINE__);
 
   out_ << "BX = " << (bitset<3>)bx_ << " Event : " << event_ << endl;
 

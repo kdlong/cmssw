@@ -14,6 +14,8 @@
 #include "Geometry/EcalCommonData/interface/EcalNumberingScheme.h"
 #include "CondFormats/GeometryObjects/interface/EcalSimulationParameters.h"
 #include "DataFormats/DetId/interface/DetId.h"
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #ifdef plotDebug
@@ -29,7 +31,7 @@ class EnergyResolutionVsLumi;
 class ECalSD : public CaloSD {
 public:
   ECalSD(const std::string &,
-         const edm::EventSetup &,
+         const EcalSimulationParameters *,
          const SensitiveDetectorCatalog &,
          edm::ParameterSet const &p,
          const SimTrackManager *);
@@ -55,7 +57,7 @@ private:
 
   // initialised before run
   const EcalSimulationParameters *ecalSimParameters_;
-  EcalNumberingScheme *numberingScheme_;
+  std::unique_ptr<EcalNumberingScheme> numberingScheme_;
   bool useWeight, storeTrack, storeRL, storeLayerTimeSim;
   bool useBirk, useBirkL3;
   double birk1, birk2, birk3, birkSlope, birkCut;

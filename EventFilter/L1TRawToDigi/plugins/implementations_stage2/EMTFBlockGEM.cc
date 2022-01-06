@@ -96,8 +96,9 @@ namespace l1t {
                                 const int evt_sector,
                                 const int cluster_id,  // used to differentiate between GEM layer 1/2
                                 const int link) {
-        station = -99;  // station is not encoded in the GEM frame
-        ring = 1;       // GEMs are only in GE1/1 and GE2/1
+        station =
+            1;  // station is not encoded in the GEM frame for now. Set station = 1 since we only have GE1/1 for Run 3.
+        ring = 1;  // GEMs are only in GE1/1 and GE2/1
         sector = -99;
         subsector = -99;
         neighbor = -99;
@@ -226,11 +227,12 @@ namespace l1t {
           }
         }  // End loop: for (auto const & iHit : *res_hit)
 
-        if (exact_duplicate)
-          edm::LogWarning("L1T|EMTF") << "EMTF unpacked duplicate GEM digis: BX " << Hit_.BX() << ", endcap "
-                                      << Hit_.Endcap() << ", station " << Hit_.Station() << ", neighbor "
-                                      << Hit_.Neighbor() << ", ring " << Hit_.Ring() << ", chamber " << Hit_.Chamber()
-                                      << ", roll " << Hit_.Roll() << ", pad " << Hit_.Pad() << std::endl;
+        // TODO: Re-enable once GEM TP data format is fixed
+        // if (exact_duplicate)
+        //   edm::LogWarning("L1T|EMTF") << "EMTF unpacked duplicate GEM digis: BX " << Hit_.BX() << ", endcap "
+        //                               << Hit_.Endcap() << ", station " << Hit_.Station() << ", neighbor "
+        //                               << Hit_.Neighbor() << ", ring " << Hit_.Ring() << ", chamber " << Hit_.Chamber()
+        //                               << ", roll " << Hit_.Roll() << ", pad " << Hit_.Pad() << std::endl;
 
         (res->at(iOut)).push_GEM(GEM_);
         if (!exact_duplicate)

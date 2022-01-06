@@ -50,6 +50,7 @@ SiPixelDigiSource::SiPixelDigiSource(const edm::ParameterSet& iConfig)
       isPIB(conf_.getUntrackedParameter<bool>("isPIB", false)),
       slowDown(conf_.getUntrackedParameter<bool>("slowDown", false)),
       modOn(conf_.getUntrackedParameter<bool>("modOn", true)),
+      perLSsaving(conf_.getUntrackedParameter<bool>("perLSsaving", false)),
       twoDimOn(conf_.getUntrackedParameter<bool>("twoDimOn", true)),
       twoDimModOn(conf_.getUntrackedParameter<bool>("twoDimModOn", true)),
       twoDimOnlyLayDisk(conf_.getUntrackedParameter<bool>("twoDimOnlyLayDisk", false)),
@@ -101,15 +102,67 @@ SiPixelDigiSource::~SiPixelDigiSource() {
   LogInfo("PixelDQM") << "SiPixelDigiSource::~SiPixelDigiSource: Destructor" << endl;
 }
 
-void SiPixelDigiSource::dqmBeginLuminosityBlock(const edm::LuminosityBlock& lb, edm::EventSetup const&) {
-  int thisls = lb.id().luminosityBlock();
+std::shared_ptr<bool> SiPixelDigiSource::globalBeginLuminosityBlock(const edm::LuminosityBlock& lumi,
+                                                                    const edm::EventSetup& iSetup) const {
+  unsigned int currentLS = lumi.id().luminosityBlock();
+  bool resetCounters = (currentLS % 10 == 0) ? true : false;
+  return std::make_shared<bool>(resetCounters);
+}
 
-  if (modOn && thisls % 10 == 0 && averageDigiOccupancy) {
+void SiPixelDigiSource::globalEndLuminosityBlock(const edm::LuminosityBlock& lb, edm::EventSetup const&) {
+  int thisls = lb.id().luminosityBlock();
+  const bool resetCounters = luminosityBlockCache(lb.index());
+
+  float averageBPIXFed = float(nBPIXDigis) / 32.;
+  float averageFPIXFed = float(nFPIXDigis) / 8.;
+
+  if (averageDigiOccupancy) {
+    for (int i = 0; i != 40; i++) {
+      float averageOcc = 0.;
+      if (i < 32) {
+        if (averageBPIXFed > 0.)
+          averageOcc = nDigisPerFed[i] / averageBPIXFed;
+      } else {
+        if (averageFPIXFed > 0.)
+          averageOcc = nDigisPerFed[i] / averageFPIXFed;
+      }
+      if (!modOn) {
+        averageDigiOccupancy->Fill(
+            i,
+            nDigisPerFed[i]);  //In offline we fill all digis and normalise at the end of the run for thread safe behaviour.
+        avgfedDigiOccvsLumi->setBinContent(thisls, i + 1, nDigisPerFed[i]);  //Same plot vs lumi section
+      }
+      if (modOn) {
+        if (thisls % 10 == 0)
+          averageDigiOccupancy->Fill(
+              i,
+              averageOcc);  // "modOn" basically mean Online DQM, in this case fill histos with actual value of digi fraction per fed for each ten lumisections
+        if (avgfedDigiOccvsLumi && thisls % 5 == 0) {
+          avgfedDigiOccvsLumi->setBinContent(
+              int(thisls / 5),
+              i + 1,
+              averageOcc);  //fill with the mean over 5 lumisections, previous code was filling this histo only with last event of each 10th lumisection
+        }
+      }
+    }
+
+    if (modOn && thisls % 10 == 0) {
+      avgBarrelFedOccvsLumi->setBinContent(
+          int(thisls / 10), averageBPIXFed);  //<NDigis> vs lumisection for barrel, filled every 10 lumi sections
+      avgEndcapFedOccvsLumi->setBinContent(
+          int(thisls / 10), averageFPIXFed);  //<NDigis> vs lumisection for endcap, filled every 10 lumi sections
+    }
+  }
+
+  //reset counters
+
+  if (modOn && resetCounters && averageDigiOccupancy) {
     nBPIXDigis = 0;
     nFPIXDigis = 0;
     for (int i = 0; i != 40; i++)
       nDigisPerFed[i] = 0;
   }
+
   if (!modOn && averageDigiOccupancy) {
     nBPIXDigis = 0;
     nFPIXDigis = 0;
@@ -117,7 +170,7 @@ void SiPixelDigiSource::dqmBeginLuminosityBlock(const edm::LuminosityBlock& lb, 
       nDigisPerFed[i] = 0;
   }
 
-  if (modOn && thisls % 10 == 0) {
+  if (modOn && resetCounters) {
     ROCMapToReset = true;  //the ROC map is reset each 10 lumisections
 
     for (int i = 0; i < 2; i++)
@@ -157,50 +210,6 @@ void SiPixelDigiSource::dqmBeginLuminosityBlock(const edm::LuminosityBlock& lb, 
 
     DoZeroRocsFMI1 = true;
     DoZeroRocsFMI2 = true;
-  }
-}
-
-void SiPixelDigiSource::dqmEndLuminosityBlock(const edm::LuminosityBlock& lb, edm::EventSetup const&) {
-  int thisls = lb.id().luminosityBlock();
-
-  float averageBPIXFed = float(nBPIXDigis) / 32.;
-  float averageFPIXFed = float(nFPIXDigis) / 8.;
-
-  if (averageDigiOccupancy) {
-    for (int i = 0; i != 40; i++) {
-      float averageOcc = 0.;
-      if (i < 32) {
-        if (averageBPIXFed > 0.)
-          averageOcc = nDigisPerFed[i] / averageBPIXFed;
-      } else {
-        if (averageFPIXFed > 0.)
-          averageOcc = nDigisPerFed[i] / averageFPIXFed;
-      }
-      if (!modOn) {
-        averageDigiOccupancy->Fill(
-            i,
-            nDigisPerFed[i]);  //In offline we fill all digis and normalise at the end of the run for thread safe behaviour.
-        avgfedDigiOccvsLumi->setBinContent(thisls, i + 1, nDigisPerFed[i]);  //Same plot vs lumi section
-      }
-      if (modOn) {
-        if (thisls % 10 == 0)
-          averageDigiOccupancy->Fill(
-              i,
-              averageOcc);  // "modOn" basically mean Online DQM, in this case fill histos with actual value of digi fraction per fed for each ten lumisections
-        if (avgfedDigiOccvsLumi && thisls % 5 == 0)
-          avgfedDigiOccvsLumi->setBinContent(
-              int(thisls / 5),
-              i + 1,
-              averageOcc);  //fill with the mean over 5 lumisections, previous code was filling this histo only with last event of each 10th lumisection
-      }
-    }
-
-    if (modOn && thisls % 10 == 0) {
-      avgBarrelFedOccvsLumi->setBinContent(
-          int(thisls / 10), averageBPIXFed);  //<NDigis> vs lumisection for barrel, filled every 10 lumi sections
-      avgEndcapFedOccvsLumi->setBinContent(
-          int(thisls / 10), averageFPIXFed);  //<NDigis> vs lumisection for endcap, filled every 10 lumi sections
-    }
   }
 }
 
@@ -1247,7 +1256,7 @@ void SiPixelDigiSource::bookMEs(DQMStore::IBooker& iBooker, const edm::EventSetu
         0.,
         3200.);
   }
-  if (!modOn) {
+  if (!modOn && !perLSsaving) {
     averageDigiOccupancy = iBooker.book1D(
         "averageDigiOccupancy", title7, 40, -0.5, 39.5);  //Book as TH1 for offline to ensure thread-safe behaviour
     avgfedDigiOccvsLumi = iBooker.book2D("avgfedDigiOccvsLumi", title8, 3200, 0., 3200., 40, -0.5, 39.5);

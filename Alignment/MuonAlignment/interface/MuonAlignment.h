@@ -13,13 +13,14 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "Alignment/MuonAlignment/interface/AlignableMuon.h"
-#include <FWCore/Framework/interface/Frameworkfwd.h>
+#include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "Alignment/CommonAlignment/interface/AlignableNavigator.h"
 #include "Alignment/MuonAlignment/interface/MuonAlignmentInputMethod.h"
+#include "Geometry/Records/interface/MuonGeometryRecord.h"
 
 class MuonAlignment {
 public:
-  MuonAlignment(const edm::EventSetup& iSetup);
+  MuonAlignment(const DTGeometry* dtGeometry, const CSCGeometry* cscGeometry, const GEMGeometry* gemGeometry);
 
   MuonAlignment(const edm::EventSetup& iSetup, const MuonAlignmentInputMethod& input);
 
@@ -44,7 +45,10 @@ public:
   void fillGapsInSurvey(double shiftErr, double angleErr);
   void copySurveyToAlignment();
 
-  void writeXML(const edm::ParameterSet& iConfig, const edm::EventSetup& iSetup);
+  void writeXML(const edm::ParameterSet& iConfig,
+                const DTGeometry* dtGeometryXML,
+                const CSCGeometry* cscGeometryXML,
+                const GEMGeometry* gemGeometryXML);
 
   void saveDTSurveyToDB();
   void saveCSCSurveyToDB();
@@ -52,6 +56,7 @@ public:
 
   void saveDTtoDB();
   void saveCSCtoDB();
+  void saveGEMtoDB();
   void saveToDB();
 
 private:
@@ -60,8 +65,13 @@ private:
 
   std::string theDTAlignRecordName, theDTErrorRecordName;
   std::string theCSCAlignRecordName, theCSCErrorRecordName;
+  std::string theGEMAlignRecordName, theGEMErrorRecordName;
   std::string theDTSurveyRecordName, theDTSurveyErrorRecordName;
   std::string theCSCSurveyRecordName, theCSCSurveyErrorRecordName;
+
+  const DTGeometry* dtGeometry_;
+  const CSCGeometry* cscGeometry_;
+  const GEMGeometry* gemGeometry_;
 
   align::Scalars displacements;
 

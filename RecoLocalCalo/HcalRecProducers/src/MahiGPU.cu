@@ -69,6 +69,7 @@ namespace hcal {
     // TODO: add/validate restrict (will increase #registers in use by the kernel)
     __global__ void kernel_prep1d_sameNumberOfSamples(float* amplitudes,
                                                       float* noiseTerms,
+                                                      float* electronicNoiseTerms,
                                                       float* outputEnergy,
                                                       float* outputChi2,
                                                       uint16_t const* dataf01HE,
@@ -88,6 +89,7 @@ namespace hcal {
                                                       float* method0Time,
                                                       uint32_t* outputdid,
                                                       uint32_t const nchannels,
+                                                      uint32_t const* qualityStatus,
                                                       uint32_t const* recoParam1Values,
                                                       uint32_t const* recoParam2Values,
                                                       float const* qieCoderOffsets,
@@ -166,6 +168,7 @@ namespace hcal {
       // offset output
       auto* amplitudesForChannel = amplitudes + nsamplesForCompute * gch;
       auto* noiseTermsForChannel = noiseTerms + nsamplesForCompute * gch;
+      auto* electronicNoiseTermsForChannel = electronicNoiseTerms + nsamplesForCompute * gch;
       auto const nchannelsf015 = nchannelsf01HE + nchannelsf5HB;
 
       // get event input quantities
@@ -182,6 +185,7 @@ namespace hcal {
                           ? idsf01HE[gch]
                           : (gch < nchannelsf015 ? idsf5HB[gch - nchannelsf01HE] : idsf3HB[gch - nchannelsf015]);
       auto const did = HcalDetId{id};
+
       auto const adc =
           gch < nchannelsf01HE
               ? adc_for_sample<Flavor1>(dataf01HE + stride * gch, sample)
@@ -216,6 +220,7 @@ namespace hcal {
       auto const* pedestalWidthsForChannel = useEffectivePedestals && (gch < nchannelsf01HE || gch >= nchannelsf015)
                                                  ? effectivePedestalWidths + hashedId * 4
                                                  : pedestalWidths + hashedId * 4;
+
       auto const* gains = gainValues + hashedId * 4;
       auto const gain = gains[capid];
       auto const gain0 = gains[0];
@@ -385,6 +390,18 @@ namespace hcal {
         printf("tsTOT = %f tstrig = %f ts4Thresh = %f\n", shrEnergyM0TotalAccum[lch], energym0_per_ts_gain0, ts4Thresh);
 #endif
 
+        // Channel quality check
+        //    https://github.com/cms-sw/cmssw/blob/master/RecoLocalCalo/HcalRecAlgos/plugins/HcalChannelPropertiesEP.cc#L107-L109
+        //    https://github.com/cms-sw/cmssw/blob/6d2f66057131baacc2fcbdd203588c41c885b42c/CondCore/HcalPlugins/plugins/HcalChannelQuality_PayloadInspector.cc#L30
+        //      const bool taggedBadByDb = severity.dropChannel(digistatus->getValue());
+        //  do not run MAHI if taggedBadByDb = true
+
+        auto const digiStatus_ = qualityStatus[hashedId];
+        const bool taggedBadByDb = (digiStatus_ / 32770);
+
+        if (taggedBadByDb)
+          outputChi2[gch] = -9999.f;
+
         // check as in cpu version if mahi is not needed
         // FIXME: KNOWN ISSUE: observed a problem when rawCharge and pedestal
         // are basically equal and generate -0.00000...
@@ -414,7 +431,7 @@ namespace hcal {
 
 #ifdef HCAL_MAHI_GPUDEBUG
       printf(
-          "charrge(%d) = %f pedestal(%d) = %f dfc(%d) = %f pedestalWidth(%d) = %f noiseADC(%d) = %f noisPhoto(%d) = "
+          "charge(%d) = %f pedestal(%d) = %f dfc(%d) = %f pedestalWidth(%d) = %f noiseADC(%d) = %f noisPhoto(%d) = "
           "%f\n",
           sample,
           rawCharge,
@@ -433,6 +450,7 @@ namespace hcal {
       // store to global memory
       amplitudesForChannel[sampleWithinWindow] = amplitude;
       noiseTermsForChannel[sampleWithinWindow] = noiseTerm;
+      electronicNoiseTermsForChannel[sampleWithinWindow] = pedestalWidth;
     }
 
     // TODO: need to add an array of offsets for pulses (a la activeBXs...)
@@ -728,7 +746,9 @@ namespace hcal {
                                     float const* __restrict__ pulseMatricesP,
                                     int const* __restrict__ pulseOffsetValues,
                                     float const* __restrict__ noiseTerms,
+                                    float const* __restrict__ electronicNoiseTerms,
                                     int8_t const* __restrict__ soiSamples,
+                                    float const* __restrict__ noiseCorrelationValues,
                                     float const* __restrict__ pedestalWidths,
                                     float const* __restrict__ effectivePedestalWidths,
                                     bool const useEffectivePedestals,
@@ -788,10 +808,13 @@ namespace hcal {
                                                  pedestalWidthsForChannel[1] * pedestalWidthsForChannel[1] +
                                                  pedestalWidthsForChannel[2] * pedestalWidthsForChannel[2] +
                                                  pedestalWidthsForChannel[3] * pedestalWidthsForChannel[3]);
+
       auto const* gains = gainValues + hashedId * 4;
       // FIXME on cpu ts 0 capid was used - does it make any difference
       auto const gain = gains[0];
       auto const respCorrection = respCorrectionValues[hashedId];
+
+      auto const noisecorr = noiseCorrelationValues[hashedId];
 
 #ifdef HCAL_MAHI_GPUDEBUG
 #ifdef HCAL_MAHI_GPUDEBUG_FILTERDETID
@@ -816,6 +839,8 @@ namespace hcal {
       // map views
       Eigen::Map<const calo::multifit::ColumnVector<NSAMPLES>> inputAmplitudesView{inputAmplitudes + gch * NSAMPLES};
       Eigen::Map<const calo::multifit::ColumnVector<NSAMPLES>> noiseTermsView{noiseTerms + gch * NSAMPLES};
+      Eigen::Map<const calo::multifit::ColumnVector<NSAMPLES>> noiseElectronicView{electronicNoiseTerms +
+                                                                                   gch * NSAMPLES};
       Eigen::Map<const calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES>> glbPulseMatrixMView{pulseMatricesM +
                                                                                               gch * NSAMPLES * NPULSES};
       Eigen::Map<const calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES>> glbPulseMatrixPView{pulseMatricesP +
@@ -856,10 +881,14 @@ namespace hcal {
         calo::multifit::MapSymM<float, NSAMPLES> covarianceMatrix{covarianceMatrixStorage};
         CMS_UNROLL_LOOP
         for (int counter = 0; counter < calo::multifit::MapSymM<float, NSAMPLES>::total; counter++)
-          covarianceMatrixStorage[counter] = averagePedestalWidth2;
+          covarianceMatrixStorage[counter] = (noisecorr != 0.f) ? 0.f : averagePedestalWidth2;
         CMS_UNROLL_LOOP
-        for (int counter = 0; counter < calo::multifit::MapSymM<float, NSAMPLES>::stride; counter++)
-          covarianceMatrix(counter, counter) += __ldg(&noiseTermsView.coeffRef(counter));
+        for (unsigned int counter = 0; counter < calo::multifit::MapSymM<float, NSAMPLES>::stride; counter++) {
+          covarianceMatrix(counter, counter) += noiseTermsView.coeffRef(counter);
+          if (counter != 0)
+            covarianceMatrix(counter, counter - 1) += noisecorr * __ldg(&noiseElectronicView.coeffRef(counter - 1)) *
+                                                      __ldg(&noiseElectronicView.coeffRef(counter));
+        }
 
         // update covariance matrix
         update_covariance(
@@ -1032,10 +1061,14 @@ namespace hcal {
                     cudaStream_t cudaStream) {
       auto const totalChannels = inputGPU.f01HEDigis.size + inputGPU.f5HBDigis.size + inputGPU.f3HBDigis.size;
 
-      // FIXME: may be move this assignment to emphasize this more clearly
-      // FIXME: number of channels for output might change given that
-      //   some channesl might be filtered out
+      // FIXME: the number of channels in output might change given that some channesl might be filtered out
+
+      // do not run when there are no rechits (e.g. if HCAL is not being read),
+      // but do set the size of the output collection to 0
       outputGPU.recHits.size = totalChannels;
+      if (totalChannels == 0) {
+        return;
+      }
 
       // TODO: this can be lifted by implementing a separate kernel
       // similar to the default one, but properly handling the diff in #sample
@@ -1060,6 +1093,7 @@ namespace hcal {
       hcal::mahi::kernel_prep1d_sameNumberOfSamples<<<blocks, threadsPerBlock, nbytesShared, cudaStream>>>(
           scratch.amplitudes.get(),
           scratch.noiseTerms.get(),
+          scratch.electronicNoiseTerms.get(),
           outputGPU.recHits.energy.get(),
           outputGPU.recHits.chi2.get(),
           inputGPU.f01HEDigis.data.get(),
@@ -1079,6 +1113,7 @@ namespace hcal {
           outputGPU.recHits.timeM0.get(),
           outputGPU.recHits.did.get(),
           totalChannels,
+          conditions.channelQuality.status,
           conditions.recoParams.param1,
           conditions.recoParams.param2,
           conditions.qieCoders.offsets,
@@ -1187,7 +1222,9 @@ namespace hcal {
             scratch.pulseMatricesP.get(),
             conditions.pulseOffsets.values,
             scratch.noiseTerms.get(),
+            scratch.electronicNoiseTerms.get(),
             scratch.soiSamples.get(),
+            conditions.sipmParameters.auxi2,
             conditions.pedestalWidths.values,
             conditions.effectivePedestalWidths.values,
             configParameters.useEffectivePedestals,

@@ -1,4 +1,6 @@
 #include "CondCore/CondDB/interface/Exception.h"
+#include "CondCore/CondDB/interface/Auth.h"
+#include "CondCore/CondDB/interface/DecodingKey.h"
 #include "SessionImpl.h"
 
 #include <memory>
@@ -30,15 +32,25 @@ namespace cond {
 
     SessionImpl::SessionImpl() : coralSession() {}
 
-    SessionImpl::SessionImpl(std::shared_ptr<coral::ISessionProxy>& session, const std::string& connectionStr)
-        : coralSession(session), connectionString(connectionStr) {}
+    SessionImpl::SessionImpl(std::shared_ptr<coral::ISessionProxy>& session,
+                             const std::string& connectionStr,
+                             const std::string& principalNm)
+        : coralSession(session), sessionHash(""), connectionString(connectionStr), principalName(principalNm) {
+      cond::auth::KeyGenerator kg;
+      sessionHash = kg.make(cond::auth::COND_SESSION_HASH_SIZE);
+    }
 
     SessionImpl::~SessionImpl() { close(); }
 
     void SessionImpl::close() {
-      if (coralSession.get()) {
+      if (isActive()) {
         if (coralSession->transaction().isActive()) {
-          coralSession->transaction().rollback();
+          rollbackTransaction();
+        }
+        if (!lockedTags.empty()) {
+          startTransaction(false);
+          releaseTagLocks();
+          commitTransaction();
         }
         coralSession.reset();
       }
@@ -96,6 +108,24 @@ namespace cond {
       if (!deep)
         return true;
       return transaction->isActive();
+    }
+
+    void SessionImpl::releaseTagLocks() {
+      iovSchema().tagAccessPermissionTable().removeEntriesForCredential(sessionHash,
+                                                                        cond::auth::COND_SESSION_HASH_CODE);
+      std::string lt("-");
+      std::string action("Lock removed by session ");
+      action += sessionHash;
+      for (const auto& tag : lockedTags) {
+        iovSchema().tagTable().unsetProtectionCode(tag, cond::auth::COND_DBTAG_LOCK_ACCESS_CODE);
+        iovSchema().tagLogTable().insert(tag,
+                                         boost::posix_time::microsec_clock::universal_time(),
+                                         cond::getUserName(),
+                                         cond::getHostName(),
+                                         cond::getCommand(),
+                                         action,
+                                         lt);
+      }
     }
 
     void SessionImpl::openIovDb(SessionImpl::FailureOnOpeningPolicy policy) {

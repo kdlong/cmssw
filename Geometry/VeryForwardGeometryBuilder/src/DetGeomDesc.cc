@@ -20,7 +20,7 @@
 #include "DataFormats/CTPPSDetId/interface/TotemTimingDetId.h"
 #include "DataFormats/CTPPSDetId/interface/CTPPSPixelDetId.h"
 #include "DataFormats/CTPPSDetId/interface/CTPPSDiamondDetId.h"
-#include "DataFormats/Math/interface/GeantUnits.h"
+#include <DD4hep/DD4hepUnits.h>
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 /*
@@ -41,20 +41,20 @@ DetGeomDesc::DetGeomDesc(const DDFilteredView& fv, const bool isRun2)
 {}
 
 /*
- *  Constructor from DD4Hep DDFilteredView, also using the SpecPars to access 2x2 wafers info.
+ *  Constructor from DD4hep DDFilteredView, also using the SpecPars to access 2x2 wafers info.
  */
 DetGeomDesc::DetGeomDesc(const cms::DDFilteredView& fv, const bool isRun2)
     : m_name(computeNameWithNoNamespace(fv.name())),
       m_copy(fv.copyNum()),
       m_isDD4hep(true),
-      m_trans(geant_units::operators::convertCmToMm(fv.translation())),  // converted from cm (DD4hep) to mm
+      m_trans(fv.translation() / dd4hep::mm),  // converted from DD4hep unit to mm
       m_rot(fv.rotation()),
-      m_params(computeParameters(fv)),  // default unit from DD4hep (cm)
+      m_params(computeParameters(fv)),  // default unit from DD4hep
       m_isABox(dd4hep::isA<dd4hep::Box>(fv.solid())),
-      m_diamondBoxParams(computeDiamondDimensions(m_isABox, m_isDD4hep, m_params)),  // converted from cm (DD4hep) to mm
+      m_diamondBoxParams(computeDiamondDimensions(m_isABox, m_isDD4hep, m_params)),  // converted from DD4hep unit to mm
       m_sensorType(computeSensorType(fv.name())),
       m_geographicalID(computeDetIDFromDD4hep(m_name, fv.copyNos(), fv.copyNum(), isRun2)),
-      m_z(geant_units::operators::convertCmToMm(fv.translation().z()))  // converted from cm (DD4hep) to mm
+      m_z(fv.translation().z() / dd4hep::mm)  // converted from DD4hep unit to mm
 {}
 
 DetGeomDesc::DetGeomDesc(const DetGeomDesc& ref, CopyMode cm) {
@@ -73,6 +73,38 @@ DetGeomDesc::DetGeomDesc(const DetGeomDesc& ref, CopyMode cm) {
     m_container = ref.m_container;
 
   m_z = ref.m_z;
+}
+
+// Constructor from DB object PDetGeomDesc::Item
+DetGeomDesc::DetGeomDesc(const PDetGeomDesc::Item& item)
+    : m_name(item.name_),
+      m_copy(item.copy_),
+      m_isDD4hep(true),
+      m_params(item.params_),  // default unit from DD4hep
+      m_sensorType(item.sensorType_),
+      m_geographicalID(item.geographicalID_),
+      m_z(item.z_)  // converted from DD4hep to mm
+{
+  Translation trans(item.dx_, item.dy_, item.dz_);
+  m_trans = trans;
+  RotationMatrix rot(item.axx_, item.axy_, item.axz_, item.ayx_, item.ayy_, item.ayz_, item.azx_, item.azy_, item.azz_);
+  m_rot = rot;
+  // Set the m_isABox flag for the box shaped sensors, so that m_params are properly set
+  if ((m_name == DDD_CTPPS_PIXELS_SENSOR_NAME || m_name == DDD_CTPPS_PIXELS_SENSOR_NAME_2x2 ||
+       m_name == DDD_CTPPS_DIAMONDS_SEGMENT_NAME || m_name == DDD_CTPPS_UFSD_SEGMENT_NAME ||
+       m_name.substr(0, 7) == DDD_TOTEM_TIMING_SENSOR_TMPL.substr(0, 7)) &&
+      m_params.size() > 2)
+    m_isABox = true;
+  else
+    m_isABox = false;
+  m_diamondBoxParams = computeDiamondDimensions(m_isABox, m_isDD4hep, m_params);
+}
+
+DetGeomDesc::DetGeomDesc(const PDetGeomDesc& pd) {
+  for (const auto& i : pd.container_) {
+    DetGeomDesc* gd = new DetGeomDesc(i);
+    this->addComponent(gd);
+  }
 }
 
 DetGeomDesc::~DetGeomDesc() { deepDeleteComponents(); }
@@ -122,7 +154,7 @@ void DetGeomDesc::deepDeleteComponents() {
 }
 
 std::string DetGeomDesc::computeNameWithNoNamespace(std::string_view nameFromView) const {
-  const auto& semiColonPos = nameFromView.find(":");
+  const auto& semiColonPos = nameFromView.find(':');
   const std::string name{(semiColonPos != std::string::npos ? nameFromView.substr(semiColonPos + 1) : nameFromView)};
   return name;
 }
@@ -140,7 +172,7 @@ std::vector<double> DetGeomDesc::computeParameters(const cms::DDFilteredView& fv
  * Compute diamond dimensions.
  * The diamond sensors are represented by the Box shape parameters.
  * oldDD: params are already in mm.
- * DD4hep: convert params from cm (DD4hep) to mm (legacy expected by PPS reco software).
+ * DD4hep: convert params from DD4hep unit to mm (mm is legacy expected by PPS reco software).
  */
 DiamondDimensions DetGeomDesc::computeDiamondDimensions(const bool isABox,
                                                         const bool isDD4hep,
@@ -148,13 +180,11 @@ DiamondDimensions DetGeomDesc::computeDiamondDimensions(const bool isABox,
   DiamondDimensions boxShapeParameters{};
   if (isABox) {
     if (!isDD4hep) {
-      // mm (legacy)
+      // mm (old DD)
       boxShapeParameters = {params.at(0), params.at(1), params.at(2)};
     } else {
-      // convert cm (DD4hep) to mm (legacy expected by PPS reco software)
-      boxShapeParameters = {geant_units::operators::convertCmToMm(params.at(0)),
-                            geant_units::operators::convertCmToMm(params.at(1)),
-                            geant_units::operators::convertCmToMm(params.at(2))};
+      // convert from DD4hep unit to mm (mm is legacy expected by PPS reco software)
+      boxShapeParameters = {params.at(0) / dd4hep::mm, params.at(1) / dd4hep::mm, params.at(2) / dd4hep::mm};
     }
   }
   return boxShapeParameters;

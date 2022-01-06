@@ -1,8 +1,8 @@
 #ifndef GeneratorInterface_LHEInterface_WeightHelper_h
 #define GeneratorInterface_LHEInterface_WeightHelper_h
 
-#include "DataFormats/Common/interface/OwnVector.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenWeightProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenWeightInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/WeightGroupInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/PdfWeightGroupInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/WeightsInfo.h"
@@ -15,6 +15,7 @@
 #include <boost/algorithm/string.hpp>
 #include <bits/stdc++.h>
 #include <fstream>
+#include <memory>
 
 namespace gen {
   struct ParsedWeight {
@@ -29,48 +30,41 @@ namespace gen {
   class WeightHelper {
   public:
     WeightHelper();
-    edm::OwnVector<gen::WeightGroupInfo> weightGroups() { return weightGroups_; }
 
     template <typename T>
-    std::unique_ptr<GenWeightProduct> weightProduct(std::vector<T> weights, float w0);
+    std::unique_ptr<GenWeightProduct> weightProduct(const GenWeightInfoProduct& weightsInfo, std::vector<T> weights, float w0) const;
 
-    void setModel(std::string model) { model_ = model; }
     void setGuessPSWeightIdx(bool guessPSWeightIdx) {
       PartonShowerWeightGroupInfo::setGuessPSWeightIdx(guessPSWeightIdx);
     }
-    void addUnassociatedGroup() {
-      weightGroups_.push_back(std::make_unique<UnknownWeightGroupInfo>("unassociated"));
-      weightGroups_.back().setDescription("Weights with missing or invalid header meta data");
+    void addUnassociatedGroup(std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const {
+      gen::UnknownWeightGroupInfo unassoc("unassociated");
+      unassoc.setDescription("Weights with missing or invalid header meta data");
+      weightGroups.push_back(std::make_unique<gen::UnknownWeightGroupInfo>(unassoc));
     }
     int addWeightToProduct(
-        std::unique_ptr<GenWeightProduct>& product, double weight, std::string name, int weightNum, int groupIndex);
-    int findContainingWeightGroup(std::string wgtId, int weightIndex, int previousGroupIndex);
+        GenWeightProduct& product, double weight, std::string name, int weightNum, int groupIndex);
     void setDebug(bool value) { debug_ = value; }
 
   protected:
-    // TODO: Make this only print from one thread a la
-    // https://github.com/kdlong/cmssw/blob/master/PhysicsTools/NanoAOD/plugins/GenWeightsTableProducer.cc#L1069
     bool debug_ = false;
     const unsigned int FIRST_PSWEIGHT_ENTRY = 2;
     const unsigned int DEFAULT_PSWEIGHT_LENGTH = 46;
-    std::string model_;
-    std::vector<ParsedWeight> parsedWeights_;
     std::map<std::string, std::string> currWeightAttributeMap_;
     std::map<std::string, std::string> currGroupAttributeMap_;
-    edm::OwnVector<gen::WeightGroupInfo> weightGroups_;
-    bool isScaleWeightGroup(const ParsedWeight& weight);
-    bool isMEParamWeightGroup(const ParsedWeight& weight);
-    bool isPdfWeightGroup(const ParsedWeight& weight);
-    bool isPartonShowerWeightGroup(const ParsedWeight& weight);
-    bool isOrphanPdfWeightGroup(ParsedWeight& weight);
-    void updateScaleInfo(gen::ScaleWeightGroupInfo& scaleGroup, const ParsedWeight& weight);
-    void updateMEParamInfo(const ParsedWeight& weight, int index);
-    void updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight);
-    void updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight);
-    void cleanupOrphanCentralWeight();
-    bool splitPdfWeight(ParsedWeight& weight);
+    bool isScaleWeightGroup(const ParsedWeight& weight) const;
+    bool isMEParamWeightGroup(const ParsedWeight& weight) const;
+    bool isPdfWeightGroup(const ParsedWeight& weight) const;
+    bool isPartonShowerWeightGroup(const ParsedWeight& weight) const;
+    bool isOrphanPdfWeightGroup(ParsedWeight& weight) const;
+    void updateScaleInfo(gen::ScaleWeightGroupInfo& scaleGroup, const ParsedWeight& weight) const;
+    void updateMEParamInfo(const ParsedWeight& weight, int index) const;
+    void updatePdfInfo(gen::PdfWeightGroupInfo& pdfGroup, const ParsedWeight& weight) const;
+    void updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight) const;
+    void cleanupOrphanCentralWeight(WeightGroupInfoContainer& weightGroups) const;
+    bool splitPdfWeight(ParsedWeight& weight, WeightGroupInfoContainer& weightGroups) const;
 
-    int lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup);
+    int lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) const;
     std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByRegex(const std::string& label, const ParsedWeight& weight) const;
@@ -86,31 +80,59 @@ namespace gen {
         {"down", {"_dn", "Lo"}},
         {"me_variation", {"mass", "sthw2", "width"}},
     };
-    void printWeights();
-    std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight);
-    void buildGroups();
-    std::string searchString(const std::string& label, const std::string& name);
+    void printWeights(const WeightGroupInfoContainer& weightGroups) const;
+    std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight) const;
+    WeightGroupInfoContainer buildGroups(std::vector<ParsedWeight>& parsedWeights, bool addUnassociatedGroup) const;
+    std::string searchString(const std::string& label, const std::string& name) const;
   };
 
-  // Templated function (needed here because of plugins)
   template <typename T>
-  std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(std::vector<T> weights, float w0) {
+  std::unique_ptr<GenWeightProduct> WeightHelper::weightProduct(
+        const GenWeightInfoProduct& weightsInfo, std::vector<T> weights, float w0) const {
     auto weightProduct = std::make_unique<GenWeightProduct>(w0);
-    weightProduct->setNumWeightSets(weightGroups_.size());
-    int weightGroupIndex = 0;
+    weightProduct->setNumWeightSets(weightsInfo.numberOfGroups());
+    gen::WeightGroupData groupData = {0, nullptr};
     int i = 0;
-    // This happens if there are no PS weights, so the weights vector contains only the central GEN weight.
-    // Just add an empty product (need for all cases or...?)
+    // size=1 happens if there are no PS weights, so the weights vector contains only the central GEN weight.
     if (weights.size() > 1) {
+	  // This gets remade every event to avoid having state-dependence in the helper class
+	  // could think about doing caching instead
+      int unassociatedIdx = weightsInfo.unassociatedIdx();
+	  std::unique_ptr<gen::UnknownWeightGroupInfo> unassociatedGroup; 
+      if (unassociatedIdx != -1)
+	  	unassociatedGroup = std::make_unique<gen::UnknownWeightGroupInfo>("unassociated");
       for (const auto& weight : weights) {
-        if constexpr (std::is_same<T, gen::WeightsInfo>::value)
-          weightGroupIndex = addWeightToProduct(weightProduct, weight.wgt, weight.id, i, weightGroupIndex);
-        else if (std::is_same<T, double>::value)
-          weightGroupIndex = addWeightToProduct(weightProduct, weight, std::to_string(i), i, weightGroupIndex);
+        double wgtval;
+        std::string wgtid;
+        if constexpr (std::is_same<T, gen::WeightsInfo>::value) {
+          wgtid = weight.id;
+          wgtval = weight.wgt;
+        } else if (std::is_same<T, double>::value) {
+          wgtid = std::to_string(i);
+          wgtval = weight;
+        }
+        try {
+          groupData = weightsInfo.containingWeightGroupInfo(i, groupData.index);
+        } catch (const cms::Exception& e) {
+          if (unassociatedIdx == -1)
+              throw e;
+          if (debug_) {
+            std::cout << "WARNING: " << e.what() << std::endl;
+          }
+          // Access the unassociated group separately so it can be modified
+          unassociatedGroup->addContainedId(i, wgtid, wgtid);
+          groupData = {static_cast<size_t>(unassociatedIdx), unassociatedGroup.get()};
+        }
+        int entry = groupData.group->weightVectorEntry(wgtid, i);
+
+        // TODO: is this too slow?
+        if (debug_)
+          std::cout << "Adding weight num " << i << " EntryNum " << entry << " to group " << groupData.index << std::endl;
+        weightProduct->addWeight(wgtval, groupData.index, entry);
         i++;
       }
     }
-    return weightProduct;
+  return weightProduct;
   }
 }  // namespace gen
 

@@ -1,15 +1,17 @@
 #include "L1Trigger/TrackFindingTracklet/interface/MemoryBase.h"
+#include "L1Trigger/TrackFindingTracklet/interface/Util.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
 #include <set>
+#include <filesystem>
 
 using namespace trklet;
 using namespace std;
 
-MemoryBase::MemoryBase(string name, Settings const& settings, unsigned int iSector) : name_(name), settings_(settings) {
-  iSector_ = iSector;
+MemoryBase::MemoryBase(string name, Settings const& settings) : name_(name), settings_(settings) {
+  iSector_ = 0;
   bx_ = 0;
   event_ = 0;
 }
@@ -69,9 +71,8 @@ void MemoryBase::findAndReplaceAll(std::string& data, std::string toSearch, std:
   }
 }
 
-void MemoryBase::openFile(bool first, std::string filebase) {
-  std::string fname = filebase;
-  fname += getName();
+void MemoryBase::openFile(bool first, std::string dirName, std::string filebase) {
+  std::string fname = filebase + getName();
 
   findAndReplaceAll(fname, "PHIa", "PHIaa");
   findAndReplaceAll(fname, "PHIb", "PHIbb");
@@ -89,13 +90,7 @@ void MemoryBase::openFile(bool first, std::string filebase) {
   fname += std::to_string(iSector_ + 1);
   fname += ".dat";
 
-  if (first) {
-    bx_ = 0;
-    event_ = 1;
-    out_.open(fname.c_str());
-  } else {
-    out_.open(fname.c_str(), std::ofstream::app);
-  }
+  openfile(out_, first, dirName, dirName + fname, __FILE__, __LINE__);
 
   out_ << "BX = " << (bitset<3>)bx_ << " Event : " << event_ << endl;
 

@@ -20,6 +20,7 @@ Implementation:
 
 // system include files
 #include <memory>
+#include <algorithm>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -63,6 +64,8 @@ private:
   void produce(edm::StreamID sid, edm::Event&, const edm::EventSetup&) const override;
 
   // ----------member data ---------------------------
+  edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> const transientTrackRecordToken_;
+
   edm::InputTag m_primaryVertex;
   edm::InputTag m_tracks;
   edm::InputTag m_jets;
@@ -86,7 +89,8 @@ private:
 //
 // constructors and destructor
 //
-PixelJetPuId::PixelJetPuId(const edm::ParameterSet& iConfig) {
+PixelJetPuId::PixelJetPuId(const edm::ParameterSet& iConfig)
+    : transientTrackRecordToken_(esConsumes(edm::ESInputTag("", "TransientTrackBuilder"))) {
   //InputTag
   m_tracks = iConfig.getParameter<edm::InputTag>("tracks");
   tracksToken = consumes<std::vector<reco::Track> >(m_tracks);
@@ -146,13 +150,13 @@ void PixelJetPuId::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Eve
   //get tracks
   Handle<std::vector<reco::Track> > tracks;
   iEvent.getByToken(tracksToken, tracks);
-  unsigned int tsize = tracks->size();
-  float teta[tsize], tphi[tsize];
-  unsigned int i = 0;
+  uint const asize = std::max(1u, (uint)tracks->size());
+  float teta[asize], tphi[asize];
+  uint tsize = 0;
   for (auto const& tr : *tracks) {
-    teta[i] = tr.eta();
-    tphi[i] = tr.phi();
-    ++i;
+    teta[tsize] = tr.eta();
+    tphi[tsize] = tr.phi();
+    ++tsize;
   }
 
   //get jets
@@ -167,8 +171,7 @@ void PixelJetPuId::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Eve
   iEvent.getByToken(primaryVertexToken, primaryVertex);
 
   //get Transient Track Builder
-  edm::ESHandle<TransientTrackBuilder> builder;
-  iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
+  auto const& builder = iSetup.getHandle(transientTrackRecordToken_);
 
   //init JetTagCollection
   if (!generaljets.product()->empty()) {

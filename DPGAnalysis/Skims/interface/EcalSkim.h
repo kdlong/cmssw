@@ -22,13 +22,13 @@
 // user include files
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDFilter.h"
+#include "FWCore/Framework/interface/stream/EDFilter.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "Geometry/CaloTopology/interface/CaloTopology.h"
-#include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
+#include "Geometry/Records/interface/CaloTopologyRecord.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/DetId/interface/DetId.h"
 
@@ -41,7 +41,7 @@
 
 class TFile;
 
-class EcalSkim : public edm::EDFilter {
+class EcalSkim : public edm::stream::EDFilter<> {
 public:
   explicit EcalSkim(const edm::ParameterSet &);
   ~EcalSkim() override;

@@ -3,16 +3,18 @@
 #include "L1Trigger/L1TMuonEndCap/interface/EMTFSetup.h"
 
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 #include "L1Trigger/L1TMuonEndCap/interface/PtAssignmentEngine2016.h"
 #include "L1Trigger/L1TMuonEndCap/interface/PtAssignmentEngine2017.h"
 
-EMTFSetup::EMTFSetup(const edm::ParameterSet& iConfig)
-    : geometry_translator_(),
-      condition_helper_(),
+EMTFSetup::EMTFSetup(const edm::ParameterSet& iConfig, edm::ConsumesCollector iCollector)
+    : geometry_translator_(iCollector),
+      condition_helper_(iCollector),
       version_control_(iConfig),
       sector_processor_lut_(),
       pt_assign_engine_(nullptr),
+      pt_assign_engine_dxy_(nullptr),
       fw_ver_(0),
       pt_lut_ver_(0),
       pc_lut_ver_(0) {
@@ -27,7 +29,11 @@ EMTFSetup::EMTFSetup(const edm::ParameterSet& iConfig)
     throw cms::Exception("L1TMuonEndCap") << "Cannot recognize the era option: " << era();
   }
 
+  // No era setup for displaced pT assignment engine
+  pt_assign_engine_dxy_ = std::make_unique<PtAssignmentEngineDxy>();
+
   emtf_assert(pt_assign_engine_ != nullptr);
+  emtf_assert(pt_assign_engine_dxy_ != nullptr);
 }
 
 EMTFSetup::~EMTFSetup() {}
@@ -37,7 +43,7 @@ void EMTFSetup::reload(const edm::Event& iEvent, const edm::EventSetup& iSetup) 
   geometry_translator_.checkAndUpdateGeometry(iSetup);
 
   // Get the conditions, primarily the firmware version and the BDT forests
-  condition_helper_.checkAndUpdateConditions(iEvent, iSetup);
+  condition_helper_.checkAndUpdateConditions(iSetup);
 
   // Set version numbers
   fw_ver_ = condition_helper_.get_fw_version();

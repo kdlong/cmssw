@@ -12,7 +12,10 @@ process = cms.Process("L1TrackNtuple")
 ############################################################
 
 GEOMETRY = "D49"
-L1TRKALGO = 'HYBRID'  # L1 tracking algorithm: 'HYBRID' (baseline, 4par fit) or 'HYBRID_DISPLACED' (extended, 5par fit)
+# Set L1 tracking algorithm: 
+# 'HYBRID' (baseline, 4par fit) or 'HYBRID_DISPLACED' (extended, 5par fit). 
+# (Or legacy algos 'TMTT' or 'TRACKLET').
+L1TRKALGO = 'HYBRID'  
 
 WRITE_DATA = False
 
@@ -25,13 +28,17 @@ process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 
 process.load('FWCore.MessageService.MessageLogger_cfi')
-process.MessageLogger.L1track=dict()
-process.MessageLogger.Tracklet = cms.untracked.PSet(limit = cms.untracked.int32(-1))
+process.MessageLogger.L1track = dict(limit = -1)
+process.MessageLogger.Tracklet = dict(limit = -1)
 
 if GEOMETRY == "D49": 
     print "using geometry " + GEOMETRY + " (tilted)"
     process.load('Configuration.Geometry.GeometryExtended2026D49Reco_cff')
     process.load('Configuration.Geometry.GeometryExtended2026D49_cff')
+elif GEOMETRY == "D76": 
+    print "using geometry " + GEOMETRY + " (tilted)"
+    process.load('Configuration.Geometry.GeometryExtended2026D76Reco_cff')
+    process.load('Configuration.Geometry.GeometryExtended2026D76_cff')
 else:
     print "this is not a valid geometry!!!"
 
@@ -48,16 +55,32 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic', '')
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
 
-# Get list of MC datasets from repo, or specify yourself.
+#--- To use MCsamples scripts, defining functions get*data*(), 
+#--- follow instructions https://cernbox.cern.ch/index.php/s/enCnnfUZ4cpK7mT
 
-def getTxtFile(txtFileName): 
-  return FileUtils.loadListFromFile(os.environ['CMSSW_BASE']+'/src/'+txtFileName)
+#from MCsamples.Scripts.getCMSdata_cfi import *
+#from MCsamples.Scripts.getCMSlocaldata_cfi import *
 
 if GEOMETRY == "D49":
-    inputMC = ["/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/F7BF4AED-51F1-9D47-B86D-6C3DDA134AB9.root"]
-    
+  # Read data from card files (defines getCMSdataFromCards()):
+  #from MCsamples.RelVal_1120.PU200_TTbar_14TeV_cfi import *
+  #inputMC = getCMSdataFromCards()
+
+  # Or read .root files from directory on local computer:
+  #dirName = "$myDir/whatever/"
+  #inputMC=getCMSlocaldata(dirName)
+
+  # Or read specified dataset (accesses CMS DB, so use this method only occasionally):
+  #dataName="/RelValTTbar_14TeV/CMSSW_11_2_0_pre5-PU25ns_110X_mcRun4_realistic_v3_2026D49PU200-v1/GEN-SIM-DIGI-RAW"
+  #inputMC=getCMSdata(dataName)
+
+  # Or read specified .root file:
+  inputMC = ["/store/relval/CMSSW_11_3_0_pre3/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU_113X_mcRun4_realistic_v3_2026D49PU200_rsb-v1/00000/00260a30-734a-4a3a-a4b0-f836ce5502c6.root"] 
+
+elif GEOMETRY == "D76":
+  inputMC = ["/store/relval/CMSSW_11_3_0_pre6/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU_113X_mcRun4_realistic_v6_2026D76PU200-v1/00000/00026541-6200-4eed-b6f8-d3a1fd720e9c.root"]
 else:
-    print "this is not a valid geometry!!!"
+  print "this is not a valid geometry!!!"    
     
 process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(*inputMC))
 
@@ -66,10 +89,12 @@ process.Timing = cms.Service("Timing", summaryOnly = cms.untracked.bool(True))
 
 
 ############################################################
-# L1 tracking: remake stubs?
+# L1 tracking: stubs / DTC emulation
 ############################################################
 
-#process.load('L1Trigger.TrackTrigger.TrackTrigger_cff')
+process.load('L1Trigger.TrackTrigger.TrackTrigger_cff')
+
+# remake stubs? 
 #from L1Trigger.TrackTrigger.TTStubAlgorithmRegister_cfi import *
 #process.load("SimTracker.TrackTriggerAssociation.TrackTriggerAssociator_cff")
 
@@ -78,6 +103,21 @@ process.Timing = cms.Service("Timing", summaryOnly = cms.untracked.bool(True))
 
 #process.TTClusterStub = cms.Path(process.TrackTriggerClustersStubs)
 #process.TTClusterStubTruth = cms.Path(process.TrackTriggerAssociatorClustersStubs) 
+
+
+# DTC emulation
+process.load('L1Trigger.TrackerDTC.ProducerES_cff')
+process.load('L1Trigger.TrackerDTC.ProducerED_cff')
+
+# load code that analyzes DTCStubs
+#process.load('L1Trigger.TrackerDTC.Analyzer_cff')
+
+# modify default cuts
+#process.TrackTriggerSetup.FrontEnd.BendCut = 5.0
+#process.TrackTriggerSetup.Hybrid.MinPt = 1.0
+
+process.dtc = cms.Path(process.TrackerDTCProducer)#*process.TrackerDTCAnalyzer)
+
 
 ############################################################
 # L1 tracking
@@ -105,8 +145,8 @@ elif (L1TRKALGO == 'HYBRID_DISPLACED'):
     
 # LEGACY ALGORITHM (EXPERTS ONLY): TRACKLET  
 elif (L1TRKALGO == 'TRACKLET'):
-    print "\n WARNING - this is not a recommended algorithm! Please use HYBRID (HYBRID_DISPLACED)!"
-    print "\n To run the tracklet-only algorithm, please ensure you have commented out #define USEHYBRID in interface/Settings.h + recompiled! \n"
+    print "\n WARNING: This is not the baseline algorithm! Prefer HYBRID or HYBRID_DISPLACED!"
+    print "\n To run the Tracklet-only algorithm, ensure you have commented out 'CXXFLAGS=-DUSEHYBRID' in BuildFile.xml & recompiled! \n"
     process.TTTracksEmulation = cms.Path(process.L1HybridTracks)
     process.TTTracksEmulationWithTruth = cms.Path(process.L1HybridTracksWithAssociators)
     NHELIXPAR = 4
@@ -116,7 +156,7 @@ elif (L1TRKALGO == 'TRACKLET'):
 
 # LEGACY ALGORITHM (EXPERTS ONLY): TMTT  
 elif (L1TRKALGO == 'TMTT'):
-    print "\n WARNING - this is not a recommended algorithm! Please use HYBRID (HYBRID_DISPLACED)! \n"
+    print "\n WARNING: This is not the baseline algorithm! Prefer HYBRID or HYBRID_DISPLACED! \n"
     process.load("L1Trigger.TrackFindingTMTT.TMTrackProducer_Ultimate_cff")
     L1TRK_PROC  =  process.TMTrackProducer
     L1TRK_NAME  = "TMTrackProducer"
@@ -134,6 +174,7 @@ elif (L1TRKALGO == 'TMTT'):
 else:
     print "ERROR: Unknown L1TRKALGO option"
     exit(1)
+
 
 ############################################################
 # Define the track ntuple process, MyProcess is the (unsigned) PDGID corresponding to the process which is run
@@ -167,19 +208,24 @@ process.L1TrackNtuple = cms.EDAnalyzer('L1TrackNtupleMaker',
                                        TrackingVertexInputTag = cms.InputTag("mix", "MergedTrackTruth"),
                                        # tracking in jets (--> requires AK4 genjet collection present!)
                                        TrackingInJets = cms.bool(False),
-                                       GenJetInputTag = cms.InputTag("ak4GenJets", ""),
+                                       GenJetInputTag = cms.InputTag("ak4GenJets", "")
                                        )
 
 process.ana = cms.Path(process.L1TrackNtuple)
 
+
+############################################################
+# final schedule of what is to be run
+############################################################
+
 # use this if you want to re-run the stub making
-# process.schedule = cms.Schedule(process.TTClusterStub,process.TTClusterStubTruth,process.TTTracksEmulationWithTruth,process.ana)
+# process.schedule = cms.Schedule(process.TTClusterStub,process.TTClusterStubTruth,process.dtc,process.TTTracksEmulationWithTruth,process.ana)
 
 # use this if cluster/stub associators not available 
-# process.schedule = cms.Schedule(process.TTClusterStubTruth,process.TTTracksEmulationWithTruth,process.ana)
+# process.schedule = cms.Schedule(process.TTClusterStubTruth,process.dtc,process.TTTracksEmulationWithTruth,process.ana)
 
 # use this to only run tracking + track associator
-process.schedule = cms.Schedule(process.TTTracksEmulationWithTruth,process.ana)
+process.schedule = cms.Schedule(process.dtc,process.TTTracksEmulationWithTruth,process.ana)
 
 
 ############################################################
@@ -202,4 +248,4 @@ if (WRITE_DATA):
 
   process.pd = cms.EndPath(process.writeDataset)
   process.schedule.append(process.pd)
-
+  

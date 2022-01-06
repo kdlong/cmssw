@@ -3,6 +3,7 @@
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
 #include "DataFormats/ParticleFlowReco/interface/PFClusterFwd.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "TVector3.h"
@@ -131,7 +132,8 @@ namespace lowptgsfeleseed {
 
 namespace lowptgsfeleid {
 
-  std::vector<float> features_V1(reco::GsfElectron const& ele, float rho, float unbiased, float field_z) {
+  std::vector<float> features_V1(
+      reco::GsfElectron const& ele, float rho, float unbiased, float field_z, const reco::Track* trk) {
     float eid_rho = -999.;
     float eid_sc_eta = -999.;
     float eid_shape_full5x5_r9 = -999.;
@@ -167,23 +169,17 @@ namespace lowptgsfeleid {
     float sc_clus2_E_ov_p = -999.;
 
     // KF tracks
-    if (ele.core().isNonnull()) {
-      reco::TrackRef trk = ele.closestCtfTrackRef();
-      if (trk.isNonnull()) {
-        eid_trk_p = (float)trk->p();
-        eid_trk_nhits = (float)trk->found();
-        eid_trk_chi2red = (float)trk->normalizedChi2();
-        TVector3 trkTV3(0, 0, 0);
-        trkTV3.SetPtEtaPhi(trk->pt(), trk->eta(), trk->phi());
-        TVector3 eleTV3(0, 0, 0);
-        eleTV3.SetPtEtaPhi(ele.pt(), ele.eta(), ele.phi());
-        trk_dr = eleTV3.DeltaR(trkTV3);
-      }
+    if (trk != nullptr || (ele.core().isNonnull() && ele.closestCtfTrackRef().isNonnull())) {
+      const reco::Track* tk = trk ? trk : &*ele.closestCtfTrackRef();
+      eid_trk_p = tk->p();
+      eid_trk_nhits = tk->found();
+      eid_trk_chi2red = tk->normalizedChi2();
+      trk_dr = reco::deltaR(*tk, ele);
     }
 
     // GSF tracks
     if (ele.core().isNonnull()) {
-      reco::GsfTrackRef gsf = ele.core()->gsfTrack();
+      reco::GsfTrackRef gsf = ele.gsfTrack();
       if (gsf.isNonnull()) {
         gsf_mode_p = gsf->pMode();
         eid_gsf_nhits = (float)gsf->found();
@@ -198,7 +194,7 @@ namespace lowptgsfeleid {
 
     // Super clusters
     if (ele.core().isNonnull()) {
-      reco::SuperClusterRef sc = ele.core()->superCluster();
+      reco::SuperClusterRef sc = ele.superCluster();
       if (sc.isNonnull()) {
         eid_sc_E = sc->energy();
         eid_sc_eta = sc->eta();
@@ -230,9 +226,9 @@ namespace lowptgsfeleid {
 
     // Clusters
     if (ele.core().isNonnull()) {
-      reco::GsfTrackRef gsf = ele.core()->gsfTrack();
+      reco::GsfTrackRef gsf = ele.gsfTrack();
       if (gsf.isNonnull()) {
-        reco::SuperClusterRef sc = ele.core()->superCluster();
+        reco::SuperClusterRef sc = ele.superCluster();
         if (sc.isNonnull()) {
           // Propagate electron track to ECAL surface
           double mass2 = 0.000511 * 0.000511;

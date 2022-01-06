@@ -1,7 +1,3 @@
-
-#include <memory>
-
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
 #include "DetectorDescription/Core/interface/DDCompactView.h"
 #include "DetectorDescription/Core/interface/DDFilter.h"
 #include "DetectorDescription/Core/interface/DDFilteredView.h"
@@ -19,8 +15,6 @@
 #include "G4Track.hh"
 #include "G4VProcess.hh"
 
-#include "FWCore/Framework/interface/ESTransientHandle.h"
-
 // Histogramming
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
@@ -31,24 +25,25 @@
 #include "G4PhysicalConstants.hh"
 #include "G4SystemOfUnits.hh"
 
-#define EDM_ML_DEBUG
+//#define EDM_ML_DEBUG
 
 //________________________________________________________________________________________
 DreamSD::DreamSD(const std::string &name,
-                 const edm::EventSetup &es,
+                 const DDCompactView *cpvDDD,
+                 const cms::DDCompactView *cpvDD4hep,
                  const SensitiveDetectorCatalog &clg,
                  edm::ParameterSet const &p,
                  const SimTrackManager *manager)
-    : CaloSD(name, es, clg, p, manager) {
+    : CaloSD(name, clg, p, manager), cpvDDD_(cpvDDD), cpvDD4hep_(cpvDD4hep) {
   edm::ParameterSet m_EC = p.getParameter<edm::ParameterSet>("ECalSD");
   useBirk_ = m_EC.getParameter<bool>("UseBirkLaw");
   doCherenkov_ = m_EC.getParameter<bool>("doCherenkov");
-  birk1_ = m_EC.getParameter<double>("BirkC1") * (g / (MeV * cm2));
+  birk1_ = m_EC.getParameter<double>("BirkC1") * (CLHEP::g / (CLHEP::MeV * CLHEP::cm2));
   birk2_ = m_EC.getParameter<double>("BirkC2");
   birk3_ = m_EC.getParameter<double>("BirkC3");
   slopeLY_ = m_EC.getParameter<double>("SlopeLightYield");
   readBothSide_ = m_EC.getUntrackedParameter<bool>("ReadBothSide", false);
-  dd4hep_ = m_EC.getUntrackedParameter<bool>("DD4Hep", false);
+  dd4hep_ = p.getParameter<bool>("g4GeometryDD4hepSource");
 
   chAngleIntegrals_.reset(nullptr);
 
@@ -58,8 +53,14 @@ DreamSD::DreamSD(const std::string &name,
                               << "\n          Slope for Light yield is set to " << slopeLY_
                               << "\n          Parameterization of Cherenkov is set to " << doCherenkov_
                               << ", readout both sides is " << readBothSide_ << " and dd4hep flag " << dd4hep_;
-
-  initMap(name, es);
+#ifdef EDM_ML_DEBUG
+  edm::LogVerbatim("EcalSim") << GetName() << " initialized";
+  const G4LogicalVolumeStore *lvs = G4LogicalVolumeStore::GetInstance();
+  unsigned int k(0);
+  for (auto lvcite = lvs->begin(); lvcite != lvs->end(); ++lvcite, ++k)
+    edm::LogVerbatim("EcalSim") << "Volume[" << k << "] " << (*lvcite)->GetName();
+#endif
+  initMap(name);
 }
 
 //________________________________________________________________________________________
@@ -88,8 +89,10 @@ void DreamSD::initRun() {
   DimensionMap::const_iterator ite = xtalLMap_.begin();
   const G4LogicalVolume *lv = (ite->first);
   G4Material *material = lv->GetMaterial();
+#ifdef EDM_ML_DEBUG
   edm::LogVerbatim("EcalSim") << "DreamSD::initRun: Initializes for material " << material->GetName() << " in "
                               << lv->GetName();
+#endif
   materialPropertiesTable_ = material->GetMaterialPropertiesTable();
   if (!materialPropertiesTable_) {
     if (!setPbWO2MaterialProperties_(material)) {
@@ -114,12 +117,10 @@ uint32_t DreamSD::setDetUnitId(const G4Step *aStep) {
 }
 
 //________________________________________________________________________________________
-void DreamSD::initMap(const std::string &sd, const edm::EventSetup &es) {
+void DreamSD::initMap(const std::string &sd) {
   if (dd4hep_) {
-    edm::ESTransientHandle<cms::DDCompactView> cpv;
-    es.get<IdealGeometryRecord>().get(cpv);
     const cms::DDFilter filter("ReadOutName", sd);
-    cms::DDFilteredView fv((*cpv), filter);
+    cms::DDFilteredView fv((*cpvDD4hep_), filter);
     while (fv.firstChild()) {
       std::string name = static_cast<std::string>(dd4hep::dd::noNamespace(fv.name()));
       std::vector<double> paras(fv.parameters());
@@ -129,21 +130,19 @@ void DreamSD::initMap(const std::string &sd, const edm::EventSetup &es) {
 #endif
       // Set length to be the largest size, width the smallest
       std::sort(paras.begin(), paras.end());
-      double length = 2.0 * k_ScaleFromDD4HepToG4 * paras.back();
-      double width = 2.0 * k_ScaleFromDD4HepToG4 * paras.front();
+      double length = 2.0 * k_ScaleFromDD4hepToG4 * paras.back();
+      double width = 2.0 * k_ScaleFromDD4hepToG4 * paras.front();
       fillMap(name, length, width);
     }
   } else {
-    edm::ESTransientHandle<DDCompactView> cpv;
-    es.get<IdealGeometryRecord>().get(cpv);
     DDSpecificsMatchesValueFilter filter{DDValue("ReadOutName", sd, 0)};
-    DDFilteredView fv((*cpv), filter);
-
-    bool dodet = fv.firstChild();
+    DDFilteredView fv((*cpvDDD_), filter);
+    fv.firstChild();
+    bool dodet = true;
     while (dodet) {
       const DDSolid &sol = fv.logicalPart().solid();
       std::vector<double> paras(sol.parameters());
-      std::string name = sol.name().name();
+      std::string name = static_cast<std::string>(sol.name().name());
 #ifdef EDM_ML_DEBUG
       edm::LogVerbatim("EcalSim") << "DreamSD::initMap (for " << sd << "): Solid " << name << " Shape " << sol.shape()
                                   << " Parameter 0 = " << paras[0];
@@ -175,10 +174,12 @@ void DreamSD::initMap(const std::string &sd, const edm::EventSetup &es) {
 //________________________________________________________________________________________
 void DreamSD::fillMap(const std::string &name, double length, double width) {
   const G4LogicalVolumeStore *lvs = G4LogicalVolumeStore::GetInstance();
-  std::vector<G4LogicalVolume *>::const_iterator lvcite;
+  edm::LogVerbatim("EcalSim") << "LV Store with " << lvs->size() << " elements";
   G4LogicalVolume *lv = nullptr;
-  for (lvcite = lvs->begin(); lvcite != lvs->end(); lvcite++) {
-    if ((*lvcite)->GetName() == static_cast<G4String>(name)) {
+  for (auto lvcite = lvs->begin(); lvcite != lvs->end(); lvcite++) {
+    edm::LogVerbatim("EcalSim") << name << " vs " << (*lvcite)->GetName();
+    std::string namex = static_cast<std::string>((*lvcite)->GetName());
+    if (name == static_cast<std::string>(dd4hep::dd::noNamespace(namex))) {
       lv = (*lvcite);
       break;
     }
@@ -379,7 +380,7 @@ double DreamSD::getAverageNumberOfPhotons_(const double charge,
   double nMax = (*Rindex)[Rlength];
 
   // Max Cerenkov Angle Integral
-  double CAImax = chAngleIntegrals_.get()->GetMaxValue();
+  double CAImax = chAngleIntegrals_.get()->GetMaxEnergy();
 
   double dp = 0., ge = 0., CAImin = 0.;
 
@@ -409,10 +410,8 @@ double DreamSD::getAverageNumberOfPhotons_(const double charge,
   // Calculate number of photons
   double numPhotons = rFact * charge / eplus * charge / eplus * (dp - ge * BetaInverse * BetaInverse);
 
-#ifdef EDM_ML_DEBUG
   edm::LogVerbatim("EcalSim") << "@SUB=getAverageNumberOfPhotons\nCAImin = " << CAImin << "\nCAImax = " << CAImax
                               << "\ndp = " << dp << ", ge = " << ge << "\nnumPhotons = " << numPhotons;
-#endif
   return numPhotons;
 }
 
@@ -421,7 +420,8 @@ double DreamSD::getAverageNumberOfPhotons_(const double charge,
 // Values from Ts42 detector construction
 bool DreamSD::setPbWO2MaterialProperties_(G4Material *aMaterial) {
   std::string pbWO2Name("E_PbWO4");
-  if (pbWO2Name != aMaterial->GetName()) {  // Wrong material!
+  std::string name = static_cast<std::string>(aMaterial->GetName());
+  if (static_cast<std::string>(dd4hep::dd::noNamespace(name)) != pbWO2Name) {  // Wrong material!
     edm::LogWarning("EcalSim") << "This is not the right material: "
                                << "expecting " << pbWO2Name << ", got " << aMaterial->GetName();
     return false;
@@ -466,13 +466,13 @@ bool DreamSD::setPbWO2MaterialProperties_(G4Material *aMaterial) {
 
   // Calculate Cherenkov angle integrals:
   // This is an ad-hoc solution (we hold it in the class, not in the material)
-  chAngleIntegrals_ = std::make_unique<G4PhysicsOrderedFreeVector>();
+  chAngleIntegrals_ = std::make_unique<G4PhysicsFreeVector>(nEntries);
 
   int index = 0;
   double currentRI = RefractiveIndex[index];
   double currentPM = PhotonEnergy[index];
   double currentCAI = 0.0;
-  chAngleIntegrals_.get()->InsertValues(currentPM, currentCAI);
+  chAngleIntegrals_.get()->PutValue(0, currentPM, currentCAI);
   double prevPM = currentPM;
   double prevCAI = currentCAI;
   double prevRI = currentRI;
@@ -482,7 +482,7 @@ bool DreamSD::setPbWO2MaterialProperties_(G4Material *aMaterial) {
     currentCAI = 0.5 * (1.0 / (prevRI * prevRI) + 1.0 / (currentRI * currentRI));
     currentCAI = prevCAI + (currentPM - prevPM) * currentCAI;
 
-    chAngleIntegrals_.get()->InsertValues(currentPM, currentCAI);
+    chAngleIntegrals_.get()->PutValue(index, currentPM, currentCAI);
 
     prevPM = currentPM;
     prevCAI = currentCAI;

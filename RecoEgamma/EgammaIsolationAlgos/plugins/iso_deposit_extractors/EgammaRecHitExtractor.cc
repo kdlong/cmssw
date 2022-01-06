@@ -20,7 +20,6 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -77,6 +76,8 @@ namespace egammaisolation {
     edm::InputTag endcapEcalHitsTag_;
     edm::EDGetTokenT<EcalRecHitCollection> barrelEcalHitsToken_;
     edm::EDGetTokenT<EcalRecHitCollection> endcapEcalHitsToken_;
+    edm::ESGetToken<CaloGeometry, CaloGeometryRecord> geometryToken_;
+    edm::ESGetToken<EcalSeverityLevelAlgo, EcalSeverityLevelAlgoRcd> sevlvToken_;
     bool fakeNegativeDeposit_;
     bool tryBoth_;
     bool useEt_;
@@ -113,6 +114,8 @@ EgammaRecHitExtractor::EgammaRecHitExtractor(const edm::ParameterSet& par, edm::
       endcapEcalHitsTag_(par.getParameter<edm::InputTag>("endcapEcalHits")),
       barrelEcalHitsToken_(iC.consumes<EcalRecHitCollection>(barrelEcalHitsTag_)),
       endcapEcalHitsToken_(iC.consumes<EcalRecHitCollection>(endcapEcalHitsTag_)),
+      geometryToken_(iC.esConsumes()),
+      sevlvToken_(iC.esConsumes()),
       fakeNegativeDeposit_(par.getParameter<bool>("subtractSuperClusterEnergy")),
       tryBoth_(par.getParameter<bool>("tryBoth")),
       vetoClustered_(par.getParameter<bool>("vetoClustered")),
@@ -170,30 +173,17 @@ EgammaRecHitExtractor::~EgammaRecHitExtractor() {}
 reco::IsoDeposit EgammaRecHitExtractor::deposit(const edm::Event& iEvent,
                                                 const edm::EventSetup& iSetup,
                                                 const reco::Candidate& emObject) const {
-  edm::ESHandle<CaloGeometry> pG;
-  iSetup.get<CaloGeometryRecord>().get(pG);
-
   //Get the channel status from the db
   //edm::ESHandle<EcalChannelStatus> chStatus;
   //iSetup.get<EcalChannelStatusRcd>().get(chStatus);
 
-  edm::ESHandle<EcalSeverityLevelAlgo> sevlv;
-  iSetup.get<EcalSeverityLevelAlgoRcd>().get(sevlv);
-  const EcalSeverityLevelAlgo* sevLevel = sevlv.product();
+  const EcalSeverityLevelAlgo* sevLevel = &iSetup.getData(sevlvToken_);
 
-  const CaloGeometry* caloGeom = pG.product();
+  const CaloGeometry* caloGeom = &iSetup.getData(geometryToken_);
   const CaloSubdetectorGeometry* barrelgeom = caloGeom->getSubdetectorGeometry(DetId::Ecal, EcalBarrel);
   const CaloSubdetectorGeometry* endcapgeom = caloGeom->getSubdetectorGeometry(DetId::Ecal, EcalEndcap);
 
   static const std::string metname = "EgammaIsolationAlgos|EgammaRecHitExtractor";
-
-  //Get barrel ECAL RecHits
-  edm::Handle<EcalRecHitCollection> barrelEcalRecHitsH;
-  iEvent.getByToken(barrelEcalHitsToken_, barrelEcalRecHitsH);
-
-  //Get endcap ECAL RecHits
-  edm::Handle<EcalRecHitCollection> endcapEcalRecHitsH;
-  iEvent.getByToken(endcapEcalHitsToken_, endcapEcalRecHitsH);
 
   //define isodeposit starting from candidate
   reco::SuperClusterRef sc = emObject.get<reco::SuperClusterRef>();
@@ -214,11 +204,11 @@ reco::IsoDeposit EgammaRecHitExtractor::deposit(const edm::Event& iEvent,
   // fill rechits
   bool inBarrel = sameTag_ || (abs(sc->eta()) < 1.479);  //check for barrel. If only one collection is used, use barrel
   if (inBarrel || tryBoth_) {
-    collect(deposit, sc, barrelgeom, caloGeom, *barrelEcalRecHitsH, sevLevel, true);
+    collect(deposit, sc, barrelgeom, caloGeom, iEvent.get(barrelEcalHitsToken_), sevLevel, true);
   }
 
   if ((!inBarrel) || tryBoth_) {
-    collect(deposit, sc, endcapgeom, caloGeom, *endcapEcalRecHitsH, sevLevel, false);
+    collect(deposit, sc, endcapgeom, caloGeom, iEvent.get(endcapEcalHitsToken_), sevLevel, false);
   }
 
   return deposit;

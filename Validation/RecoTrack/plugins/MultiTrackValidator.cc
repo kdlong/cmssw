@@ -12,6 +12,7 @@
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
 #include "SimDataFormats/Associations/interface/TrackToTrackingParticleAssociator.h"
+#include "SimTracker/TrackAssociation/interface/CosmicParametersDefinerForTP.h"
 #include "SimTracker/TrackerHitAssociation/interface/TrackerHitAssociator.h"
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertex.h"
@@ -20,8 +21,6 @@
 #include "SimDataFormats/EncodedEventId/interface/EncodedEventId.h"
 #include "TrackingTools/TrajectoryState/interface/FreeTrajectoryState.h"
 #include "TrackingTools/PatternTools/interface/TSCBLBuilderNoMaterial.h"
-#include "SimTracker/TrackAssociation/plugins/ParametersDefinerForTPESProducer.h"
-#include "SimTracker/TrackAssociation/plugins/CosmicParametersDefinerForTPESProducer.h"
 #include "SimTracker/TrackAssociation/interface/TrackingParticleIP.h"
 
 #include "DataFormats/TrackReco/interface/DeDxData.h"
@@ -47,10 +46,10 @@ namespace {
 }  // namespace
 
 MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset)
-    : associators(pset.getUntrackedParameter<std::vector<edm::InputTag>>("associators")),
+    : tTopoEsToken(esConsumes()),
+      parametersDefinerIsCosmic_(pset.getParameter<std::string>("parametersDefiner") == "CosmicParametersDefinerForTP"),
+      associators(pset.getUntrackedParameter<std::vector<edm::InputTag>>("associators")),
       label(pset.getParameter<std::vector<edm::InputTag>>("label")),
-      parametersDefiner(pset.getParameter<std::string>("parametersDefiner")),
-      parametersDefinerIsCosmic_(parametersDefiner == "CosmicParametersDefinerForTP"),
       ignoremissingtkcollection_(pset.getUntrackedParameter<bool>("ignoremissingtrackcollection", false)),
       useAssociators_(pset.getParameter<bool>("UseAssociators")),
       calculateDrSingleCollection_(pset.getUntrackedParameter<bool>("calculateDrSingleCollection")),
@@ -115,6 +114,12 @@ MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset)
 
   edm::InputTag beamSpotTag = pset.getParameter<edm::InputTag>("beamSpot");
   bsSrc = consumes<reco::BeamSpot>(beamSpotTag);
+
+  if (parametersDefinerIsCosmic_) {
+    parametersDefinerTP_ = std::make_unique<CosmicParametersDefinerForTP>(consumesCollector());
+  } else {
+    parametersDefinerTP_ = std::make_unique<ParametersDefinerForTP>(beamSpotTag, consumesCollector());
+  }
 
   ParameterSet psetForHistoProducerAlgo = pset.getParameter<ParameterSet>("histoProducerAlgoBlock");
   histoProducerAlgo_ = std::make_unique<MTVHistoProducerAlgoForTracker>(psetForHistoProducerAlgo, doSeedPlots_);
@@ -340,6 +345,7 @@ void MultiTrackValidator::bookHistograms(DQMStore::IBooker& ibook,
   }    // end loop ww
 }
 
+#ifdef EDM_ML_DEBUG
 namespace {
   void ensureEffIsSubsetOfFake(const TrackingParticleRefVector& eff, const TrackingParticleRefVector& fake) {
     // If efficiency RefVector is empty, don't check the product ids
@@ -373,6 +379,7 @@ namespace {
     }
   }
 }  // namespace
+#endif
 
 const TrackingVertex::LorentzVector* MultiTrackValidator::getSimPVPosition(
     const edm::Handle<TrackingVertexCollection>& htv) const {
@@ -416,7 +423,6 @@ const reco::Vertex::Point* MultiTrackValidator::getRecoPVPosition(
 void MultiTrackValidator::tpParametersAndSelection(
     const Histograms& histograms,
     const TrackingParticleRefVector& tPCeff,
-    const ParametersDefinerForTP& parametersDefinerTP,
     const edm::Event& event,
     const edm::EventSetup& setup,
     const reco::BeamSpot& bs,
@@ -429,8 +435,9 @@ void MultiTrackValidator::tpParametersAndSelection(
     for (size_t j = 0; j < tPCeff.size(); ++j) {
       const TrackingParticleRef& tpr = tPCeff[j];
 
-      TrackingParticle::Vector momentum = parametersDefinerTP.momentum(event, setup, tpr);
-      TrackingParticle::Point vertex = parametersDefinerTP.vertex(event, setup, tpr);
+      auto const& rec = parametersDefinerTP_->momentumAndVertex(event, setup, tpr);
+      TrackingParticle::Vector const& momentum = std::get<0>(rec);
+      TrackingParticle::Point const& vertex = std::get<1>(rec);
       if (doSimPlots_) {
         histoProducerAlgo_->fill_generic_simTrack_histos(
             histograms.histoProducerAlgo, momentum, vertex, tpr->eventId().bunchCrossing());
@@ -461,9 +468,7 @@ void MultiTrackValidator::tpParametersAndSelection(
 
       if (tpSelector(tp)) {
         selected_tPCeff.push_back(j);
-        TrackingParticle::Vector momentum = parametersDefinerTP.momentum(event, setup, tpr);
-        TrackingParticle::Point vertex = parametersDefinerTP.vertex(event, setup, tpr);
-        momVert_tPCeff.emplace_back(momentum, vertex);
+        momVert_tPCeff.emplace_back(parametersDefinerTP_->momentumAndVertex(event, setup, tpr));
       }
       ++j;
     }
@@ -478,6 +483,9 @@ size_t MultiTrackValidator::tpDR(const TrackingParticleRefVector& tPCeff,
                                  DynArray<float>& dR_tPCeff,
                                  DynArray<float>& dR_tPCeff_jet,
                                  const edm::View<reco::Candidate>* cores) const {
+  if (tPCeff.empty()) {
+    return 0;
+  }
   float etaL[tPCeff.size()], phiL[tPCeff.size()];
   size_t n_selTP_dr = 0;
   for (size_t iTP : selected_tPCeff) {
@@ -527,6 +535,9 @@ void MultiTrackValidator::trackDR(const edm::View<reco::Track>& trackCollection,
                                   DynArray<float>& dR_trk,
                                   DynArray<float>& dR_trk_jet,
                                   const edm::View<reco::Candidate>* cores) const {
+  if (trackCollectionDr.empty()) {
+    return;
+  }
   int i = 0;
   float etaL[trackCollectionDr.size()];
   float phiL[trackCollectionDr.size()];
@@ -586,14 +597,7 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
                              << "====================================================\n"
                              << "\n";
 
-  edm::ESHandle<ParametersDefinerForTP> parametersDefinerTPHandle;
-  setup.get<TrackAssociatorRecord>().get(parametersDefiner, parametersDefinerTPHandle);
-  //Since we modify the object, we must clone it
-  auto parametersDefinerTP = parametersDefinerTPHandle->clone();
-
-  edm::ESHandle<TrackerTopology> httopo;
-  setup.get<TrackerTopologyRcd>().get(httopo);
-  const TrackerTopology& ttopo = *httopo;
+  const TrackerTopology& ttopo = setup.getData(tTopoEsToken);
 
   // FIXME: we really need to move to edm::View for reading the
   // TrackingParticles... Unfortunately it has non-trivial
@@ -609,6 +613,7 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
   const bool tp_effic_refvector = label_tp_effic.isUninitialized();
   if (!tp_effic_refvector) {
     event.getByToken(label_tp_effic, TPCollectionHeff);
+    tmpTPeff.reserve(TPCollectionHeff->size());
     for (size_t i = 0, size = TPCollectionHeff->size(); i < size; ++i) {
       tmpTPeff.push_back(TrackingParticleRef(TPCollectionHeff, i));
     }
@@ -620,6 +625,7 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
   if (!label_tp_fake.isUninitialized()) {
     edm::Handle<TrackingParticleCollection> TPCollectionHfake;
     event.getByToken(label_tp_fake, TPCollectionHfake);
+    tmpTPfake.reserve(TPCollectionHfake->size());
     for (size_t i = 0, size = TPCollectionHfake->size(); i < size; ++i) {
       tmpTPfake.push_back(TrackingParticleRef(TPCollectionHfake, i));
     }
@@ -633,13 +639,15 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
   TrackingParticleRefVector const& tPCeff = *tmpTPeffPtr;
   TrackingParticleRefVector const& tPCfake = *tmpTPfakePtr;
 
+#ifdef EDM_ML_DEBUG
   ensureEffIsSubsetOfFake(tPCeff, tPCfake);
+#endif
 
   if (parametersDefinerIsCosmic_) {
     edm::Handle<SimHitTPAssociationProducer::SimHitTPAssociationList> simHitsTPAssoc;
     //warning: make sure the TP collection used in the map is the same used in the MTV!
     event.getByToken(_simHitTpMapTag, simHitsTPAssoc);
-    parametersDefinerTP->initEvent(simHitsTPAssoc);
+    parametersDefinerTP_->initEvent(simHitsTPAssoc);
     cosmictpSelector.initEvent(simHitsTPAssoc);
   }
 
@@ -715,7 +723,7 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
   // for "efficiency" TPs.
   std::vector<size_t> selected_tPCeff;
   std::vector<std::tuple<TrackingParticle::Vector, TrackingParticle::Point>> momVert_tPCeff;
-  tpParametersAndSelection(histograms, tPCeff, *parametersDefinerTP, event, setup, bs, momVert_tPCeff, selected_tPCeff);
+  tpParametersAndSelection(histograms, tPCeff, event, setup, bs, momVert_tPCeff, selected_tPCeff);
 
   //calculate dR for TPs
   declareDynArray(float, tPCeff.size(), dR_tPCeff);
@@ -798,6 +806,7 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
 
         // The associator interfaces really need to be fixed...
         edm::RefToBaseVector<reco::Track> trackRefs;
+        // trackRefs.vectorHolder()->reserve(trackCollection.size());  NOT a good idea
         for (edm::View<Track>::size_type i = 0; i < trackCollection.size(); ++i) {
           trackRefs.push_back(trackCollection.refAt(i));
         }
@@ -1028,13 +1037,16 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
       size_t n_selTrack_dr = 0;
 
       //calculate dR for tracks
+      declareDynArray(float, trackCollection.size(), dR_trk);
+      declareDynArray(float, trackCollection.size(), dR_trk_jet);
+#ifndef NO_TRACK_DR
+      // this accounts for most of the time spent in MTV and it is used to fill just one histo that is of doubtful usefulness but (maybe) for the whole collection
       const edm::View<Track>* trackCollectionDr = &trackCollection;
       if (calculateDrSingleCollection_) {
         trackCollectionDr = trackCollectionForDrCalculation.product();
       }
-      declareDynArray(float, trackCollection.size(), dR_trk);
-      declareDynArray(float, trackCollection.size(), dR_trk_jet);
       trackDR(trackCollection, *trackCollectionDr, dR_trk, dR_trk_jet, coresVector);
+#endif
 
       for (View<Track>::size_type i = 0; i < trackCollection.size(); ++i) {
         auto track = trackCollection.refAt(i);
@@ -1159,8 +1171,8 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
         if (doResolutionPlots_[www]) {
           //Get tracking particle parameters at point of closest approach to the beamline
           TrackingParticleRef tpr = tpFound->val.begin()->first;
-          TrackingParticle::Vector momentumTP = parametersDefinerTP->momentum(event, setup, tpr);
-          TrackingParticle::Point vertexTP = parametersDefinerTP->vertex(event, setup, tpr);
+          TrackingParticle::Vector momentumTP = parametersDefinerTP_->momentum(event, setup, tpr);
+          TrackingParticle::Point vertexTP = parametersDefinerTP_->vertex(event, setup, tpr);
           int chargeTP = tpr->charge();
 
           histoProducerAlgo_->fill_ResoAndPull_recoTrack_histos(

@@ -1,12 +1,12 @@
 #include "L1Trigger/TrackFindingTracklet/interface/VMStubsMEMemory.h"
 #include "L1Trigger/TrackFindingTracklet/interface/Settings.h"
 #include <iomanip>
+#include <filesystem>
 
 using namespace std;
 using namespace trklet;
 
-VMStubsMEMemory::VMStubsMEMemory(string name, Settings const& settings, unsigned int iSector)
-    : MemoryBase(name, settings, iSector) {
+VMStubsMEMemory::VMStubsMEMemory(string name, Settings const& settings) : MemoryBase(name, settings) {
   unsigned int layerdisk = initLayerDisk(6);
   if (layerdisk < N_LAYER) {
     binnedstubs_.resize(settings_.NLONGVMBINS());
@@ -16,9 +16,12 @@ VMStubsMEMemory::VMStubsMEMemory(string name, Settings const& settings, unsigned
   }
 }
 
-void VMStubsMEMemory::writeStubs(bool first) {
+void VMStubsMEMemory::writeStubs(bool first, unsigned int iSector) {
+  iSector_ = iSector;
+  const string dirVM = settings_.memPath() + "VMStubsME/";
+
   std::ostringstream oss;
-  oss << "../data/MemPrints/VMStubsME/VMStubs_" << getName();
+  oss << dirVM << "VMStubs_" << getName();
   //get rid of duplicates
   auto const& tmp = oss.str();
   int len = tmp.size();
@@ -27,12 +30,7 @@ void VMStubsMEMemory::writeStubs(bool first) {
   oss << "_" << std::setfill('0') << std::setw(2) << (iSector_ + 1) << ".dat";
   auto const& fname = oss.str();
 
-  if (first) {
-    bx_ = 0;
-    event_ = 1;
-    out_.open(fname.c_str());
-  } else
-    out_.open(fname.c_str(), std::ofstream::app);
+  openfile(out_, first, dirVM, fname, __FILE__, __LINE__);
 
   out_ << "BX = " << (bitset<3>)bx_ << " Event : " << event_ << endl;
 
@@ -41,6 +39,8 @@ void VMStubsMEMemory::writeStubs(bool first) {
       string stub = binnedstubs_[i][j].stubindex().str();
       stub += "|" + binnedstubs_[i][j].bend().str();
 
+      FPGAWord finephipos = binnedstubs_[i][j].finephi();
+      stub += "|" + finephipos.str();
       FPGAWord finepos = binnedstubs_[i][j].finerz();
       stub += "|" + finepos.str();
       out_ << hex << i << " " << j << dec << " " << stub << " " << trklet::hexFormat(stub) << endl;

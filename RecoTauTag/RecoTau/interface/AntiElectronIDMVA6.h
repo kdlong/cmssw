@@ -21,7 +21,7 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackFwd.h"
-#include "CondFormats/EgammaObjects/interface/GBRForest.h"
+#include "CondFormats/GBRForest/interface/GBRForest.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
@@ -33,6 +33,8 @@
 #include "DataFormats/Math/interface/deltaR.h"
 
 #include <vector>
+
+class GBRWrapperRcd;
 
 namespace antiElecIDMVA6_blocks {
   struct TauVars {
@@ -176,6 +178,19 @@ private:
   std::string mvaName_NoEleMatch_wGwoGSF_VFEC_;
   std::string mvaName_woGwGSF_VFEC_;
   std::string mvaName_wGwGSF_VFEC_;
+
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_NoEleMatch_woGwoGSF_BL_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_NoEleMatch_wGwoGSF_BL_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_woGwGSF_BL_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_wGwGSF_BL_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_NoEleMatch_woGwoGSF_EC_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_NoEleMatch_wGwoGSF_EC_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_woGwGSF_EC_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_wGwGSF_EC_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_NoEleMatch_woGwoGSF_VFEC_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_NoEleMatch_wGwoGSF_VFEC_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_woGwGSF_VFEC_;
+  edm::ESGetToken<GBRForest, GBRWrapperRcd> mvaToken_wGwGSF_VFEC_;
 
   bool usePhiAtEcalEntranceExtrapolation_;
 

@@ -4,8 +4,6 @@
 
 #include "DQMServices/Core/interface/DQMStore.h"
 
-#include "CalibTracker/Records/interface/SiStripQualityRcd.h"
-#include "CalibTracker/SiStripESProducers/interface/SiStripQualityHelpers.h"
 #include "DQM/SiStripCommon/interface/SiStripFolderOrganizer.h"
 #include "DQM/SiStripMonitorClient/interface/SiStripUtility.h"
 #include "DQM/SiStripMonitorClient/plugins/SiStripBadComponentInfo.h"
@@ -23,11 +21,12 @@
 // -- Contructor
 //
 SiStripBadComponentInfo::SiStripBadComponentInfo(edm::ParameterSet const& pSet)
-    : bookedStatus_(false), nSubSystem_(6), qualityLabel_(pSet.getParameter<std::string>("StripQualityLabel")) {
-  addBadCompFromFedErr_ = pSet.getUntrackedParameter<bool>("AddBadComponentsFromFedErrors", false);
-  fedErrCutoff_ = float(pSet.getUntrackedParameter<double>("FedErrorBadComponentsCutoff", 0.8));
+    : bookedStatus_(false),
+      nSubSystem_(6),
+      tTopoToken_(esConsumes<edm::Transition::EndRun>()),
+      withFedErrHelper_{pSet, consumesCollector()} {
   // Create MessageSender
-  LogDebug("SiStripBadComponentInfo") << "SiStripBadComponentInfo::Deleting SiStripBadComponentInfo ";
+  LogDebug("SiStripBadComponentInfo") << "SiStripBadComponentInfo::Creating SiStripBadComponentInfo ";
 }
 
 SiStripBadComponentInfo::~SiStripBadComponentInfo() {
@@ -37,16 +36,14 @@ SiStripBadComponentInfo::~SiStripBadComponentInfo() {
 //
 // -- Read Condition
 //
-void SiStripBadComponentInfo::checkBadComponents(edm::EventSetup const& eSetup) {
-  LogDebug("SiStripBadComponentInfo") << "SiStripBadComponentInfo:: Begining of Run";
+void SiStripBadComponentInfo::endRun(edm::Run const& run, edm::EventSetup const& eSetup) {
+  LogDebug("SiStripBadComponentInfo") << "SiStripBadComponentInfo:: End of Run";
 
   // Retrieve tracker topology from geometry
-  eSetup.get<TrackerTopologyRcd>().get(tTopo_);
-  eSetup.get<SiStripFedCablingRcd>().get(fedCabling_);
+  tTopo_ = std::make_unique<TrackerTopology>(eSetup.getData(tTopoToken_));
 
-  eSetup.get<SiStripQualityRcd>().get(qualityLabel_, siStripQuality_);
-  if (!addBadCompFromFedErr_) {
-    fillBadComponentMaps(siStripQuality_.product());
+  if (withFedErrHelper_.endRun(eSetup) && !withFedErrHelper_.addBadCompFromFedErr()) {
+    fillBadComponentMaps(&eSetup.getData(withFedErrHelper_.qualityToken()));
   }
 }
 
@@ -142,20 +139,10 @@ void SiStripBadComponentInfo::fillBadComponentMaps(const SiStripQuality* siStrip
   }
 }
 
-void SiStripBadComponentInfo::endRun(edm::Run const& run, edm::EventSetup const& eSetup) {
-  LogDebug("SiStripBadComponentInfo") << "SiStripBadComponentInfo:: End of Run";
-  checkBadComponents(eSetup);
-}
-
 void SiStripBadComponentInfo::dqmEndJob(DQMStore::IBooker& ibooker, DQMStore::IGetter& igetter) {
   LogDebug("SiStripBadComponentInfo") << "SiStripBadComponentInfo::dqmEndRun";
-  if (addBadCompFromFedErr_) {
-    auto mergedQuality = std::make_unique<SiStripQuality>(*siStripQuality_);
-    auto fedErrQuality = sistrip::badStripFromFedErr(igetter, *fedCabling_, fedErrCutoff_);
-    mergedQuality->add(fedErrQuality.get());
-    mergedQuality->cleanUp();
-    mergedQuality->fillBadComponents();
-    fillBadComponentMaps(mergedQuality.get());
+  if (withFedErrHelper_.addBadCompFromFedErr()) {
+    fillBadComponentMaps(&withFedErrHelper_.getMergedQuality(igetter));
   }
   bookBadComponentHistos(ibooker, igetter);
   createSummary(badAPVME_, mapBadAPV);

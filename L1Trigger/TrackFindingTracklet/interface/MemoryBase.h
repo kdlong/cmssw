@@ -12,7 +12,7 @@ namespace trklet {
 
   class MemoryBase {
   public:
-    MemoryBase(std::string name, Settings const& settings, unsigned int iSector);
+    MemoryBase(std::string name, Settings const& settings);
 
     virtual ~MemoryBase() = default;
 
@@ -35,7 +35,7 @@ namespace trklet {
     //Used for a hack below due to MAC OS case sensitiviy problem for files
     void findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr);
 
-    void openFile(bool first, std::string filebase);
+    void openFile(bool first, std::string dirName, std::string filebase);
 
     static size_t find_nth(const std::string& haystack, size_t pos, const std::string& needle, size_t nth);
 

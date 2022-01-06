@@ -3,7 +3,10 @@
 
 /*----------------------------------------------------------------------
 
-RootInputFileSequence: This is an InputSource. initTheFile tries to open a file using a list of PFN names constructed from multiple data catalogs in site-local-config.xml. These are accessed via FileCatalogItem iterator fileIter_.  
+RootInputFileSequence: This is an InputSource. initTheFile tries to open
+a file using a list of PFN names constructed from multiple data catalogs
+in site-local-config.xml. These are accessed via FileCatalogItem iterator
+fileIter_.
 
 ----------------------------------------------------------------------*/
 
@@ -35,11 +38,14 @@ namespace edm {
     RootInputFileSequence& operator=(RootInputFileSequence const&) = delete;  // Disallow copying and moving
 
     bool containedInCurrentFile(RunNumber_t run, LuminosityBlockNumber_t lumi, EventNumber_t event) const;
-    void readEvent(EventPrincipal& cache);
+    bool readEvent(EventPrincipal& cache);
     std::shared_ptr<LuminosityBlockAuxiliary> readLuminosityBlockAuxiliary_();
     void readLuminosityBlock_(LuminosityBlockPrincipal& lumiPrincipal);
     std::shared_ptr<RunAuxiliary> readRunAuxiliary_();
     void readRun_(RunPrincipal& runPrincipal);
+    void fillProcessBlockHelper_();
+    bool nextProcessBlock_(ProcessBlockPrincipal&);
+    void readProcessBlock_(ProcessBlockPrincipal&);
     bool skipToItem(RunNumber_t run,
                     LuminosityBlockNumber_t lumi,
                     EventNumber_t event,
@@ -47,6 +53,8 @@ namespace edm {
                     bool currentFileFirst = true);
     std::shared_ptr<ProductRegistry const> fileProductRegistry() const;
     std::shared_ptr<BranchIDListHelper const> fileBranchIDListHelper() const;
+
+    void closeFile();
 
   protected:
     typedef std::shared_ptr<RootFile> RootFileSharedPtr;

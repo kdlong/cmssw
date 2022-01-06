@@ -4,6 +4,10 @@ from Configuration.Eras.Modifier_fastSim_cff import fastSim
 
 #for dnn classifier
 from Configuration.ProcessModifiers.trackdnn_cff import trackdnn
+from RecoTracker.IterativeTracking.dnnQualityCuts import qualityCutDictionary
+
+# for no-loopers
+from Configuration.ProcessModifiers.trackingNoLoopers_cff import trackingNoLoopers
 
 ###############################################
 # Low pT and detached tracks from pixel quadruplets
@@ -155,6 +159,8 @@ detachedQuadStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryB
     maxDPhiForLooperReconstruction = cms.double(2.0),
     maxPtForLooperReconstruction = cms.double(0.7)
 )
+trackingNoLoopers.toModify(detachedQuadStepTrajectoryBuilder,
+                           maxPtForLooperReconstruction = 0.0)
 trackingPhase2PU140.toModify(detachedQuadStepTrajectoryBuilder,
     maxCand              = 2,
     alwaysUseInvalidHits = False,
@@ -185,6 +191,29 @@ trackingPhase2PU140.toModify(detachedQuadStepTrackCandidates,
     phase2clustersToSkip = cms.InputTag('detachedQuadStepClusters')
 )
 
+from Configuration.ProcessModifiers.trackingMkFitDetachedQuadStep_cff import trackingMkFitDetachedQuadStep
+import RecoTracker.MkFit.mkFitSeedConverter_cfi as mkFitSeedConverter_cfi
+import RecoTracker.MkFit.mkFitIterationConfigESProducer_cfi as mkFitIterationConfigESProducer_cfi
+import RecoTracker.MkFit.mkFitProducer_cfi as mkFitProducer_cfi
+import RecoTracker.MkFit.mkFitOutputConverter_cfi as mkFitOutputConverter_cfi
+detachedQuadStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConverter.clone(
+    seeds = 'detachedQuadStepSeeds',
+)
+detachedQuadStepTrackCandidatesMkFitConfig = mkFitIterationConfigESProducer_cfi.mkFitIterationConfigESProducer.clone(
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-detachedQuadStep.json',
+    ComponentName = 'detachedQuadStepTrackCandidatesMkFitConfig',
+)
+detachedQuadStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
+    seeds = 'detachedQuadStepTrackCandidatesMkFitSeeds',
+    config = ('', 'detachedQuadStepTrackCandidatesMkFitConfig'),
+    clustersToSkip = 'detachedQuadStepClusters',
+)
+trackingMkFitDetachedQuadStep.toReplaceWith(detachedQuadStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(
+    seeds = 'detachedQuadStepSeeds',
+    mkFitSeeds = 'detachedQuadStepTrackCandidatesMkFitSeeds',
+    tracks = 'detachedQuadStepTrackCandidatesMkFit',
+))
+
 #For FastSim phase1 tracking 
 import FastSimulation.Tracking.TrackCandidateProducer_cfi
 _fastSim_detachedQuadStepTrackCandidates = FastSimulation.Tracking.TrackCandidateProducer_cfi.trackCandidateProducer.clone(
@@ -211,12 +240,14 @@ detachedQuadStep = TrackMVAClassifierDetached.clone(
     qualityCuts = [-0.5,0.0,0.5]
 )
 
-from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
-from RecoTracker.FinalTrackSelectors.trackSelectionLwtnn_cfi import *
-trackdnn.toReplaceWith(detachedQuadStep, TrackLwtnnClassifier.clone(
-    src         = 'detachedQuadStepTracks',
-    qualityCuts = [-0.6, 0.05, 0.7]
+from RecoTracker.FinalTrackSelectors.trackTfClassifier_cfi import *
+from RecoTracker.FinalTrackSelectors.trackSelectionTf_cfi import *
+from RecoTracker.FinalTrackSelectors.trackSelectionTf_CKF_cfi import *
+trackdnn.toReplaceWith(detachedQuadStep, trackTfClassifier.clone(
+    src = 'detachedQuadStepTracks',
+    qualityCuts = qualityCutDictionary.DetachedQuadStep.value()
 ))
+
 
 highBetaStar_2018.toModify(detachedQuadStep,qualityCuts = [-0.7,0.0,0.5])
 pp_on_AA.toModify(detachedQuadStep, 
@@ -336,6 +367,11 @@ DetachedQuadStepTask = cms.Task(detachedQuadStepClusters,
                                 detachedQuadStepTracks,
                                 detachedQuadStep)
 DetachedQuadStep = cms.Sequence(DetachedQuadStepTask)
+
+_DetachedQuadStepTask_trackingMkFit = DetachedQuadStepTask.copy()
+_DetachedQuadStepTask_trackingMkFit.add(detachedQuadStepTrackCandidatesMkFitSeeds, detachedQuadStepTrackCandidatesMkFit, detachedQuadStepTrackCandidatesMkFitConfig)
+trackingMkFitDetachedQuadStep.toReplaceWith(DetachedQuadStepTask, _DetachedQuadStepTask_trackingMkFit)
+
 _DetachedQuadStepTask_Phase2PU140 = DetachedQuadStepTask.copy()
 _DetachedQuadStepTask_Phase2PU140.replace(detachedQuadStep, cms.Task(detachedQuadStepSelector,detachedQuadStep))
 trackingPhase2PU140.toReplaceWith(DetachedQuadStepTask, _DetachedQuadStepTask_Phase2PU140)

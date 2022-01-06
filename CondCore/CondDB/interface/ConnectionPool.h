@@ -43,6 +43,7 @@ namespace cond {
       void setAuthenticationSystem(int authSysCode);
       void setFrontierSecurity(const std::string& signature);
       void setLogging(bool flag);
+      void setConnectionTimeout(int seconds);
       bool isLoggingEnabled() const;
       void setParameters(const edm::ParameterSet& connectionPset);
       void configure();
@@ -63,7 +64,9 @@ namespace cond {
     private:
       std::string m_authPath = std::string("");
       int m_authSys = 0;
+      std::string m_authenticationService = std::string("");
       coral::MsgLevel m_messageLevel = coral::Error;
+      int m_connectionTimeout = 0;
       CoralMsgReporter* m_msgReporter = nullptr;
       bool m_loggingEnabled = false;
       //The frontier security option is turned on for all sessions

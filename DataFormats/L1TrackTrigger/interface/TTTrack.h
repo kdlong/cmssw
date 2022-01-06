@@ -16,11 +16,14 @@
 #include "CLHEP/Units/GlobalPhysicalConstants.h"
 #include "DataFormats/L1TrackTrigger/interface/TTStub.h"
 #include "DataFormats/L1TrackTrigger/interface/TTTrack_TrackWord.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
 #include "DataFormats/Phase2TrackerDigi/interface/Phase2TrackerDigi.h"
+
+namespace tttrack {
+  void errorSetTrackWordBits(unsigned int);
+}
 
 template <typename T>
 class TTTrack : public TTTrack_TrackWord {
@@ -102,6 +105,9 @@ public:
   /// Track phi
   double phi() const;
 
+  /// Local track phi (within the sector)
+  double localPhi() const;
+
   /// Track tanL
   double tanL() const;
 
@@ -119,8 +125,11 @@ public:
 
   /// MVA Track quality variables
   double trkMVA1() const;
+  void settrkMVA1(double atrkMVA1);
   double trkMVA2() const;
+  void settrkMVA2(double atrkMVA2);
   double trkMVA3() const;
+  void settrkMVA3(double atrkMVA3);
 
   /// Phi Sector
   unsigned int phiSector() const { return thePhiSector_; }
@@ -142,9 +151,14 @@ public:
   double chi2XY() const;
   double chi2XYRed() const;
 
-  /// Stub Pt consistency
+  /// Stub Pt consistency (i.e. stub bend chi2/dof)
+  /// Note: The "stubPtConsistency" names are historic and people are encouraged
+  ///       to adopt the "chi2Bend" names.
   double stubPtConsistency() const;
   void setStubPtConsistency(double aPtConsistency);
+  double chi2BendRed() { return stubPtConsistency(); }
+  void setChi2BendRed(double aChi2BendRed) { setStubPtConsistency(aChi2BendRed); }
+  double chi2Bend() { return chi2BendRed() * theStubRefs.size(); }
 
   void setFitParNo(unsigned int aFitParNo);
   int nFitPars() const { return theNumFitPars_; }
@@ -303,6 +317,11 @@ double TTTrack<T>::phi() const {
 }
 
 template <typename T>
+double TTTrack<T>::localPhi() const {
+  return TTTrack_TrackWord::localPhi(thePhi_, thePhiSector_);
+}
+
+template <typename T>
 double TTTrack<T>::d0() const {
   return theD0_;
 }
@@ -353,10 +372,15 @@ double TTTrack<T>::chi2ZRed() const {
   return theChi2_Z_ / (theStubRefs.size() - 2.);
 }
 
-/// MVA quality variables
 template <typename T>
 double TTTrack<T>::trkMVA1() const {
   return theTrkMVA1_;
+}
+
+template <typename T>
+void TTTrack<T>::settrkMVA1(double atrkMVA1) {
+  theTrkMVA1_ = atrkMVA1;
+  return;
 }
 
 template <typename T>
@@ -365,8 +389,20 @@ double TTTrack<T>::trkMVA2() const {
 }
 
 template <typename T>
+void TTTrack<T>::settrkMVA2(double atrkMVA2) {
+  theTrkMVA2_ = atrkMVA2;
+  return;
+}
+
+template <typename T>
 double TTTrack<T>::trkMVA3() const {
   return theTrkMVA3_;
+}
+
+template <typename T>
+void TTTrack<T>::settrkMVA3(double atrkMVA3) {
+  theTrkMVA3_ = atrkMVA3;
+  return;
 }
 
 /// StubPtConsistency
@@ -402,21 +438,40 @@ void TTTrack<T>::setBField(double aBField) {
 template <typename T>
 void TTTrack<T>::setTrackWordBits() {
   if (!(theNumFitPars_ == Npars4 || theNumFitPars_ == Npars5)) {
-    edm::LogError("TTTrack") << " setTrackWordBits method is called with theNumFitPars_=" << theNumFitPars_
-                             << " only possible values are 4/5" << std::endl;
+    tttrack::errorSetTrackWordBits(theNumFitPars_);
     return;
   }
 
-  unsigned int sparebits = 0;
+  unsigned int valid = true;
+  unsigned int mvaQuality = 0;
+  unsigned int mvaOther = 0;
 
   // missing conversion of global phi to difference from sector center phi
 
   if (theChi2_Z_ < 0) {
-    setTrackWord(theMomentum_, thePOCA_, theRInv_, theChi2_, 0, theStubPtConsistency_, theHitPattern_, sparebits);
-
+    setTrackWord(valid,
+                 theMomentum_,
+                 thePOCA_,
+                 theRInv_,
+                 theChi2_,
+                 0,
+                 theStubPtConsistency_,
+                 theHitPattern_,
+                 mvaQuality,
+                 mvaOther,
+                 thePhiSector_);
   } else {
-    setTrackWord(
-        theMomentum_, thePOCA_, theRInv_, theChi2_XY_, theChi2_Z_, theStubPtConsistency_, theHitPattern_, sparebits);
+    setTrackWord(valid,
+                 theMomentum_,
+                 thePOCA_,
+                 theRInv_,
+                 chi2XYRed(),
+                 chi2ZRed(),
+                 chi2BendRed(),
+                 theHitPattern_,
+                 mvaQuality,
+                 mvaOther,
+                 thePhiSector_);
   }
   return;
 }

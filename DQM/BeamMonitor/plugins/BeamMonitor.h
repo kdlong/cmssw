@@ -37,6 +37,8 @@ public:
 
 protected:
   // BeginRun
+  void dqmBeginRun(edm::Run const&, edm::EventSetup const&) override;
+
   void bookHistograms(DQMStore::IBooker& i, const edm::Run& r, const edm::EventSetup& c) override;
 
   void analyze(const edm::Event& e, const edm::EventSetup& c) override;
@@ -53,6 +55,8 @@ private:
   void scrollTH1(TH1*, std::time_t);
   bool testScroll(std::time_t&, std::time_t&);
   void formatFitTime(char*, const std::time_t&);
+  std::string getGMTstring(const std::time_t&);
+
   const int dxBin_;
   const double dxMin_;
   const double dxMax_;
@@ -114,7 +118,10 @@ private:
   int countGapLumi_;
 
   bool processed_;
+  bool useLockRecords_;
 
+  int nAnalyzedLS_;
+  int nLS_for_upload_;
   // ----------member data ---------------------------
 
   //   std::vector<BSTrkParameters> fBSvector;

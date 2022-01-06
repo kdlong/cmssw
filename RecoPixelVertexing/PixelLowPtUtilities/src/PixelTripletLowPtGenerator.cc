@@ -6,16 +6,15 @@
 #include "RecoTracker/TkMSParametrization/interface/PixelRecoPointRZ.h"
 #include "RecoTracker/TkHitPairs/interface/HitPairGeneratorFromLayerPair.h"
 
-#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
-#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
-
-#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
-#include "Geometry/Records/interface/TrackerTopologyRcd.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/SiPixelCluster/interface/SiPixelClusterShapeCache.h"
+
+#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
+#include "RecoTracker/TkMSParametrization/interface/MultipleScatteringParametrisationMaker.h"
+#include "TrackingTools/Records/interface/TransientRecHitRecord.h"
+#include "RecoTracker/Record/interface/TrackerMultipleScatteringRecord.h"
 
 #undef Debug
 
@@ -24,6 +23,11 @@ using namespace std;
 /*****************************************************************************/
 PixelTripletLowPtGenerator::PixelTripletLowPtGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC)
     : HitTripletGeneratorFromPairAndLayers(),  // no theMaxElement used in this class
+      m_geomToken(iC.esConsumes<TrackerGeometry, TrackerDigiGeometryRecord>()),
+      m_topoToken(iC.esConsumes<TrackerTopology, TrackerTopologyRcd>()),
+      m_magfieldToken(iC.esConsumes()),
+      m_ttrhBuilderToken(iC.esConsumes(edm::ESInputTag("", cfg.getParameter<string>("TTRHBuilder")))),
+      m_msmakerToken(iC.esConsumes()),
       theTracker(nullptr),
       theClusterShapeCacheToken(
           iC.consumes<SiPixelClusterShapeCache>(cfg.getParameter<edm::InputTag>("clusterShapeCacheSrc"))) {
@@ -32,7 +36,6 @@ PixelTripletLowPtGenerator::PixelTripletLowPtGenerator(const edm::ParameterSet& 
   checkClusterShape = cfg.getParameter<bool>("checkClusterShape");
   rzTolerance = cfg.getParameter<double>("rzTolerance");
   maxAngleRatio = cfg.getParameter<double>("maxAngleRatio");
-  builderName = cfg.getParameter<string>("TTRHBuilder");
 }
 
 /*****************************************************************************/
@@ -44,10 +47,7 @@ PixelTripletLowPtGenerator::~PixelTripletLowPtGenerator() {}
 void PixelTripletLowPtGenerator::getTracker(const edm::EventSetup& es) {
   if (theTracker == nullptr) {
     // Get tracker geometry
-    edm::ESHandle<TrackerGeometry> tracker;
-    es.get<TrackerDigiGeometryRecord>().get(tracker);
-
-    theTracker = tracker.product();
+    theTracker = &es.getData(m_geomToken);
   }
 
   if (!theFilter) {
@@ -70,9 +70,10 @@ void PixelTripletLowPtGenerator::hitTriplets(const TrackingRegion& region,
                                              const SeedingLayerSetsHits::SeedingLayerSet& pairLayers,
                                              const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers) {
   //Retrieve tracker topology from geometry
-  edm::ESHandle<TrackerTopology> tTopoHand;
-  es.get<TrackerTopologyRcd>().get(tTopoHand);
-  const TrackerTopology* tTopo = tTopoHand.product();
+  const TrackerTopology* tTopo = &es.getData(m_topoToken);
+  const auto& magfield = es.getData(m_magfieldToken);
+  const auto& ttrhBuilder = es.getData(m_ttrhBuilderToken);
+  const auto& msmaker = es.getData(m_msmakerToken);
 
   edm::Handle<SiPixelClusterShapeCache> clusterShapeCache;
   ev.getByToken(theClusterShapeCacheToken, clusterShapeCache);
@@ -90,7 +91,7 @@ void PixelTripletLowPtGenerator::hitTriplets(const TrackingRegion& region,
   // Set aliases
   const RecHitsSortedInPhi** thirdHitMap = new const RecHitsSortedInPhi*[size];
   for (int il = 0; il < size; il++)
-    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, es);
+    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region);
 
   // Get tracker
   getTracker(es);
@@ -113,7 +114,7 @@ void PixelTripletLowPtGenerator::hitTriplets(const TrackingRegion& region,
 
     // Initialize helix prediction
     ThirdHitPrediction thePrediction(
-        region, points[0], points[1], es, nSigMultipleScattering, maxAngleRatio, builderName);
+        region, points[0], points[1], magfield, ttrhBuilder, nSigMultipleScattering, maxAngleRatio);
 
     // Look at all layers
     for (int il = 0; il < size; il++) {
@@ -146,7 +147,7 @@ void PixelTripletLowPtGenerator::hitTriplets(const TrackingRegion& region,
 
         // Check if third hit is compatible with multiple scattering
         vector<GlobalVector> globalDirs;
-        if (thePrediction.isCompatibleWithMultipleScattering(points[2], recHits, globalDirs, es) == false) {
+        if (thePrediction.isCompatibleWithMultipleScattering(points[2], recHits, globalDirs, msmaker) == false) {
 #ifdef Debug
           cerr << "  not compatible: multiple scattering" << endl;
 #endif

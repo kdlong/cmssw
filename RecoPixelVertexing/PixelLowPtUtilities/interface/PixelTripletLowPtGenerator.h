@@ -7,6 +7,11 @@
     provided Layers
  */
 
+#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
+#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
+
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
@@ -14,9 +19,14 @@
 
 #include "RecoPixelVertexing/PixelLowPtUtilities/interface/TripletFilter.h"
 
-class TrackerGeometry;
-class TripletFilter;
+class IdealMagneticFieldRecord;
+class MultipleScatteringParametrisationMaker;
+class TrackerMultipleScatteringRecord;
 class SiPixelClusterShapeCache;
+class TrackerGeometry;
+class TransientTrackingRecHitBuilder;
+class TransientRecHitRecord;
+class TripletFilter;
 
 #include <vector>
 
@@ -41,6 +51,12 @@ public:
                    const int nThirdLayers) override;
 
 private:
+  edm::ESGetToken<TrackerGeometry, TrackerDigiGeometryRecord> m_geomToken;
+  edm::ESGetToken<TrackerTopology, TrackerTopologyRcd> m_topoToken;
+  edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> m_magfieldToken;
+  edm::ESGetToken<TransientTrackingRecHitBuilder, TransientRecHitRecord> m_ttrhBuilderToken;
+  edm::ESGetToken<MultipleScatteringParametrisationMaker, TrackerMultipleScatteringRecord> m_msmakerToken;
+
   void getTracker(const edm::EventSetup& es);
   GlobalPoint getGlobalPosition(const TrackingRecHit* recHit);
 
@@ -52,7 +68,6 @@ private:
   double rzTolerance;
   double maxAngleRatio;
 
-  std::string builderName;
   bool checkMultipleScattering;
   bool checkClusterShape;
 };

@@ -7,13 +7,14 @@
 
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 
 #include "FWCore/Utilities/interface/InputTag.h"
 
-#include "CondFormats/EgammaObjects/interface/GBRForest.h"
+#include "CondFormats/GBRForest/interface/GBRForest.h"
 
 #include <vector>
 #include <memory>
@@ -95,7 +96,7 @@ template <typename MVA, typename EventCache = void>
 class TrackMVAClassifier : public TrackMVAClassifierBase {
 public:
   explicit TrackMVAClassifier(const edm::ParameterSet& cfg)
-      : TrackMVAClassifierBase(cfg), mva(cfg.getParameter<edm::ParameterSet>("mva")) {}
+      : TrackMVAClassifierBase(cfg), mva(cfg.getParameter<edm::ParameterSet>("mva"), consumesCollector()) {}
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
     edm::ParameterSetDescription desc;

@@ -29,7 +29,7 @@ trackingPhase2PU140.toReplaceWith(highPtTripletStepSeedClusterMask, seedClusterR
     )
 )
 trackingPhase2PU140.toReplaceWith(pixelPairStepSeedClusterMask, seedClusterRemoverPhase2.clone(
-    trajectories = cms.InputTag('detachedQuadStepSeeds'),
+    trajectories = 'detachedQuadStepSeeds',
     oldClusterRemovalInfo = cms.InputTag('highPtTripletStepSeedClusterMask')
     )
 )
@@ -52,19 +52,21 @@ pixelLessStepSeedClusterMask = seedClusterRemover.clone(
     oldClusterRemovalInfo = cms.InputTag('mixedTripletStepSeedClusterMask')
 )
 
-tripletElectronSeedLayers = cms.EDProducer('SeedingLayersEDProducer',
-    layerList = cms.vstring('BPix1+BPix2+BPix3', 
-                            'BPix1+BPix2+FPix1_pos', 'BPix1+BPix2+FPix1_neg', 
-                            'BPix1+FPix1_pos+FPix2_pos', 'BPix1+FPix1_neg+FPix2_neg'),
-    BPix = cms.PSet(
-    TTRHBuilder = cms.string('TTRHBuilderWithoutAngle4PixelTriplets'),
-    HitProducer = cms.string('siPixelRecHits'),
-    skipClusters = cms.InputTag('pixelLessStepSeedClusterMask')
+import RecoTracker.TkSeedingLayers.seedingLayersEDProducer_cfi as _mod
+
+tripletElectronSeedLayers = _mod.seedingLayersEDProducer.clone(
+    layerList = ['BPix1+BPix2+BPix3', 
+                 'BPix1+BPix2+FPix1_pos', 'BPix1+BPix2+FPix1_neg', 
+                 'BPix1+FPix1_pos+FPix2_pos', 'BPix1+FPix1_neg+FPix2_neg'],
+    BPix = dict(
+        TTRHBuilder = cms.string('TTRHBuilderWithoutAngle4PixelTriplets'),
+        HitProducer = cms.string('siPixelRecHits'),
+        skipClusters = cms.InputTag('pixelLessStepSeedClusterMask')
     ),
-    FPix = cms.PSet(
-    TTRHBuilder = cms.string('TTRHBuilderWithoutAngle4PixelTriplets'),
-    HitProducer = cms.string('siPixelRecHits'),
-    skipClusters = cms.InputTag('pixelLessStepSeedClusterMask')
+    FPix = dict(
+        TTRHBuilder = cms.string('TTRHBuilderWithoutAngle4PixelTriplets'),
+        HitProducer = cms.string('siPixelRecHits'),
+        skipClusters = cms.InputTag('pixelLessStepSeedClusterMask')
     )
 )
 _layerListForPhase1 = [
@@ -138,21 +140,21 @@ trackingPhase2PU140.toReplaceWith(tripletElectronClusterMask, seedClusterRemover
     )
 )
 
-pixelPairElectronSeedLayers = cms.EDProducer('SeedingLayersEDProducer',
-    layerList = cms.vstring('BPix1+BPix2', 'BPix1+BPix3', 'BPix2+BPix3', 
-                            'BPix1+FPix1_pos', 'BPix1+FPix1_neg', 
-                            'BPix1+FPix2_pos', 'BPix1+FPix2_neg', 
-                            'BPix2+FPix1_pos', 'BPix2+FPix1_neg', 
-                            'FPix1_pos+FPix2_pos', 'FPix1_neg+FPix2_neg'),
-    BPix = cms.PSet(
-    TTRHBuilder = cms.string('WithTrackAngle'),
-    HitProducer = cms.string('siPixelRecHits'),
-    skipClusters = cms.InputTag('tripletElectronClusterMask')
+pixelPairElectronSeedLayers = _mod.seedingLayersEDProducer.clone(
+    layerList = ['BPix1+BPix2', 'BPix1+BPix3', 'BPix2+BPix3', 
+                 'BPix1+FPix1_pos', 'BPix1+FPix1_neg', 
+                 'BPix1+FPix2_pos', 'BPix1+FPix2_neg', 
+                 'BPix2+FPix1_pos', 'BPix2+FPix1_neg', 
+                 'FPix1_pos+FPix2_pos', 'FPix1_neg+FPix2_neg'],
+    BPix = dict(
+        TTRHBuilder = cms.string('WithTrackAngle'),
+        HitProducer = cms.string('siPixelRecHits'),
+        skipClusters = cms.InputTag('tripletElectronClusterMask')
     ),
-    FPix = cms.PSet(
-    TTRHBuilder = cms.string('WithTrackAngle'),
-    HitProducer = cms.string('siPixelRecHits'),
-    skipClusters = cms.InputTag('tripletElectronClusterMask')
+    FPix = dict(
+        TTRHBuilder = cms.string('WithTrackAngle'),
+        HitProducer = cms.string('siPixelRecHits'),
+        skipClusters = cms.InputTag('tripletElectronClusterMask')
     )
 )
 _layerListForPhase1 = [
@@ -188,30 +190,30 @@ pixelPairElectronSeeds = _seedCreatorFromRegionConsecutiveHitsEDProducer.clone(
     seedingHitSets = 'pixelPairElectronHitDoublets',
 )
 
-stripPairElectronSeedLayers = cms.EDProducer('SeedingLayersEDProducer',
-    layerList = cms.vstring('TIB1+TIB2', 'TIB1+TID1_pos', 'TIB1+TID1_neg', 'TID2_pos+TID3_pos', 'TID2_neg+TID3_neg',
-                            'TEC1_pos+TEC2_pos','TEC2_pos+TEC3_pos','TEC3_pos+TEC4_pos','TEC3_pos+TEC5_pos',
-                            'TEC1_neg+TEC2_neg','TEC2_neg+TEC3_neg','TEC3_neg+TEC4_neg','TEC3_neg+TEC5_neg'),
-    TIB = cms.PSet(
-    TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutNone')),
-    matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
-    skipClusters = cms.InputTag('tripletElectronClusterMask')
+stripPairElectronSeedLayers = _mod.seedingLayersEDProducer.clone(
+    layerList = ['TIB1+TIB2', 'TIB1+TID1_pos', 'TIB1+TID1_neg', 'TID2_pos+TID3_pos', 'TID2_neg+TID3_neg',
+                 'TEC1_pos+TEC2_pos','TEC2_pos+TEC3_pos','TEC3_pos+TEC4_pos','TEC3_pos+TEC5_pos',
+                 'TEC1_neg+TEC2_neg','TEC2_neg+TEC3_neg','TEC3_neg+TEC4_neg','TEC3_neg+TEC5_neg'],
+    TIB = dict(
+        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutNone')),
+        matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
+        skipClusters = cms.InputTag('tripletElectronClusterMask')
     ),
-    TID = cms.PSet(
-    matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
-    skipClusters = cms.InputTag('tripletElectronClusterMask'),
-    useRingSlector = cms.bool(True),
-    TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutNone')),
-    minRing = cms.int32(1),
-    maxRing = cms.int32(2)
+    TID = dict(
+        matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
+        skipClusters = cms.InputTag('tripletElectronClusterMask'),
+        useRingSlector = cms.bool(True),
+        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutNone')),
+        minRing = cms.int32(1),
+        maxRing = cms.int32(2)
     ),
-    TEC = cms.PSet(
-    matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
-    skipClusters = cms.InputTag('tripletElectronClusterMask'),
-    useRingSlector = cms.bool(True),
-    TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutNone')),
-    minRing = cms.int32(1),
-    maxRing = cms.int32(2)
+    TEC = dict(
+        matchedRecHits = cms.InputTag('siStripMatchedRecHits','matchedRecHit'),
+        skipClusters = cms.InputTag('tripletElectronClusterMask'),
+        useRingSlector = cms.bool(True),
+        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutNone')),
+        minRing = cms.int32(1),
+        maxRing = cms.int32(2)
     )
 )
 

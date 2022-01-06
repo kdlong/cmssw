@@ -33,6 +33,7 @@ namespace ecaldqm {
     energyThresholdEEFwd_ = _params.getUntrackedParameter<double>("energyThresholdEEFwd");
     timingVsBXThreshold_ = _params.getUntrackedParameter<double>("timingVsBXThreshold");
     timeErrorThreshold_ = _params.getUntrackedParameter<double>("timeErrorThreshold");
+    splashSwitch_ = _params.getUntrackedParameter<bool>("splashSwitch", false);
   }
 
   bool TimingTask::filterRunType(short const* _runType) {
@@ -54,7 +55,7 @@ namespace ecaldqm {
     if (ByLumiResetSwitch) {
       meTimeMapByLS = &MEs_.at("TimeMapByLS");
       if (timestamp_.iLumi % 10 == 0)
-        meTimeMapByLS->reset();
+        meTimeMapByLS->reset(GetElectronicsMap());
     }
   }
 
@@ -80,18 +81,12 @@ namespace ecaldqm {
       float time(hit.time());
       float energy(hit.energy());
 
-      float chi2Threshold, energyThreshold;
+      float energyThreshold;
       if (id.subdetId() == EcalBarrel) {
-        chi2Threshold = chi2ThresholdEB_;
         energyThreshold = energyThresholdEB_;
-      } else {
-        chi2Threshold = chi2ThresholdEE_;
-        energyThreshold = (isForward(id)) ? energyThresholdEEFwd_ : energyThresholdEE_;
-      }
-
-      if (id.subdetId() == EcalBarrel)
         signedSubdet = EcalBarrel;
-      else {
+      } else {
+        energyThreshold = (isForward(id)) ? energyThresholdEEFwd_ : energyThresholdEE_;
         EEDetId eeId(hit.id());
         if (eeId.zside() < 0)
           signedSubdet = -EcalEndcap;
@@ -100,28 +95,35 @@ namespace ecaldqm {
       }
 
       if (energy > energyThreshold)
-        meChi2.fill(signedSubdet, hit.chi2());
+        meChi2.fill(getEcalDQMSetupObjects(), signedSubdet, hit.chi2());
 
-      // Apply cut on chi2 of pulse shape fit
-      if (hit.chi2() > chi2Threshold)
-        return;
+      if (!splashSwitch_) {  //Not applied for splash events
+        float chi2Threshold;
+        if (id.subdetId() == EcalBarrel)
+          chi2Threshold = chi2ThresholdEB_;
+        else
+          chi2Threshold = chi2ThresholdEE_;
 
+        //Apply cut on chi2 of pulse shape fit
+        if (hit.chi2() > chi2Threshold)
+          return;
+      }
       // Apply cut based on timing error of rechit
       if (hit.timeError() > timeErrorThreshold_)
         return;
 
-      meTimeAmp.fill(id, energy, time);
-      meTimeAmpAll.fill(id, energy, time);
+      meTimeAmp.fill(getEcalDQMSetupObjects(), id, energy, time);
+      meTimeAmpAll.fill(getEcalDQMSetupObjects(), id, energy, time);
 
       if (energy > timingVsBXThreshold_ && signedSubdet == EcalBarrel)
-        meTimingVsBX.fill(bxBin_, time);
+        meTimingVsBX.fill(getEcalDQMSetupObjects(), bxBin_, time);
 
       if (energy > energyThreshold) {
-        meTimeAll.fill(id, time);
-        meTimeMap.fill(id, time);
-        meTimeMapByLS->fill(id, time);
-        meTime1D.fill(id, time);
-        meTimeAllMap.fill(id, time);
+        meTimeAll.fill(getEcalDQMSetupObjects(), id, time);
+        meTimeMap.fill(getEcalDQMSetupObjects(), id, time);
+        meTimeMapByLS->fill(getEcalDQMSetupObjects(), id, time);
+        meTime1D.fill(getEcalDQMSetupObjects(), id, time);
+        meTimeAllMap.fill(getEcalDQMSetupObjects(), id, time);
       }
     });
   }
@@ -163,8 +165,8 @@ namespace ecaldqm {
         continue;
 
       // Fill MEs
-      meTimeAmpBXm.fill(id, amp, uhitItr->outOfTimeAmplitude(4));  // BX-1
-      meTimeAmpBXp.fill(id, amp, uhitItr->outOfTimeAmplitude(6));  // BX+1
+      meTimeAmpBXm.fill(getEcalDQMSetupObjects(), id, amp, uhitItr->outOfTimeAmplitude(4));  // BX-1
+      meTimeAmpBXp.fill(getEcalDQMSetupObjects(), id, amp, uhitItr->outOfTimeAmplitude(6));  // BX+1
     }
   }
 

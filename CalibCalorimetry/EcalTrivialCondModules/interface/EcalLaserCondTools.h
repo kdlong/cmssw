@@ -1,16 +1,17 @@
-#ifndef EcaLaserCondTools_h
-#define EcaLaserCondTools_h
+#ifndef CalibCalorimetry_EcalTrivialCondModules_EcaLaserCondTools_h
+#define CalibCalorimetry_EcalTrivialCondModules_EcaLaserCondTools_h
 
 /*
  * $Id: EcalLaserCondTools.h,v 1.2 2010/06/14 10:45:16 pgras Exp $
  */
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatios.h"
+#include "CondFormats/DataRecord/interface/EcalLaserAPDPNRatiosRcd.h"
 
 #include "DataFormats/DetId/interface/DetId.h"
 
@@ -20,7 +21,7 @@
 #include <vector>
 /**
  */
-class EcalLaserCondTools : public edm::EDAnalyzer {
+class EcalLaserCondTools : public edm::one::EDAnalyzer<> {
   //static fields
 
   /** Number of extended laser monitoring regions
@@ -43,6 +44,7 @@ public:
    * @param es events setup
    */
   void analyze(const edm::Event& evt, const edm::EventSetup& es) override;
+  void from_hdf_to_db();
 
 private:
   static std::string toNth(int n);
@@ -82,6 +84,7 @@ private:
 
   //fields
 private:
+  edm::ESGetToken<EcalLaserAPDPNRatios, EcalLaserAPDPNRatiosRcd> laserAPDPNRatiosToken_;
   FILE* fout_;
   FILE* eventList_;
   std::string eventListFileName_;

@@ -155,7 +155,15 @@ namespace CaloL1Information {
 
     dqm::reco::MonitorElement *last20Mismatches_;
 
-    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>> runMismatchList;
+    dqm::reco::MonitorElement *ecalOccRecd5Bx_;
+    dqm::reco::MonitorElement *ecalOccRecd5BxEtWgt_;
+    dqm::reco::MonitorElement *ecalOccRecdBx1_;
+    dqm::reco::MonitorElement *ecalOccRecdBx2_;
+    dqm::reco::MonitorElement *ecalOccRecdBx3_;
+    dqm::reco::MonitorElement *ecalOccRecdBx4_;
+    dqm::reco::MonitorElement *ecalOccRecdBx5_;
+
+    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>> runMismatchList;
   };
 
   struct perStreamMonitoringDataHolder {
@@ -166,7 +174,7 @@ namespace CaloL1Information {
     int streamNumMaxEvtMismatchECAL{0};
     int streamNumMaxEvtMismatchHCAL{0};
     int streamNumMaxEvtMismatch{0};
-    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>> streamMismatchList;
+    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>> streamMismatchList;
   };
 
   struct perLumiBlockMonitoringInformation {
@@ -178,11 +186,11 @@ namespace CaloL1Information {
     int lumiNumMaxEvtMismatchHCAL{0};
     int lumiNumMaxEvtMismatch{0};
 
-    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>> lumiMismatchList;
+    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>> lumiMismatchList;
   };
 
   struct perRunSummaryMonitoringInformation {
-    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>> runMismatchList;
+    std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>> runMismatchList;
   };
 
 }  // namespace CaloL1Information
@@ -248,24 +256,36 @@ protected:
                            CaloL1Information::perRunSummaryMonitoringInformation *) const override;
 
 private:
-  void updateMismatch(
-      const edm::Event &e,
-      int mismatchType,
-      std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>> &streamMismatches) const;
+  void updateMismatch(const edm::Event &e,
+                      int mismatchType,
+                      std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>>
+                          &streamMismatches) const;
 
-  void mergeMismatchVectors(std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>> &,
-                            std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>> &) const;
+  void mergeMismatchVectors(
+      std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>> &,
+      std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>> &) const;
 
-  bool isLaterMismatch(std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int> &candidateMismatch,
-                       std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int> &comparisonMismatch) const;
+  bool isLaterMismatch(
+      std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>> &candidateMismatch,
+      std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>> &comparisonMismatch) const;
 
-  int findIndex(std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>,
-                std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, int>>,
+  int findIndex(std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>,
+                std::vector<std::tuple<edm::RunID, edm::LuminosityBlockID, edm::EventID, std::vector<int>>>,
                 int lowerIndexToSearch,
                 int upperIndexToSearch) const;
   // Input and config info
   edm::EDGetTokenT<EcalTrigPrimDigiCollection> ecalTPSourceRecd_;
   std::string ecalTPSourceRecdLabel_;
+  edm::EDGetTokenT<EcalTrigPrimDigiCollection> ecalTPSourceRecdBx1_;
+  std::string ecalTPSourceRecdBx1Label_;
+  edm::EDGetTokenT<EcalTrigPrimDigiCollection> ecalTPSourceRecdBx2_;
+  std::string ecalTPSourceRecdBx2Label_;
+  edm::EDGetTokenT<EcalTrigPrimDigiCollection> ecalTPSourceRecdBx3_;
+  std::string ecalTPSourceRecdBx3Label_;
+  edm::EDGetTokenT<EcalTrigPrimDigiCollection> ecalTPSourceRecdBx4_;
+  std::string ecalTPSourceRecdBx4Label_;
+  edm::EDGetTokenT<EcalTrigPrimDigiCollection> ecalTPSourceRecdBx5_;
+  std::string ecalTPSourceRecdBx5Label_;
   edm::EDGetTokenT<HcalTrigPrimDigiCollection> hcalTPSourceRecd_;
   std::string hcalTPSourceRecdLabel_;
   edm::EDGetTokenT<EcalTrigPrimDigiCollection> ecalTPSourceSent_;
@@ -275,6 +295,7 @@ private:
   edm::EDGetTokenT<FEDRawDataCollection> fedRawData_;
   std::string histFolder_;
   int tpFillThreshold_;
+  int tpFillThreshold5Bx_;
   bool ignoreHFfbs_;
 };
 

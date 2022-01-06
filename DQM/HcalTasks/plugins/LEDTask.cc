@@ -5,7 +5,8 @@ using namespace hcaldqm;
 using namespace hcaldqm::constants;
 using namespace hcaldqm::filter;
 
-LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
+LEDTask::LEDTask(edm::ParameterSet const& ps)
+    : DQTask(ps), hcalDbServiceToken_(esConsumes<HcalDbService, HcalDbRecord, edm::Transition::BeginRun>()) {
   _nevents = ps.getUntrackedParameter<int>("nevents", 2000);
   //	tags
   _tagQIE11 = ps.getUntrackedParameter<edm::InputTag>("tagHE", edm::InputTag("hcalDigis"));
@@ -23,38 +24,6 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
   _lowHBHE = ps.getUntrackedParameter<double>("lowHBHE", 20);
   _lowHO = ps.getUntrackedParameter<double>("lowHO", 20);
   _lowHF = ps.getUntrackedParameter<double>("lowHF", 20);
-
-  // LED calibration channels
-  std::vector<edm::ParameterSet> vLedCalibChannels =
-      ps.getParameter<std::vector<edm::ParameterSet>>("ledCalibrationChannels");
-  for (int i = 0; i <= 3; ++i) {
-    HcalSubdetector this_subdet = HcalEmpty;
-    switch (i) {
-      case 0:
-        this_subdet = HcalBarrel;
-        break;
-      case 1:
-        this_subdet = HcalEndcap;
-        break;
-      case 2:
-        this_subdet = HcalOuter;
-        break;
-      case 3:
-        this_subdet = HcalForward;
-        break;
-      default:
-        this_subdet = HcalEmpty;
-        break;
-    }
-    std::vector<int32_t> subdet_calib_ietas = vLedCalibChannels[i].getUntrackedParameter<std::vector<int32_t>>("ieta");
-    std::vector<int32_t> subdet_calib_iphis = vLedCalibChannels[i].getUntrackedParameter<std::vector<int32_t>>("iphi");
-    std::vector<int32_t> subdet_calib_depths =
-        vLedCalibChannels[i].getUntrackedParameter<std::vector<int32_t>>("depth");
-    for (unsigned int ichannel = 0; ichannel < subdet_calib_ietas.size(); ++ichannel) {
-      _ledCalibrationChannels[this_subdet].push_back(HcalDetId(
-          HcalOther, subdet_calib_ietas[ichannel], subdet_calib_iphis[ichannel], subdet_calib_depths[ichannel]));
-    }
-  }
 }
 
 /* virtual */ void LEDTask::bookHistograms(DQMStore::IBooker& ib, edm::Run const& r, edm::EventSetup const& es) {
@@ -64,9 +33,40 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
 
   DQTask::bookHistograms(ib, r, es);
 
-  edm::ESHandle<HcalDbService> dbService;
-  es.get<HcalDbRecord>().get(dbService);
+  edm::ESHandle<HcalDbService> dbService = es.getHandle(hcalDbServiceToken_);
   _emap = dbService->getHcalMapping();
+
+  // Book LED calibration channels from emap
+  std::vector<HcalElectronicsId> eids = _emap->allElectronicsId();
+  for (unsigned i = 0; i < eids.size(); i++) {
+    HcalElectronicsId eid = eids[i];
+    DetId id = _emap->lookup(eid);
+    if (HcalGenericDetId(id.rawId()).isHcalCalibDetId()) {
+      HcalCalibDetId calibId(id);
+      if (calibId.calibFlavor() == HcalCalibDetId::CalibrationBox) {
+        HcalSubdetector this_subdet = HcalEmpty;
+        switch (calibId.hcalSubdet()) {
+          case HcalBarrel:
+            this_subdet = HcalBarrel;
+            break;
+          case HcalEndcap:
+            this_subdet = HcalEndcap;
+            break;
+          case HcalOuter:
+            this_subdet = HcalOuter;
+            break;
+          case HcalForward:
+            this_subdet = HcalForward;
+            break;
+          default:
+            this_subdet = HcalEmpty;
+            break;
+        }
+        _ledCalibrationChannels[this_subdet].push_back(
+            HcalDetId(HcalOther, calibId.ieta(), calibId.iphi(), calibId.cboxChannel()));
+      }
+    }
+  }
 
   std::vector<uint32_t> vhashVME;
   std::vector<uint32_t> vhashuTCA;
@@ -104,13 +104,6 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
                                 0);
 
   if (_ptype == fLocal) {  // hidefed2crate
-    _cSignalMean_FEDVME.initialize(_name,
-                                   "SignalMean",
-                                   hcaldqm::hashfunctions::fFED,
-                                   new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fSpigot),
-                                   new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fFiberVMEFiberCh),
-                                   new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::ffC_generic_400000, true),
-                                   0);
     _cSignalMean_FEDuTCA.initialize(_name,
                                     "SignalMean",
                                     hcaldqm::hashfunctions::fFED,
@@ -118,26 +111,12 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
                                     new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fFiberuTCAFiberCh),
                                     new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::ffC_generic_400000, true),
                                     0);
-    _cSignalRMS_FEDVME.initialize(_name,
-                                  "SignalRMS",
-                                  hcaldqm::hashfunctions::fFED,
-                                  new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fSpigot),
-                                  new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fFiberVMEFiberCh),
-                                  new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::ffC_generic_10000, true),
-                                  0);
     _cSignalRMS_FEDuTCA.initialize(_name,
                                    "SignalRMS",
                                    hcaldqm::hashfunctions::fFED,
                                    new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fSlotuTCA),
                                    new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fFiberuTCAFiberCh),
                                    new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::ffC_generic_10000, true),
-                                   0);
-    _cTimingMean_FEDVME.initialize(_name,
-                                   "TimingMean",
-                                   hcaldqm::hashfunctions::fFED,
-                                   new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fSpigot),
-                                   new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fFiberVMEFiberCh),
-                                   new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS200),
                                    0);
     _cTimingMean_FEDuTCA.initialize(_name,
                                     "TimingMean",
@@ -146,13 +125,6 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
                                     new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fFiberuTCAFiberCh),
                                     new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS200),
                                     0);
-    _cTimingRMS_FEDVME.initialize(_name,
-                                  "TimingRMS",
-                                  hcaldqm::hashfunctions::fFED,
-                                  new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fSpigot),
-                                  new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fFiberVMEFiberCh),
-                                  new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS200),
-                                  0);
     _cTimingRMS_FEDuTCA.initialize(_name,
                                    "TimingRMS",
                                    hcaldqm::hashfunctions::fFED,
@@ -206,13 +178,6 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
                              new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),
                              0);
   if (_ptype != fOffline) {  // hidefed2crate
-    _cMissing_FEDVME.initialize(_name,
-                                "Missing",
-                                hcaldqm::hashfunctions::fFED,
-                                new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fSpigot),
-                                new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fFiberVMEFiberCh),
-                                new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),
-                                0);
     _cMissing_FEDuTCA.initialize(_name,
                                  "Missing",
                                  hcaldqm::hashfunctions::fFED,
@@ -295,16 +260,11 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
 
   _cMissing_depth.book(ib, _emap, _subsystem);
   if (_ptype == fLocal) {  // hidefed2crate
-    _cSignalMean_FEDVME.book(ib, _emap, _filter_uTCA, _subsystem);
     _cSignalMean_FEDuTCA.book(ib, _emap, _filter_VME, _subsystem);
-    _cSignalRMS_FEDVME.book(ib, _emap, _filter_uTCA, _subsystem);
     _cSignalRMS_FEDuTCA.book(ib, _emap, _filter_VME, _subsystem);
-    _cTimingMean_FEDVME.book(ib, _emap, _filter_uTCA, _subsystem);
     _cTimingMean_FEDuTCA.book(ib, _emap, _filter_VME, _subsystem);
-    _cTimingRMS_FEDVME.book(ib, _emap, _filter_uTCA, _subsystem);
     _cTimingRMS_FEDuTCA.book(ib, _emap, _filter_VME, _subsystem);
     _cShapeCut_FEDSlot.book(ib, _emap, _subsystem);
-    _cMissing_FEDVME.book(ib, _emap, _filter_uTCA, _subsystem);
     _cMissing_FEDuTCA.book(ib, _emap, _filter_VME, _subsystem);
   }
   if (_ptype == fOnline || _ptype == fLocal) {
@@ -345,13 +305,9 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
   _cTimingRMS_depth.reset();
 
   if (_ptype == fLocal) {  // hidefed2crate
-    _cSignalMean_FEDVME.reset();
     _cSignalMean_FEDuTCA.reset();
-    _cSignalRMS_FEDVME.reset();
     _cSignalRMS_FEDuTCA.reset();
-    _cTimingMean_FEDVME.reset();
     _cTimingMean_FEDuTCA.reset();
-    _cTimingRMS_FEDVME.reset();
     _cTimingRMS_FEDuTCA.reset();
   }
 
@@ -371,9 +327,7 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
     if (n == 0) {
       _cMissing_depth.fill(did);
       if (_ptype == fLocal) {  // hidefed2crate
-        if (eid.isVMEid())
-          _cMissing_FEDVME.fill(eid);
-        else
+        if (!eid.isVMEid())
           _cMissing_FEDuTCA.fill(eid);
       }
       continue;
@@ -387,12 +341,7 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
     _cTimingRMS_Subdet.fill(did, rtim);
     _cTimingRMS_depth.fill(did, rtim);
     if (_ptype == fLocal) {  // hidefed2crate
-      if (eid.isVMEid()) {
-        _cSignalMean_FEDVME.fill(eid, msig);
-        _cSignalRMS_FEDVME.fill(eid, rsig);
-        _cTimingMean_FEDVME.fill(eid, mtim);
-        _cTimingRMS_FEDVME.fill(eid, rtim);
-      } else {
+      if (!eid.isVMEid()) {
         _cSignalMean_FEDuTCA.fill(eid, msig);
         _cSignalRMS_FEDuTCA.fill(eid, rsig);
         _cTimingMean_FEDuTCA.fill(eid, mtim);
@@ -514,6 +463,25 @@ LEDTask::LEDTask(edm::ParameterSet const& ps) : DQTask(ps) {
   for (HODigiCollection::const_iterator it = c_ho->begin(); it != c_ho->end(); ++it) {
     const HODataFrame digi = (const HODataFrame)(*it);
     HcalDetId did = digi.id();
+    if (did.subdet() != HcalOuter) {
+      // LED monitoring from calibration channels
+      if (did.subdet() == HcalOther) {
+        HcalOtherDetId hodid(did);
+        if (hodid.subdet() == HcalCalibration) {
+          if (std::find(_ledCalibrationChannels[HcalOuter].begin(), _ledCalibrationChannels[HcalOuter].end(), did) !=
+              _ledCalibrationChannels[HcalOuter].end()) {
+            for (int i = 0; i < digi.size(); i++) {
+              if (_ptype == fOnline) {
+                _LED_ADCvsBX_Subdet.fill(HcalDetId(HcalOuter, 1, 1, 4), e.bunchCrossing(), digi[i].adc());
+              } else if (_ptype == fLocal) {
+                _LED_ADCvsEvn_Subdet.fill(
+                    HcalDetId(HcalOuter, 1, 1, 4), e.eventAuxiliary().id().event(), digi[i].adc());
+              }
+            }
+          }
+        }
+      }
+    }
     HcalElectronicsId eid = digi.elecId();
     //double sumQ = hcaldqm::utilities::sumQ<HODataFrame>(digi, 8.5, 0, digi.size()-1);
     CaloSamples digi_fC = hcaldqm::utilities::loadADC2fCDB<HODataFrame>(_dbService, did, digi);

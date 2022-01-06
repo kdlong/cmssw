@@ -1,9 +1,16 @@
 import FWCore.ParameterSet.Config as cms
 
-from DQMOffline.Muon.gemOfflineMonitor_cfi import *
+from DQM.GEM.GEMDigiSource_cfi import *
+from DQM.GEM.GEMRecHitSource_cfi import *
+
 from DQMOffline.Muon.gemEfficiencyAnalyzer_cfi import *
 
+GEMDigiSource.modeRelVal = True
+GEMRecHitSource.modeRelVal = True
+
 gemSources = cms.Sequence(
-    gemOfflineMonitor *
-    gemEfficiencyAnalyzerTightSeq *
-    gemEfficiencyAnalyzerSTASeq)
+    GEMDigiSource *
+    GEMRecHitSource *
+    gemEfficiencyAnalyzerTightGlbSeq *
+    gemEfficiencyAnalyzerStaSeq
+)

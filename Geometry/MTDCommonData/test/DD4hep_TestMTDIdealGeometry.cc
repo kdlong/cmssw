@@ -40,7 +40,7 @@ using namespace cms;
 class DD4hep_TestMTDIdealGeometry : public edm::one::EDAnalyzer<> {
 public:
   explicit DD4hep_TestMTDIdealGeometry(const edm::ParameterSet&);
-  ~DD4hep_TestMTDIdealGeometry() = default;
+  ~DD4hep_TestMTDIdealGeometry() override = default;
 
   void beginJob() override {}
   void analyze(edm::Event const&, edm::EventSetup const&) override;
@@ -310,12 +310,11 @@ void DD4hep_TestMTDIdealGeometry::theBaseNumber(cms::DDFilteredView& fv) {
   thisN_.setSize(fv.navPos().size());
 
   for (uint ii = 0; ii < fv.navPos().size(); ii++) {
-    std::string name((fv.geoHistory()[ii])->GetName());
-    name.assign(name.erase(name.rfind('_')));
-    int copyN(fv.copyNos()[ii]);
-    thisN_.addLevel(name, copyN);
+    std::string_view name((fv.geoHistory()[ii])->GetName());
+    size_t ipos = name.rfind('_');
+    thisN_.addLevel(name.substr(0, ipos), fv.copyNos()[ii]);
 #ifdef EDM_ML_DEBUG
-    edm::LogVerbatim("DD4hep_TestMTDIdealGeometry") << name << " " << copyN;
+    edm::LogVerbatim("DD4hep_TestMTDIdealGeometry") << name.substr(0, ipos) << " " << fv.copyNos()[ii];
 #endif
   }
 }

@@ -5,7 +5,7 @@ from RecoLocalCalo.EcalRecProducers.ecalRecHitTPGConditions_cff import *
 
 # ECAL reconstruction
 from RecoLocalCalo.EcalRecProducers.ecalMultiFitUncalibRecHit_cff import *
-from RecoLocalCalo.EcalRecProducers.ecalRecHit_cfi import *
+from RecoLocalCalo.EcalRecProducers.ecalRecHit_cff import *
 from RecoLocalCalo.EcalRecProducers.ecalPreshowerRecHit_cfi import *
 from RecoLocalCalo.EcalRecProducers.ecalDetIdToBeRecovered_cfi import *
 from RecoLocalCalo.EcalRecProducers.ecalCompactTrigPrim_cfi import *
@@ -19,7 +19,7 @@ ecalUncalibRecHitTask = cms.Task(
 ecalUncalibRecHitSequence = cms.Sequence(ecalUncalibRecHitTask)
 
 ecalRecHitNoTPTask = cms.Task(
-    ecalRecHit,
+    ecalCalibratedRecHitTask,
     ecalPreshowerRecHit)
 
 ecalRecHitNoTPSequence = cms.Sequence(ecalRecHitNoTPTask)
