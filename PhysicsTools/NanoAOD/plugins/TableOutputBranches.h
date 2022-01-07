@@ -32,7 +32,7 @@ private:
                    TBranch *branchptr = nullptr)
         : name(aname), title(atitle), rootTypeCode(rootType), branch(branchptr) {}
   };
-  TBranch *m_counterBranch;
+  TBranch *m_counterBranch = nullptr;
   std::vector<NamedBranchPtr> m_floatBranches;
   std::vector<NamedBranchPtr> m_intBranches;
   std::vector<NamedBranchPtr> m_uint8Branches;
