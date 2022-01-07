@@ -88,7 +88,7 @@ void LHEWeightProductProducer::produce(edm::StreamID, edm::Event& iEvent, const 
   }
 
   if (!lheEventInfo.isValid())
-      return;
+    return;
 
   auto weightProduct =
       weightHelper_.weightProduct(productInfo.product, lheEventInfo->weights(), lheEventInfo->originalXWGTUP());
