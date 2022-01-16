@@ -45,10 +45,10 @@ namespace gen {
     PdfUncertaintyType uncertaintyType() const { return uncertaintyType_; }
     bool hasAlphasVariations() const { return hasAlphasVars_; }
     void addLhaid(int lhaid);
-    std::vector<int>& getLhaIds() { return lhaids_; }
+    std::vector<int>& lhaIds() { return lhaids_; }
 
     bool isIdInParentSet(int lhaid) const { return parentLhapdfId_ == parentLhapdfId(lhaid); }
-    int getParentLhapdfId() const { return parentLhapdfId_; }
+    int parentLhapdfId() const { return parentLhapdfId_; }
     void setParentLhapdfInfo(int lhaid);
 
     // need to remove

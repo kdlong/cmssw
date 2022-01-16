@@ -7,7 +7,9 @@
 using namespace tinyxml2;
 
 namespace gen {
-  void LHEWeightHelper::setHeaderLines(std::vector<std::string> headerLines) { headerLines_ = headerLines; }
+  void LHEWeightHelper::setHeaderLines(std::vector<std::string> headerLines) { 
+    headerLines_ = headerLines;
+  }
 
   void LHEWeightHelper::parseWeights() {
     parsedWeights_.clear();
@@ -23,6 +25,8 @@ namespace gen {
 
     tinyxml2::XMLDocument xmlDoc;
     std::string fullHeader = boost::algorithm::join(headerLines_, "");
+    if (debug_)
+      std::cout << "Full header is \n" << fullHeader << std::endl;
 
     int xmlError = xmlDoc.Parse(fullHeader.c_str());
     // in case of &gt; instead of <
@@ -33,7 +37,7 @@ namespace gen {
     }
     // error persists (how to handle error?)
     if (xmlError != 0) {
-      std::cerr << "Error in lhe xml file" << std::endl;
+      std::cerr << "WARNING: Error in parsing XML of LHE weight header!" << std::endl;
       xmlDoc.PrintError();
       if (failIfInvalidXML_)
         throw std::runtime_error("XML is unreadable because of above error.");
@@ -46,9 +50,14 @@ namespace gen {
     int weightIndex = 0;
     int groupIndex = 0;
     for (auto* e = xmlDoc.RootElement(); e != nullptr; e = e->NextSiblingElement()) {
+      if (debug_) 
+        std::cout << "XML element is " << e->Name() << std::endl;
       std::string groupName = "";
       if (strcmp(e->Name(), "weight") == 0) {
+        if (debug_) 
+          std::cout << "Found weight unmatched to group\n";
         // we are here if there is a weight that does not belong to any group
+        // TODO: Recylce code better between here when a weight is found in a group
         std::string text = "";
         if (e->GetText()) {
           text = e->GetText();
@@ -58,6 +67,8 @@ namespace gen {
           attributes[att->Name()] = att->Value();
         parsedWeights_.push_back({e->Attribute("id"), weightIndex++, groupName, text, attributes, groupIndex});
       } else if (strcmp(e->Name(), "weightgroup") == 0) {
+        if (debug_)
+          std::cout << "Found a weight group.\n";
         // to deal wiht files with "id" instead of "name"
         for (auto nameAtt : nameAlts_) {
           if (e->Attribute(nameAtt.c_str())) {
@@ -66,6 +77,7 @@ namespace gen {
           }
         }
         if (groupName.empty()) {
+          // TODO: Need a better failure mode
           throw std::runtime_error("couldn't find groupname");
         }
         // May remove this, very specific error
@@ -75,6 +87,8 @@ namespace gen {
         for (auto* inner = e->FirstChildElement("weight"); inner != nullptr;
              inner = inner->NextSiblingElement("weight")) {
           // we are here if there is a weight in a weightgroup
+          if (debug_)
+            std::cout << "Found a weight inside the group. Content is " << inner->GetText() <<  " group index is " << groupIndex << std::endl;
           std::string text = "";
           if (inner->GetText())
             text = inner->GetText();
@@ -83,7 +97,8 @@ namespace gen {
             attributes[att->Name()] = att->Value();
           parsedWeights_.push_back({inner->Attribute("id"), weightIndex++, groupName, text, attributes, groupIndex});
         }
-      }
+      } else
+          std::cout << "Found an invalid entry\n";
       groupIndex++;
     }
     buildGroups();

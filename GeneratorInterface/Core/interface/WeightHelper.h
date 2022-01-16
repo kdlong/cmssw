@@ -38,6 +38,9 @@ namespace gen {
     int findContainingWeightGroup(std::string wgtId, int weightIndex, int previousGroupIndex);
 
   protected:
+    // TODO: Make this only print from one thread a la 
+    // https://github.com/kdlong/cmssw/blob/master/PhysicsTools/NanoAOD/plugins/GenWeightsTableProducer.cc#L1069
+    bool debug_ = true;
     std::string model_;
     std::vector<ParsedWeight> parsedWeights_;
     std::map<std::string, std::string> currWeightAttributeMap_;
@@ -51,10 +54,9 @@ namespace gen {
     void updateScaleInfo(const ParsedWeight& weight, int index);
     void updateMEParamInfo(const ParsedWeight& weight, int index);
     void updatePdfInfo(const ParsedWeight& weight, int index);
-    void updatePartonShowerInfo(const ParsedWeight& weight, int index);
     void cleanupOrphanCentralWeight();
 
-    int getLhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup);
+    int lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup);
     std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByRegex(const std::string& label, const ParsedWeight& weight) const;
