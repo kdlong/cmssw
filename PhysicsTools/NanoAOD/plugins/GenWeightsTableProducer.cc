@@ -69,7 +69,7 @@ public:
     bool foundLheWeights = false;
     edm::Handle<GenWeightInfoProduct> lheWeightInfoHandle;
     for (auto& token : lheWeightInfoTokens_) {
-      iLumi.getByToken(token, lheWeightInfoHandle);
+      iLumi.getRun().getByToken(token, lheWeightInfoHandle);
       if (lheWeightInfoHandle.isValid()) {
         foundLheWeights = true;
         break;
@@ -159,7 +159,7 @@ GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params
             [this](const edm::InputTag& tag) { return mayConsume<GenWeightProduct>(tag); })),
       lheWeightInfoTokens_(edm::vector_transform(
           params.getParameter<std::vector<edm::InputTag>>("lheWeights"),
-            [this](const edm::InputTag& tag) { return mayConsume<GenWeightInfoProduct, edm::InLumi>(tag); })),
+            [this](const edm::InputTag& tag) { return mayConsume<GenWeightInfoProduct, edm::InRun>(tag); })),
       genWeightTokens_(
           edm::vector_transform(params.getParameter<std::vector<edm::InputTag>>("genWeights"),
             [this](const edm::InputTag& tag) { return mayConsume<GenWeightProduct>(tag); })),
@@ -419,10 +419,9 @@ WeightGroupDataContainer GenWeightsTableProducer::weightDataPerType(edm::Handle<
                                                                     size_t maxStore) const {
   WeightGroupDataContainer allgroups;
   if (weightType == gen::WeightType::kPdfWeights && !pdfIds_.empty()) {
-    auto pdfIds = pdfIds_;
-    if (pdfIds.size() > maxStore)
-        pdfIds.resize(maxStore);
-    allgroups = weightsInfoHandle->pdfGroupsWithIndicesByLHAIDs(pdfIds);
+    allgroups = weightsInfoHandle->pdfGroupsWithIndicesByLHAIDs(pdfIds_);
+	if (allgroups.size() > maxStore)
+		allgroups.resize(maxStore);
   } else
     allgroups = weightsInfoHandle->weightGroupsAndIndicesByType(weightType, maxStore);
 
