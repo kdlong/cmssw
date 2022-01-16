@@ -22,6 +22,7 @@ namespace gen {
     inline bool isValidValue(float mu) const { return mu == 0.5 || mu == 1.0 || mu == 2.0; }
 
   public:
+    static const unsigned int MIN_SCALE_VARIATIONS = 9;
     ScaleWeightGroupInfo() : ScaleWeightGroupInfo("") {}
     ScaleWeightGroupInfo(std::string header, std::string name)
         : WeightGroupInfo(header, name), muIndices_(9, -1), dynVec_(9) {
@@ -43,15 +44,15 @@ namespace gen {
     // Is a variation of the functional form of the dynamic scale
     bool isFunctionalFormVariation();
     void setIsFunctionalFormVariation(bool functionalVar) { isFunctionalFormVar_ = functionalVar; }
-    size_t centralIndex() const { return muIndices_.at(4); }
-    size_t muR1muF2Index() const { return muIndices_.at(5); }
-    size_t muR1muF05Index() const { return muIndices_.at(3); }
-    size_t muR2muF05Index() const { return muIndices_.at(6); }
-    size_t muR2muF1Index() const { return muIndices_.at(7); }
-    size_t muR2muF2Index() const { return muIndices_.at(8); }
-    size_t muR05muF05Index() const { return muIndices_.at(0); }
-    size_t muR05muF1Index() const { return muIndices_.at(1); }
-    size_t muR05muF2Index() const { return muIndices_.at(2); }
+    int centralIndex() const { return muIndices_.at(4); }
+    int muR1muF2Index() const { return muIndices_.at(5); }
+    int muR1muF05Index() const { return muIndices_.at(3); }
+    int muR2muF05Index() const { return muIndices_.at(6); }
+    int muR2muF1Index() const { return muIndices_.at(7); }
+    int muR2muF2Index() const { return muIndices_.at(8); }
+    int muR05muF05Index() const { return muIndices_.at(0); }
+    int muR05muF1Index() const { return muIndices_.at(1); }
+    int muR05muF2Index() const { return muIndices_.at(2); }
     // dynweight version
     size_t centralIndex(std::string& dynName) const { return getScaleIndex(4, dynName); }
     size_t muR1muF2Index(std::string& dynName) const { return getScaleIndex(5, dynName); }

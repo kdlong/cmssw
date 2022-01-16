@@ -118,6 +118,12 @@ namespace gen {
         scaleGroup.setLhaid(-2);
       }
     }
+    if (!(scaleGroup.centralIndex() >= 0 && scaleGroup.muR05muF05Index() >= 0 && 
+        scaleGroup.muR1muF05Index() >= 0 && scaleGroup.muR2muF05Index() >= 0 && 
+        scaleGroup.muR05muF1Index() >= 0 && scaleGroup.muR05muF2Index() >= 0 &&
+        scaleGroup.muR1muF2Index() >= 0 && scaleGroup.muR2muF2Index() >= 0 &&
+        scaleGroup.muR2muF2Index() >= 0))
+      scaleGroup.setIsWellFormed(true);
   }
 
   int WeightHelper::lhapdfId(const ParsedWeight& weight, gen::PdfWeightGroupInfo& pdfGroup) {
@@ -213,9 +219,31 @@ namespace gen {
 
   int WeightHelper::addWeightToProduct(
       std::unique_ptr<GenWeightProduct>& product, double weight, std::string name, int weightNum, int groupIndex) {
-    groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
-    auto group = weightGroups_[groupIndex];
-    int entry = group.weightVectorEntry(name, weightNum);
+    bool isUnassociated = false;
+    try {
+      groupIndex = findContainingWeightGroup(name, weightNum, groupIndex);
+    }
+    catch (const std::range_error& e) {
+      std::cerr << "WARNING: " << e.what() << std::endl;
+      isUnassociated = true;
+
+      bool foundUnassocGroup = false;
+      while (!foundUnassocGroup && groupIndex < static_cast<int>(weightGroups_.size())) {
+        auto& g = weightGroups_[groupIndex];
+        if (g.weightType() == gen::WeightType::kUnknownWeights && g.name() == "unassociated")
+          foundUnassocGroup = true;
+        else
+          groupIndex++;
+      }
+      if (!foundUnassocGroup) {
+        addUnassociatedGroup();
+      }
+    }
+    auto& group = weightGroups_[groupIndex];
+    if (isUnassociated) {
+      group.addContainedId(weightNum, name, name);
+    }
+    int entry = !isUnassociated ? group.weightVectorEntry(name, weightNum) : group.nIdsContained();
     if (debug_)
         std::cout << "Adding weight " << entry << " to group " << groupIndex << std::endl;
     product->addWeight(weight, groupIndex, entry);
@@ -279,9 +307,14 @@ namespace gen {
         std::cout << wgt.description() << "\n";
       } else if (wgt.weightType() == gen::WeightType::kPartonShowerWeights) {
         auto& wgtPS = dynamic_cast<gen::PartonShowerWeightGroupInfo&>(wgt);
-        for (auto group : wgtPS.getWeightNames()) {
-          std::cout << group << ": up " << wgtPS.upIndex(group);
-          std::cout << " - down " << wgtPS.downIndex(group) << std::endl;
+        if (wgtPS.containedIds().size() == DEFAULT_PSWEIGHT_LENGTH)
+            wgtPS.setIsWellFormed(true);
+
+        wgtPS.cacheWeightIndicesByLabel();
+        std::vector<std::string> labels = wgtPS.weightLabels();
+        if (labels.size() > FIRST_PSWEIGHT_ENTRY && labels.at(FIRST_PSWEIGHT_ENTRY).find(":") != std::string::npos &&
+                labels.at(FIRST_PSWEIGHT_ENTRY).find("=") != std::string::npos) {
+          wgtPS.setNameIsPythiaSyntax(true);
         }
       }
       if (!wgt.isWellFormed())
