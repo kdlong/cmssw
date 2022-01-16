@@ -30,12 +30,12 @@ namespace {
 using CounterMap = genCounter::CounterMap;
 using Counter = genCounter::Counter;
 
-class LHEWeightsTableProducer : public edm::global::EDProducer<edm::LuminosityBlockCache<WeightGroupsToStore>,
+class GenWeightsTableProducer : public edm::global::EDProducer<edm::LuminosityBlockCache<WeightGroupsToStore>,
                                                                edm::StreamCache<CounterMap>,
                                                                edm::RunSummaryCache<CounterMap>,
                                                                edm::EndRunProducer> {
 public:
-  LHEWeightsTableProducer(edm::ParameterSet const& params);
+  GenWeightsTableProducer(edm::ParameterSet const& params);
 
   void produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
   //func changed//sroychow
@@ -155,7 +155,7 @@ protected:
   enum { inLHE, inGen };
 };
 //put back if needed; till now not used
-LHEWeightsTableProducer::LHEWeightsTableProducer(edm::ParameterSet const& params)
+GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params)
     : lheWeightTokens_(
           edm::vector_transform(params.getParameter<std::vector<edm::InputTag>>("lheWeights"),
                                 [this](const edm::InputTag& tag) { return mayConsume<GenWeightProduct>(tag); })),
@@ -185,7 +185,7 @@ LHEWeightsTableProducer::LHEWeightsTableProducer(edm::ParameterSet const& params
   produces<std::string>("genModel");
 }
 
-void LHEWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
+void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
   //access counter for weight sums
   Counter& counter = *streamCache(id)->get();
   edm::Handle<GenWeightProduct> lheWeightHandle;
@@ -263,7 +263,7 @@ void LHEWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
 /*
 
 */
-void LHEWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, std::vector<double>>& lheWeightTables,
+void GenWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, std::vector<double>>& lheWeightTables,
                                                     std::map<gen::WeightType, std::vector<int>>& weightVecsizes,
                                                     std::map<gen::WeightType, std::string>& weightlabels,
                                                     const char* typeName,
@@ -297,7 +297,7 @@ void LHEWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
       } else {
         std::cout << "NOT WELL FORMED!\n";
         size_t nstore = std::min<size_t>(gen::ScaleWeightGroupInfo::MIN_SCALE_VARIATIONS, weights.size());
-        weights = std::vector(weights.begin(), weights.begin() + nstore);
+        weights = std::vector<double>(begin(weights), std::begin(weights)+nstore);
         label.append("WARNING: Unexpected format found. Contains first " + std::to_string(nstore) +
                      " elements of weights vector, unordered");
       }
@@ -323,7 +323,7 @@ void LHEWeightsTableProducer::addWeightGroupToTable(std::map<gen::WeightType, st
   }
 }
 
-WeightGroupDataContainer LHEWeightsTableProducer::weightDataPerType(edm::Handle<GenWeightInfoProduct>& weightsHandle,
+WeightGroupDataContainer GenWeightsTableProducer::weightDataPerType(edm::Handle<GenWeightInfoProduct>& weightsHandle,
                                                                     gen::WeightType weightType,
                                                                     int& maxStore) const {
   std::vector<gen::WeightGroupData> allgroups;
@@ -348,7 +348,7 @@ WeightGroupDataContainer LHEWeightsTableProducer::weightDataPerType(edm::Handle<
   return out;
 }
 
-std::vector<double> LHEWeightsTableProducer::orderedScaleWeights(const std::vector<double>& scaleWeights,
+std::vector<double> GenWeightsTableProducer::orderedScaleWeights(const std::vector<double>& scaleWeights,
                                                                  const gen::ScaleWeightGroupInfo& scaleGroup) const {
   std::vector<double> weights;
   weights.emplace_back(scaleWeights.at(scaleGroup.muR05muF05Index()));
@@ -364,7 +364,7 @@ std::vector<double> LHEWeightsTableProducer::orderedScaleWeights(const std::vect
   return weights;
 }
 
-std::vector<double> LHEWeightsTableProducer::preferredPSweights(const std::vector<double>& psWeights,
+std::vector<double> GenWeightsTableProducer::preferredPSweights(const std::vector<double>& psWeights,
                                                                 const gen::PartonShowerWeightGroupInfo& pswV) const {
   std::vector<double> psTosave;
 
@@ -376,7 +376,7 @@ std::vector<double> LHEWeightsTableProducer::preferredPSweights(const std::vecto
   return psTosave;
 }
 
-void LHEWeightsTableProducer::streamEndRunSummary(edm::StreamID id,
+void GenWeightsTableProducer::streamEndRunSummary(edm::StreamID id,
                                                   edm::Run const&,
                                                   edm::EventSetup const&,
                                                   CounterMap* runCounterMap) const {
@@ -384,7 +384,7 @@ void LHEWeightsTableProducer::streamEndRunSummary(edm::StreamID id,
   runCounterMap->mergeSumMap(*streamCache(id));
 }
 
-void LHEWeightsTableProducer::globalEndRunProduce(edm::Run& iRun,
+void GenWeightsTableProducer::globalEndRunProduce(edm::Run& iRun,
                                                   edm::EventSetup const&,
                                                   CounterMap const* runCounterMap) const {
   auto out = std::make_unique<nanoaod::MergeableCounterTable>();
@@ -411,7 +411,7 @@ void LHEWeightsTableProducer::globalEndRunProduce(edm::Run& iRun,
   }
   iRun.put(std::move(out));
 }
-void LHEWeightsTableProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void GenWeightsTableProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<std::vector<edm::InputTag>>("lheWeights");
   desc.add<std::vector<edm::InputTag>>("lheInfo", std::vector<edm::InputTag>{{"externalLHEProducer"}, {"source"}})
@@ -431,4 +431,4 @@ void LHEWeightsTableProducer::fillDescriptions(edm::ConfigurationDescriptions& d
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"
-DEFINE_FWK_MODULE(LHEWeightsTableProducer);
+DEFINE_FWK_MODULE(GenWeightsTableProducer);

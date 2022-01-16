@@ -84,8 +84,7 @@ namespace gen {
           std::cout << ">>>> Found a weight group: " << groupName << std::endl;
         for (auto inner = e->FirstChildElement("weight"); inner != nullptr; inner = inner->NextSiblingElement("weight"))
           addGroup(inner, groupName, groupIndex, weightIndex);
-      } else
-        std::cout << "Found an invalid entry\n";
+      } 
       groupIndex++;
     }
     buildGroups();

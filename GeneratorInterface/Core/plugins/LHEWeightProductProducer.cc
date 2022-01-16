@@ -137,7 +137,7 @@ void LHEWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock&
 
   auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();
   for (auto& weightGroup : weightHelper_.weightGroups()) {
-    weightInfoProduct->addWeightGroupInfo(std::unique_ptr<gen::WeightGroupInfo>(weightGroup.clone()));
+    weightInfoProduct->addWeightGroupInfo(weightGroup);
   }
   lumi.put(std::move(weightInfoProduct));
 }
