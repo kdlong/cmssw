@@ -23,8 +23,8 @@
 #include <algorithm>
 
 namespace {
-  typedef std::vector<gen::SharedWeightGroupData> WeightGroupDataContainer;
-  typedef std::array<std::vector<gen::SharedWeightGroupData>, 2> WeightGroupsToStore;
+  typedef std::vector<gen::WeightGroupData> WeightGroupDataContainer;
+  typedef std::array<WeightGroupDataContainer, 2> WeightGroupsToStore;
 }  // namespace
 using CounterMap = genCounter::CounterMap;
 using Counter = genCounter::Counter;
@@ -49,7 +49,7 @@ public:
   // Need to either pass the handle or a pointer to avoid a copy and conversion to the base class
   WeightGroupDataContainer weightDataPerType(edm::Handle<GenWeightInfoProduct>& weightsInfoHandle,
                                              gen::WeightType weightType,
-                                             int maxStore) const;
+                                             size_t maxStore) const;
 
   WeightGroupsToStore groupsToStore(bool foundLheWeights, 
                                     edm::Handle<GenWeightInfoProduct>& genWeightInfoHandle,
@@ -336,18 +336,18 @@ void GenWeightsTableProducer::addWeightGroupToTable(
     std::string label = groupInfo.group->description();
     auto weights = allWeights.at(groupInfo.index);
     if (weightType == gen::WeightType::kScaleWeights) {
-        const auto& scaleGroup = *std::static_pointer_cast<const gen::ScaleWeightGroupInfo>(groupInfo.group);
+        const auto& scaleGroup = *static_cast<const gen::ScaleWeightGroupInfo*>(groupInfo.group);
         auto weightsAndLabel = orderedScaleWeights(weights, scaleGroup);
         label.append(weightsAndLabel.first);
         weights = weightsAndLabel.second;
     } else if (weightType == gen::WeightType::kPartonShowerWeights) {
-      const auto psGroup = std::static_pointer_cast<const gen::PartonShowerWeightGroupInfo>(groupInfo.group);
+      const auto& psGroup = *static_cast<const gen::PartonShowerWeightGroupInfo*>(groupInfo.group);
       if(!keepAllPSWeights_) {
-        auto weightsAndLabel = preferredPSweights(weights, *psGroup);
+        auto weightsAndLabel = preferredPSweights(weights, psGroup);
         label.append(weightsAndLabel.first);
         weights = weightsAndLabel.second;
-      } else if (psGroup->isWellFormed()) {
-        double baseline = weights[psGroup->weightIndexFromLabel("Baseline")];
+      } else if (psGroup.isWellFormed()) {
+        double baseline = weights[psGroup.weightIndexFromLabel("Baseline")];
         for (size_t i = 0; i < weights.size(); i++)
           weights[i] = weights[i]/baseline;
         label = "PS weights (w_var / w_nominal)";
@@ -384,20 +384,20 @@ WeightGroupsToStore GenWeightsTableProducer::groupsToStore(bool foundLheWeights,
         continue; 
     auto& hand = isLHE ? lheWeightInfoHandle : genWeightInfoHandle;
     bool ignoreGroups = isLHE ? ignoreLheGroups_ : ignoreGenGroups_;
+    auto& toStorePerType = weightsToStore[genOrLhe];
     if (ignoreGroups) {
-       auto& groups = hand->allWeightGroupsInfo();
-       for (size_t i = 0; i < groups.size(); i++)
-           weightsToStore.at(genOrLhe).push_back({i, std::shared_ptr<const gen::WeightGroupInfo>(groups[i]->clone())});
+       toStorePerType = hand->allWeightGroupsInfoWithIndices();
     } else {
-        for (auto weightType : gen::allWeightTypes) {
-            if (weightType == gen::WeightType::kUnknownWeights && !storeUnknown)
+        for (auto& typeAndCount : storePerType) {
+            if (typeAndCount.first == gen::WeightType::kUnknownWeights && !storeUnknown)
                 continue;
-            auto allWeights = weightDataPerType(hand, weightType, storePerType[weightType]);
+            // Since the count isn't updated, the counts are effectively independent between LHE and GEN
+            auto groupsPerType = weightDataPerType(hand, typeAndCount.first, typeAndCount.second);
             // Only store unknown if at least one specified groups is empty
             if (!storeUnknown && !groupsToSearch.empty()) {
-                auto it = std::find(std::begin(groupsToSearch), std::end(groupsToSearch), weightType);
+                auto it = std::find(std::begin(groupsToSearch), std::end(groupsToSearch), typeAndCount.first);
                 if (it != std::end(groupsToSearch)) {
-                    if (allWeights.empty())
+                    if (groupsPerType.empty())
                         storeUnknown = true;
                     // Remove from array to avoid repeating the check on GEN. NOTE, if parton
                     // shower weights are included as one of the ones to consider, this can
@@ -407,8 +407,7 @@ WeightGroupsToStore GenWeightsTableProducer::groupsToStore(bool foundLheWeights,
 
                 }
             }
-            for (auto& w : allWeights)
-                weightsToStore.at(genOrLhe).push_back({w.index, std::move(w.group)});
+            toStorePerType.insert(std::end(toStorePerType), std::begin(groupsPerType), std::end(groupsPerType));
         }
     }
   } 
@@ -417,27 +416,17 @@ WeightGroupsToStore GenWeightsTableProducer::groupsToStore(bool foundLheWeights,
 
 WeightGroupDataContainer GenWeightsTableProducer::weightDataPerType(edm::Handle<GenWeightInfoProduct>& weightsInfoHandle,
                                                                     gen::WeightType weightType,
-                                                                    int maxStore) const {
-  std::vector<gen::WeightGroupData> allgroups;
+                                                                    size_t maxStore) const {
+  WeightGroupDataContainer allgroups;
   if (weightType == gen::WeightType::kPdfWeights && !pdfIds_.empty()) {
-    allgroups = weightsInfoHandle->pdfGroupsWithIndicesByLHAIDs(pdfIds_);
+    auto pdfIds = pdfIds_;
+    if (pdfIds.size() > maxStore)
+        pdfIds.resize(maxStore);
+    allgroups = weightsInfoHandle->pdfGroupsWithIndicesByLHAIDs(pdfIds);
   } else
-    allgroups = weightsInfoHandle->weightGroupsAndIndicesByType(weightType);
+    allgroups = weightsInfoHandle->weightGroupsAndIndicesByType(weightType, maxStore);
 
-  int toStore = maxStore;
-  if (maxStore < 0 || static_cast<int>(allgroups.size()) <= maxStore) {
-    // Modify size in case one type of weight is present in multiple products
-    maxStore -= allgroups.size();
-    toStore = allgroups.size();
-  }
-
-  WeightGroupDataContainer out;
-  for (int i = 0; i < toStore; i++) {
-    auto& group = allgroups.at(i);
-    gen::SharedWeightGroupData temp = {group.index, std::shared_ptr<const gen::WeightGroupInfo>(group.group->clone())};
-    out.push_back(temp);
-  }
-  return out;
+  return allgroups;
 }
 
 std::pair<std::string, std::vector<double>> 
