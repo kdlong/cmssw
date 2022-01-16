@@ -49,6 +49,7 @@ GenWeightProductProducer::GenWeightProductProducer(const edm::ParameterSet& iCon
       genEventToken_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genInfo"))),
       genLumiInfoHeadTag_(
           mayConsume<GenLumiInfoHeader, edm::InLumi>(iConfig.getParameter<edm::InputTag>("genLumiInfoHeader"))) {
+  weightHelper_.setDebug(iConfig.getUntrackedParameter<bool>("debug", false));
   produces<GenWeightProduct>();
   produces<GenWeightInfoProduct, edm::Transition::BeginLuminosityBlock>();
 }

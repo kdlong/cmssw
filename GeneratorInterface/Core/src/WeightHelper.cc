@@ -1,4 +1,5 @@
 #include "GeneratorInterface/Core/interface/WeightHelper.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include <regex>
 
 namespace gen {
@@ -222,7 +223,7 @@ namespace gen {
     }
     int entry = !isUnassociated ? group.weightVectorEntry(name, weightNum) : group.nIdsContained();
     if (debug_)
-      std::cout << "Adding weight " << entry << " to group " << groupIndex << std::endl;
+      std::cout << "Adding weight " << entry << " to group " << groupIndex;
     product->addWeight(weight, groupIndex, entry);
     return groupIndex;
   }
@@ -300,10 +301,9 @@ namespace gen {
   }
 
   std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) {
-    if (debug_) {
-      std::cout << "Building group for weight group " << weight.groupname << " weight content is " << weight.content
-                << std::endl;
-    }
+    if (debug_)
+      std::cout << "Building group for weight group " << weight.groupname << " weight content is " << weight.content;
+
     if (isScaleWeightGroup(weight))
       return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
     else if (isPdfWeightGroup(weight))

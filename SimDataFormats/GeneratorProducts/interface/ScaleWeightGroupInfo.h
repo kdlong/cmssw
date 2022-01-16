@@ -39,7 +39,6 @@ namespace gen {
         : WeightGroupInfo(header, name), muIndices_(MIN_SCALE_VARIATIONS, -1), dynVec_(MIN_SCALE_VARIATIONS) {
       weightType_ = WeightType::kScaleWeights;
       isFunctionalFormVar_ = false;
-      isWellFormed_ = true;
     }
     ScaleWeightGroupInfo(std::string header) : ScaleWeightGroupInfo(header, header) {}
     ScaleWeightGroupInfo(const ScaleWeightGroupInfo& other) { copy(other); }
