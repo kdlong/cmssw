@@ -6,7 +6,12 @@
 <use   name="GeneratorInterface/Core"/>
 
 <library   name="GeneratorInterfaceCore_plugins" file="*.cc" >
+  <use name="DataFormats/HepMCCandidate"/>
+  <use name="DataFormats/Candidate"/>
+  <use name="DataFormats/METReco"/>
+  <use name="DataFormats/JetReco"/>
+  <use name="PhysicsTools/UtilAlgos"/>
+  <use name="SimDataFormats/GeneratorProducts"/>
+  <use name="lhapdf"/>
   <flags   EDM_PLUGIN="1"/>
 </library>
-
-

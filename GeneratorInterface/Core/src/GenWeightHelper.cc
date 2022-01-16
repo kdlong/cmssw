@@ -9,6 +9,7 @@ namespace gen {
   void GenWeightHelper::parseWeightGroupsFromNames(std::vector<std::string> weightNames) {
     int index = 0;
 
+    // If size is 1, it's just the central weight
     if (weightNames.size() <= 1)
       return;
 

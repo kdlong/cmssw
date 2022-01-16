@@ -48,8 +48,8 @@ namespace gen {
     bool isOrphanPdfWeightGroup(ParsedWeight& weight);
     void updateScaleInfo(const ParsedWeight& weight);
     void updatePdfInfo(const ParsedWeight& weight);
-    void splitPdfGroups();
     void cleanupOrphanCentralWeight();
+
     int getLhapdfId(const ParsedWeight& weight);
     std::string searchAttributes(const std::string& label, const ParsedWeight& weight) const;
     std::string searchAttributesByTag(const std::string& label, const ParsedWeight& weight) const;

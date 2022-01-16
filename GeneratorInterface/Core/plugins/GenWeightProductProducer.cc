@@ -74,13 +74,12 @@ void GenWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock&
     weightHelper_.setModel(label);
   }
 
-  if (weightNames_.size() == 0) {
-    edm::Handle<GenLumiInfoHeader> genLumiInfoHandle;
-    iLumi.getByToken(genLumiInfoToken_, genLumiInfoHandle);
+  edm::Handle<GenLumiInfoHeader> genLumiInfoHandle;
+  iLumi.getByToken(genLumiInfoToken_, genLumiInfoHandle);
 
-    weightNames_ = genLumiInfoHandle->weightNames();
-    weightHelper_.parseWeightGroupsFromNames(weightNames_);
-  }
+  weightNames_ = genLumiInfoHandle->weightNames();
+  weightHelper_.parseWeightGroupsFromNames(weightNames_);
+
   auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();
   for (auto& weightGroup : weightHelper_.weightGroups()) {
     weightInfoProduct->addWeightGroupInfo(weightGroup.clone());

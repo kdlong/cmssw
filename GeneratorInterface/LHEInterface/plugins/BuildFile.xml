@@ -17,9 +17,3 @@
 	<use name="mcdb"/>
 	<flags EDM_PLUGIN="1"/>
 </library>
-<library name="GeneratorInterfaceLHECOMWeightProducer" file="LHECOMWeightProducer.cc">
-        <use name="FWCore/Framework"/>
-        <use name="SimDataFormats/GeneratorProducts"/>
-        <use name="lhapdf"/>
-        <flags EDM_PLUGIN="1"/>
-</library>

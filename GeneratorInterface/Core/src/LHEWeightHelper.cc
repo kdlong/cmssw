@@ -29,7 +29,7 @@ namespace gen {
     if (xmlError != 0) {
       std::cerr << "Error in lhe xml file" << std::endl;
       xmlDoc.PrintError();
-      exit(1);
+      return;
     }
 
     std::vector<std::string> nameAlts_ = {"name", "type"};

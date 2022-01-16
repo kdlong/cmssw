@@ -36,7 +36,7 @@ private:
   edm::EDGetTokenT<LHERunInfoProduct> lheRunInfoToken_;
   edm::EDGetTokenT<LHEEventProduct> lheEventToken_;
   const edm::EDGetTokenT<GenWeightInfoProduct> lheWeightInfoToken_;
-  bool foundWeightProduct_;
+  bool foundWeightProduct_ = false;
 
   void produce(edm::Event&, const edm::EventSetup&) override;
   void beginLuminosityBlockProduce(edm::LuminosityBlock& lumi, edm::EventSetup const& es) override;

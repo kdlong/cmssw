@@ -148,8 +148,12 @@ namespace gen {
     auto weightProduct = std::make_unique<GenWeightProduct>(w0);
     weightProduct->setNumWeightSets(weightGroups_.size());
     int weightGroupIndex = 0;
-    for (unsigned int i = 0; i < weights.size(); i++) {
-      addWeightToProduct(weightProduct, weights.at(i), "", i, weightGroupIndex);
+    // This happens if there are no PS weights, so the weights vector contains only the central GEN weight.
+    // Just add an empty product
+    if (weights.size() > 1) {
+      for (unsigned int i = 0; i < weights.size(); i++) {
+        addWeightToProduct(weightProduct, weights.at(i), "", i, weightGroupIndex);
+      }
     }
     return std::move(weightProduct);
   }
