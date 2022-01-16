@@ -69,7 +69,7 @@ nanogenSequence = cms.Sequence(
     genVisTaus+
     genVisTauTable+
     genTable+
-    genWeightsTable+
+    #genWeightsTable+
     lheWeightsTable+
     genParticleTables+
     tautagger+
@@ -98,7 +98,7 @@ nanogenMiniSequence = cms.Sequence(
     genVisTaus+
     genVisTauTable+
     genTable+
-    genWeightsTable+
+    #genWeightsTable+
     lheWeightsTable+
     genParticleTables+
     tautagger+

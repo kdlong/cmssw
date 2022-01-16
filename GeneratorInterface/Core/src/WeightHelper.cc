@@ -20,7 +20,7 @@ namespace gen {
   bool WeightHelper::isPartonShowerWeightGroup(const ParsedWeight& weight) {
     const std::string& groupname = boost::to_lower_copy(weight.groupname);
     std::vector<std::string> psNames = {"isr", "fsr", "nominal", "baseline", "emission"};
-    for (auto name : psNames) {
+    for (const auto& name : psNames) {
       if (groupname.find(name) != std::string::npos)
         return true;
     }
@@ -128,7 +128,7 @@ namespace gen {
       } catch (std::invalid_argument& e) {
         pdfGroup.setIsWellFormed(false);
       }
-    } else if (pdfGroup.lhaIds().size() > 0) {
+    } else if (!pdfGroup.lhaIds().empty()) {
       return pdfGroup.lhaIds().back() + 1;
     } else {
       return LHAPDF::lookupLHAPDFID(weight.groupname);
@@ -240,7 +240,7 @@ namespace gen {
 
     // Fall back to unordered search
     int counter = 0;
-    for (auto weightGroup : weightGroups_) {
+    for (const auto& weightGroup : weightGroups_) {
       if (weightGroup.containsWeight(wgtId, weightIndex))
         return counter;
       counter++;
@@ -290,10 +290,11 @@ namespace gen {
 
         wgtPS.cacheWeightIndicesByLabel();
         std::vector<std::string> labels = wgtPS.weightLabels();
-        if (labels.size() > FIRST_PSWEIGHT_ENTRY && labels.at(FIRST_PSWEIGHT_ENTRY).find(":") != std::string::npos &&
-            labels.at(FIRST_PSWEIGHT_ENTRY).find("=") != std::string::npos) {
+        if (labels.size() > FIRST_PSWEIGHT_ENTRY && labels.at(FIRST_PSWEIGHT_ENTRY).find(':') != std::string::npos &&
+            labels.at(FIRST_PSWEIGHT_ENTRY).find('=') != std::string::npos) {
           wgtPS.setNameIsPythiaSyntax(true);
         }
+        std::cout << "Name is pythiaSynax? " << wgtPS.nameIsPythiaSyntax() << std::endl;
       }
       if (!wgt.isWellFormed())
         std::cout << "\033[0m";

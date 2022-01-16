@@ -61,7 +61,7 @@ void GenWeightProductProducer::produce(edm::Event& iEvent, const edm::EventSetup
   edm::Handle<GenEventInfoProduct> genEventInfo;
   iEvent.getByToken(genEventToken_, genEventInfo);
 
-  float centralWeight = genEventInfo->weights().size() > 0 ? genEventInfo->weights().at(0) : 1.;
+  float centralWeight = !genEventInfo->weights().empty() ? genEventInfo->weights().at(0) : 1.;
   auto weightProduct = weightHelper_.weightProduct(genEventInfo->weights(), centralWeight);
   iEvent.put(std::move(weightProduct));
 }
@@ -82,11 +82,11 @@ void GenWeightProductProducer::beginLuminosityBlockProduce(edm::LuminosityBlock&
   weightHelper_.parseWeightGroupsFromNames(weightNames_);
 
   auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>();
-  if (weightHelper_.weightGroups().size() == 0)
-      weightHelper_.addUnassociatedGroup();
-  
+  if (weightHelper_.weightGroups().empty())
+    weightHelper_.addUnassociatedGroup();
+
   for (auto& weightGroup : weightHelper_.weightGroups()) {
-    weightInfoProduct->addWeightGroupInfo(std::make_unique<gen::WeightGroupInfo>(*weightGroup.clone()));
+    weightInfoProduct->addWeightGroupInfo(std::unique_ptr<gen::WeightGroupInfo>(weightGroup.clone()));
   }
   iLumi.put(std::move(weightInfoProduct));
 }

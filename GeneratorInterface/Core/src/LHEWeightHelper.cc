@@ -13,8 +13,8 @@ namespace gen {
     parsedWeights_.clear();
 
     if (!isConsistent() && failIfInvalidXML_) {
-      throw cms::Exception("LHEWeightHelper") <<
-          "XML in LHE is not consistent: Most likely, XML tags are out of order.";
+      throw cms::Exception("LHEWeightHelper")
+          << "XML in LHE is not consistent: Most likely, XML tags are out of order.";
     } else if (!isConsistent()) {
       swapHeaders();
     }
@@ -27,7 +27,7 @@ namespace gen {
     // in case of &gt; instead of <
     if (xmlError != 0 && failIfInvalidXML_) {
       xmlDoc.PrintError();
-      throw cms::Exception("LHEWeightHelper") 
+      throw cms::Exception("LHEWeightHelper")
           << "The LHE header is not valid XML! Weight information was not properly parsed.";
     } else if (xmlError != 0 && !failIfInvalidXML_) {
       boost::replace_all(fullHeader, "&lt;", "<");
@@ -93,11 +93,11 @@ namespace gen {
 
   std::string LHEWeightHelper::parseGroupName(tinyxml2::XMLElement* el) {
     std::vector<std::string> nameAlts_ = {"name", "type"};
-    for (auto nameAtt : nameAlts_) {
+    for (const auto& nameAtt : nameAlts_) {
       if (el->Attribute(nameAtt.c_str())) {
         std::string groupName = el->Attribute(nameAtt.c_str());
-        if (groupName.find(".") != std::string::npos)
-          groupName.erase(groupName.find("."), groupName.size());
+        if (groupName.find('.') != std::string::npos)
+          groupName.erase(groupName.find('.'), groupName.size());
         return groupName;
       }
     }
@@ -111,7 +111,7 @@ namespace gen {
   bool LHEWeightHelper::isConsistent() {
     int curLevel = 0;
 
-    for (auto line : headerLines_) {
+    for (const auto& line : headerLines_) {
       if (line.find("<weightgroup") != std::string::npos) {
         curLevel++;
         if (curLevel != 1) {

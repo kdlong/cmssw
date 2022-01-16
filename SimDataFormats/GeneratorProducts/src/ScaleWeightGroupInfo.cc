@@ -99,7 +99,7 @@ namespace gen {
 
   std::vector<std::string> ScaleWeightGroupInfo::dynNames() const {
     std::vector<std::string> returnVec;
-    for (auto item : dynNames_) {
+    for (const auto& item : dynNames_) {
       if (!item.empty())
         returnVec.push_back(item);
     }

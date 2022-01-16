@@ -42,9 +42,9 @@ namespace gen {
     }
     ScaleWeightGroupInfo(std::string header) : ScaleWeightGroupInfo(header, header) {}
     ScaleWeightGroupInfo(const ScaleWeightGroupInfo& other) { copy(other); }
-    virtual ~ScaleWeightGroupInfo() override {}
+    ~ScaleWeightGroupInfo() override {}
     void copy(const ScaleWeightGroupInfo& other);
-    virtual ScaleWeightGroupInfo* clone() const override;
+    ScaleWeightGroupInfo* clone() const override;
     bool containsCentralWeight() const { return containsCentral_; }
     void addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF);
     bool isWellFormed() { return isWellFormed_ && hasAllWeights; }
