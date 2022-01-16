@@ -34,8 +34,8 @@ namespace gen {
 
     std::vector<std::string> nameAlts_ = {"name", "type"};
 
-    size_t weightIndex = 0;
-    size_t groupIndex = 0;
+    int weightIndex = 0;
+    int groupIndex = 0;
     //for (auto* e = root->FirstChildElement(); e != nullptr; e = e->NextSiblingElement()) {
     for (auto* e = xmlDoc.RootElement(); e != nullptr; e = e->NextSiblingElement()) {
       std::string groupName = "";

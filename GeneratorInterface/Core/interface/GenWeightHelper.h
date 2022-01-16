@@ -19,11 +19,7 @@ namespace gen {
   class GenWeightHelper : public WeightHelper {
   public:
     GenWeightHelper();
-
     void parseWeightGroupsFromNames(std::vector<std::string> weightNames);
-
-  private:
-    static inline std::string trim(std::string &s);
   };
 }  // namespace gen
 

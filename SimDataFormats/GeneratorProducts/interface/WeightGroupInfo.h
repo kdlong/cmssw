@@ -55,9 +55,9 @@ namespace gen {
     virtual WeightGroupInfo* clone() const;
     WeightMetaInfo weightMetaInfo(int weightEntry) const;
     WeightMetaInfo weightMetaInfoByGlobalIndex(std::string wgtId, int weightEntry) const;
-    int weightVectorEntry(const std::string& wgtId) const;
-    bool containsWeight(const std::string& wgtId, int weightEntry) const;
-    int weightVectorEntry(const std::string& wgtId, int weightEntry) const;
+    int weightVectorEntry(std::string& wgtId) const;
+    bool containsWeight(std::string& wgtId, int weightEntry) const;
+    int weightVectorEntry(std::string& wgtId, int weightEntry) const;
     void addContainedId(int weightEntry, std::string id, std::string label);
     std::vector<WeightMetaInfo> containedIds() const;
     bool indexInRange(int index) const;

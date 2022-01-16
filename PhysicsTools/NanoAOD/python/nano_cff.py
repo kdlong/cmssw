@@ -115,7 +115,8 @@ genWeightsTable = cms.EDProducer("GenWeightsTableProducer",
 lheInfoTable = cms.EDProducer("LHETablesProducer",
     lheInfo = cms.VInputTag(cms.InputTag("externalLHEProducer"), cms.InputTag("source")),
     precision = cms.int32(14),
-    storeLHEParticles = cms.bool(True) 
+    storeLHEParticles = cms.bool(True),
+    storeAllLHEInfo = cms.bool(False),  
 )
 
 l1bits=cms.EDProducer("L1TriggerResultsConverter", src=cms.InputTag("gtStage2Digis"), legacyL1=cms.bool(False),
