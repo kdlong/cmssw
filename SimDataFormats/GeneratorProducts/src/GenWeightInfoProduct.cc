@@ -33,7 +33,8 @@ std::unique_ptr<const gen::WeightGroupInfo> GenWeightInfoProduct::containingWeig
 
 std::unique_ptr<const gen::WeightGroupInfo> GenWeightInfoProduct::orderedWeightGroupInfo(int weightGroupIndex) const {
   if (weightGroupIndex >= static_cast<int>(weightGroupsInfo_.size()))
-    throw cms::Exception("GenWeightInfoProduct") << "Weight index requested is outside the range of weights in the product";
+    throw cms::Exception("GenWeightInfoProduct")
+        << "Weight index requested is outside the range of weights in the product";
   return std::unique_ptr<const gen::WeightGroupInfo>(weightGroupsInfo_[weightGroupIndex].clone());
 }
 
@@ -61,7 +62,8 @@ std::optional<gen::WeightGroupData> GenWeightInfoProduct::pdfGroupWithIndexByLHA
   std::vector<gen::WeightGroupData> pdfGroups = weightGroupsAndIndicesByType(gen::WeightType::kPdfWeights);
 
   auto matchingPdfSet = std::find_if(pdfGroups.begin(), pdfGroups.end(), [lhaid](gen::WeightGroupData& data) {
-    auto pdfGroup = std::unique_ptr<const gen::PdfWeightGroupInfo>(static_cast<const gen::PdfWeightGroupInfo*>(data.group.release()));
+    auto pdfGroup = std::unique_ptr<const gen::PdfWeightGroupInfo>(
+        static_cast<const gen::PdfWeightGroupInfo*>(data.group.release()));
     return pdfGroup->containsLhapdfId(lhaid);
   });
 
@@ -77,7 +79,8 @@ std::vector<gen::WeightGroupData> GenWeightInfoProduct::pdfGroupsWithIndicesByLH
 
   for (auto lhaid : lhaids) {
     auto matchingPdfSet = std::find_if(pdfGroups.begin(), pdfGroups.end(), [lhaid](gen::WeightGroupData& data) {
-      auto pdfGroup = std::unique_ptr<const gen::PdfWeightGroupInfo>(static_cast<const gen::PdfWeightGroupInfo*>(data.group.release()));
+      auto pdfGroup = std::unique_ptr<const gen::PdfWeightGroupInfo>(
+          static_cast<const gen::PdfWeightGroupInfo*>(data.group.release()));
       return pdfGroup->containsLhapdfId(lhaid);
     });
     if (matchingPdfSet != pdfGroups.end()) {

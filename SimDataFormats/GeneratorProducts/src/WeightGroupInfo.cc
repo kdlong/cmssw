@@ -18,7 +18,8 @@ namespace gen {
   }
 
   WeightGroupInfo* WeightGroupInfo::clone() const {
-    throw cms::Exception("WeightGroupInfo") << "WeightGroupInfo is abstract, so it's clone() method can't be implemented.";
+    throw cms::Exception("WeightGroupInfo")
+        << "WeightGroupInfo is abstract, so it's clone() method can't be implemented.";
   }
 
   WeightMetaInfo WeightGroupInfo::weightMetaInfo(int weightEntry) const { return idsContained_.at(weightEntry); }
@@ -28,8 +29,9 @@ namespace gen {
       wgtId = std::to_string(weightEntry);
     int entry = weightVectorEntry(wgtId, weightEntry);
     if (entry < 0 || entry >= static_cast<int>(idsContained_.size()))
-      throw cms::Exception("WeightGroupInfo") << "Weight entry " << std::to_string(weightEntry) << " is not a member of group " 
-            << name_ << ". \n    firstID = " << std::to_string(firstId_) << " lastId = " << std::to_string(lastId_);
+      throw cms::Exception("WeightGroupInfo")
+          << "Weight entry " << std::to_string(weightEntry) << " is not a member of group " << name_
+          << ". \n    firstID = " << std::to_string(firstId_) << " lastId = " << std::to_string(lastId_);
     return idsContained_.at(entry);
   }
 

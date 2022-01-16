@@ -13,9 +13,9 @@ namespace gen {
     PartonShowerWeightGroupInfo(std::string header, std::string name);
     PartonShowerWeightGroupInfo(std::string header) : PartonShowerWeightGroupInfo(header, header) {}
     PartonShowerWeightGroupInfo(const PartonShowerWeightGroupInfo &other) { copy(other); }
-    virtual ~PartonShowerWeightGroupInfo() override {}
+    ~PartonShowerWeightGroupInfo() override {}
     void copy(const PartonShowerWeightGroupInfo &other);
-    virtual PartonShowerWeightGroupInfo *clone() const override;
+    PartonShowerWeightGroupInfo *clone() const override;
     void setNameIsPythiaSyntax(bool isPythiaSyntax) { nameIsPythiaSyntax_ = isPythiaSyntax; }
     bool nameIsPythiaSyntax() const { return nameIsPythiaSyntax_; }
     int variationIndex(bool isISR, bool isUp, PSVarType variationType, PSSplittingType splittingType) const;

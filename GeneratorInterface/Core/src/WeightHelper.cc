@@ -161,7 +161,7 @@ namespace gen {
   void WeightHelper::updatePartonShowerInfo(gen::PartonShowerWeightGroupInfo& psGroup, const ParsedWeight& weight) {
     if (psGroup.containedIds().size() == DEFAULT_PSWEIGHT_LENGTH)
       psGroup.setIsWellFormed(true);
-    if (weight.content.find(":") != std::string::npos && weight.content.find("=") != std::string::npos)
+    if (weight.content.find(':') != std::string::npos && weight.content.find('=') != std::string::npos)
       psGroup.setNameIsPythiaSyntax(true);
   }
 
