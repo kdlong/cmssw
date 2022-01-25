@@ -141,6 +141,8 @@
   <class name="edm::Wrapper<std::vector<TTTrackTruthPair<edm::Ref<edm::DetSetVector<Phase2TrackerDigi>,Phase2TrackerDigi,edm::refhelper::FindForDetSetVector<Phase2TrackerDigi> > > > >" />
   <class name="edm::Association<std::vector<reco::CaloCluster> >"/>
   <class name="edm::Wrapper<edm::Association<std::vector<reco::CaloCluster> > >"/>
+  <class name="edm::Association<std::vector<TICLCandidate>>"/>
+  <class name="edm::Wrapper<edm::Association<std::vector<TICLCandidate>> >"/>
 
   <class name="edm::Association<std::vector<PFTruthParticle> >"/>
   <class name="edm::Wrapper<edm::Association<std::vector<PFTruthParticle> > >"/>

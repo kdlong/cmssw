@@ -21,6 +21,7 @@
 #include "DataFormats/HGCRecHit/interface/HGCRecHit.h"
 #include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
+#include "DataFormats/HGCalReco/interface/TICLCandidate.h"
 #include "SimDataFormats/PFAnalysis/interface/PFTruthParticle.h"
 
 #include "DataFormats/Common/interface/Association.h"
@@ -51,6 +52,7 @@ namespace SimDataFormats_Associations {
 
     edm::Wrapper<hgcal::LayerClusterToSimTracksterAssociator> dummy10;
 
+    edm::Wrapper<edm::Association<std::vector<TICLCandidate>>> blah;
     reco::VertexSimToRecoCollection vstrc;
     reco::VertexSimToRecoCollection::const_iterator vstrci;
     edm::Wrapper<reco::VertexSimToRecoCollection> wvstrc;
