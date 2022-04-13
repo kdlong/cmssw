@@ -426,13 +426,13 @@ def nanoGenWmassCustomize(process):
         lheSourceLabels = cms.vstring("correctMassWeights"),
     )
 
-    process.genWeightsTable.weightgroups = ['scale', 'PDF', 'matrix element', 'unknown', 'parton shower']
-    process.genWeightsTable.maxGroupsPerType = [-1, -1, 0, -1, 1]
+    process.genWeightsTable.maxGroupsPerType = [-1, -1, -1, -1, -1]
 
     process.massWeightsTable = process.genWeightsTable.clone(
         lheWeights = cms.VInputTag("massWeights"),
-        weightgroups = cms.vstring('matrix element'),
-        maxGroupsPerType = cms.vint32([-1]),
+        weightgroups = cms.vstring(['scale', 'matrix element', 'unknown']),
+        outputNames = cms.vstring(['H2BugFixWeight', 'CorrectedMassWeight', 'UnknownWeight']),
+        maxGroupsPerType = cms.vint32([-1, -1, -1]),
     )
     process.nanoSequenceMC.insert(-1, process.massWeights)
     process.nanoSequenceMC.insert(-1, process.massWeightsTable)
