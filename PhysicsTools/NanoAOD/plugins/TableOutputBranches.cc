@@ -123,7 +123,9 @@ void TableOutputBranches::fill(const nanoaod::FlatTable &tab, TTree &tree, bool 
   if (!m_singleton && m_extension == IsExtension) {
     if (m_counter != *reinterpret_cast<CounterType *>(m_counterBranch->GetAddress())) {
       throw cms::Exception("LogicError",
-                           "Mismatch in number of entries between extension and main table for " + tab.name());
+                           "Mismatch in number of entries between extension "
+                           "and main table for " +
+                               tab.name());
     }
   }
   for (auto &pair : m_uint8Branches)
