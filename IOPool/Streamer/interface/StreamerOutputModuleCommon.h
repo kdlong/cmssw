@@ -20,9 +20,7 @@ namespace edm {
 
   class StreamerOutputModuleCommon {
   public:
-    explicit StreamerOutputModuleCommon(ParameterSet const& ps,
-                                        SelectedProducts const* selections,
-                                        std::string const& moduleLabel);
+    explicit StreamerOutputModuleCommon(ParameterSet const& ps, SelectedProducts const* selections);
     ~StreamerOutputModuleCommon();
     static void fillDescription(ParameterSetDescription& desc);
 
