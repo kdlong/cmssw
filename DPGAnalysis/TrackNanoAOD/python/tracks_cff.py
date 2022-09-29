@@ -9,11 +9,10 @@ generalTrackTable = cms.EDProducer("SimpleTrackFlatTableProducer",
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(P3Vars,
-        p = Var("p", float, precision=14, doc="momentum"),
         charge = Var("charge", int, doc="electric charge"),
         normChiSq = Var("normalizedChi2", float, precision=14, doc="Chi^2/ndof"),
-        #numberOfValidHits = Var('numberOfValidHits()', 'int', precision=-1, doc='Number of valid hits in track'),
-        #numberOfLostHits = Var('numberOfLostHits()', 'int', precision=-1, doc='Number of lost hits in track'),
+        numberOfValidHits = Var('numberOfValidHits()', 'int', precision=-1, doc='Number of valid hits in track'),
+        numberOfLostHits = Var('numberOfLostHits()', 'int', precision=-1, doc='Number of lost hits in track'),
         Vtx_x = Var('vx()', 'float', precision=14, doc='parent vertex x pos'),
         Vtx_y = Var('vy()', 'float', precision=14, doc='parent vertex y pos'),
         Vtx_z = Var('vz()', 'float', precision=14, doc='parent vertex z pos'),
@@ -26,37 +25,27 @@ generalTrackTable = cms.EDProducer("SimpleTrackFlatTableProducer",
     )
 )
 
-generalTrackHGCPositionTable = cms.EDProducer("TrackPositionAtHGCALTableProducer",
-    src = generalTrackTable.src,
-    name = generalTrackTable.name,
-    cut = generalTrackTable.cut,
-)
-
-# conversions
-
 trackConversionsTable = generalTrackTable.clone()
 trackConversionsTable.src = "conversionStepTracks"
 trackConversionsTable.name = "TrackConv"
 
-trackConversionsHGCPositionTable = generalTrackHGCPositionTable.clone()
-trackConversionsHGCPositionTable.src = trackConversionsTable.src
-trackConversionsHGCPositionTable.name = trackConversionsTable.name
-trackConversionsHGCPositionTable.cut = trackConversionsTable.cut
+trackDisplacedTable = cms.EDProducer("SimpleTrackFlatTableProducer",
+    src = cms.InputTag("displacedTracks"),
+    cut = cms.string(""), 
+    name = cms.string("TrackDisp"),
+    doc  = cms.string("reco::Track"),
+    singleton = cms.bool(False), # the number of entries is variable
+    extension = cms.bool(False), # this is the main table for the muons
+    variables = cms.PSet(P3Vars,
+        charge = Var("charge", int, doc="electric charge"),
+        Vtx_x = Var('vx()', 'float', precision=14, doc='parent vertex x pos'),
+        Vtx_y = Var('vy()', 'float', precision=14, doc='parent vertex y pos'),
+        Vtx_z = Var('vz()', 'float', precision=14, doc='parent vertex z pos'),
+        Vtx_t = Var('t0', 'float', precision=14, doc='parent vertex time'),
+    )
+)
 
-# displaced
-
-#trackDisplacedTable = generalTrackTable.clone()
-#trackDisplacedTable.src = "displacedTracks"
-#trackDisplacedTable.name = "TrackDisp"
-#
-#trackDisplacedHGCPositionTable = generalTrackHGCPositionTable.clone()
-#trackDisplacedHGCPositionTable.src = trackDisplacedTable.src
-#trackDisplacedHGCPositionTable.name = trackDisplacedTable.name
-#trackDisplacedHGCPositionTable.cut = trackDisplacedTable.cut
-
-
-
-
+# These two aren't scheduled at the moment
 trackSimClusterMatch = cms.EDProducer("RecoTrackToSimClusterAssociation",
     tracks = cms.InputTag("generalTracks"),
     simclusters = cms.InputTag("hgcSimTruth"),
@@ -70,22 +59,24 @@ trackSimClusterAssocTable = cms.EDProducer("RecoTrackToSimClusterIndexTableProdu
     bestMatchTable = cms.untracked.bool(True),
     branchName = cms.string("MergedSimCluster"),
     objMap = cms.InputTag("trackSimClusterMatch"),
-    docString = cms.string("Index of the best matching SimClusters (by pMag cluster/pMag track) within a dR cone of 0.4. Quality defined as pratio < 1 ? pratio : 2 - pratio") 
+    docString = cms.string("Index of the best matching SimClusters (by pMag cluster/pMag track) within a dR cone of 0.4. Quality defined as pratio < 1 ? pratio : 2 - pratio")
 )
 
-trackToTrackingParticleTable = cms.EDProducer("TrackToTrackingParticleIndexTableProducer",
-    cut = generalTrackTable.cut,
+generalTrackHGCPositionTable = cms.EDProducer("TrackPositionAtHGCALTableProducer",
     src = generalTrackTable.src,
-    objName = generalTrackTable.name,
-    branchName = cms.string("TrackingPart"),
-    objMap = cms.InputTag("trackingParticleRecoTrackAsssociation"),
-    docString = cms.string("Index of the matching TrackingParticles") 
+    name = generalTrackTable.name,
+    cut = generalTrackTable.cut,
 )
 
+trackTables = cms.Task(generalTrackTable,
+        trackConversionsTable,
+        trackDisplacedTable
+)
 
-trackTables = cms.Sequence(generalTrackTable+generalTrackHGCPositionTable
-                           +trackConversionsTable + trackConversionsHGCPositionTable
-                          # +trackDisplacedTable + trackDisplacedHGCPositionTable
-        +trackToTrackingParticleTable)
+from Configuration.Eras.Modifier_phase2_hgcal_cff import phase2_hgcal
+from TrackingTools.MaterialEffects.MaterialPropagator_cfi import *
 
-trackSCAssocTable = cms.Sequence(trackSimClusterMatch+trackSimClusterAssocTable)
+phase2_hgcal.toReplaceWith(
+	trackTables, cms.Task(generalTrackTable, 
+        trackConversionsTable, trackDisplacedTable, MaterialPropagator, generalTrackHGCPositionTable)
+)

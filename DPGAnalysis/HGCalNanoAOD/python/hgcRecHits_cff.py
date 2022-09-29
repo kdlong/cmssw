@@ -21,7 +21,7 @@ hgcRecHitsTable = cms.EDProducer("SimpleCaloRecHitFlatTableProducer",
     )
 )
 
-hgcRecHitsPositionTable = cms.EDProducer("HGCALRecHitPositionTableProducer",
+hgcRecHitsPositionTable = cms.EDProducer("HGCalRecHitPositionTableProducer",
     src = hgcRecHitsTable.src,
     cut = hgcRecHitsTable.cut, 
     name = hgcRecHitsTable.name,

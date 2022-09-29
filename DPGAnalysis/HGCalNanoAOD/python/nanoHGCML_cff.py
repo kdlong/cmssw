@@ -7,9 +7,9 @@ from DPGAnalysis.HGCalNanoAOD.hgcSimHits_cff import *
 from DPGAnalysis.HGCalNanoAOD.hgcSimTracks_cff import *
 from DPGAnalysis.HGCalNanoAOD.hgcRecHits_cff import *
 from DPGAnalysis.HGCalNanoAOD.hgcRecHitSimAssociations_cff import *
-from DPGAnalysis.HGCalNanoAOD.simClusters_cff import *
+from DPGAnalysis.CaloNanoAOD.simClusters_cff import *
+from DPGAnalysis.CaloNanoAOD.caloParticles_cff import *
 from DPGAnalysis.HGCalNanoAOD.layerClusters_cff import *
-from DPGAnalysis.HGCalNanoAOD.caloParticles_cff import *
 from DPGAnalysis.TrackNanoAOD.trackSimHits_cff import *
 from DPGAnalysis.TrackNanoAOD.trackingParticles_cff import *
 from DPGAnalysis.TrackNanoAOD.tracks_cff import *
@@ -29,24 +29,28 @@ genParticleTable.variables = cms.PSet(genParticleTable.variables,
 nanoHGCMLSequence = cms.Sequence(nanoMetadata+
                                  hgcRecHits+ #so that modules can use them
     genVertexTable+genVertexT0Table+genParticleTable+
-    layerClusterTables+
+    cms.Sequence(layerClusterTables)+
     simTrackTables+
     hgcSimHitsSequence+
-    trackerSimHitTables+
+    # TODO: Fix producer and allow adding via configuration
+    #trackerSimHitTables+
     simClusterTables+
     trackingParticleTables+
     caloParticleTables
 )
 
-nanoHGCMLRecoSequence = cms.Sequence(hgcRecHitsSequence+
-        hgcRecHitSimAssociationSequence+
-        pfCandTable+pfTruth+
-        pfTICLCandTable+
-        trackTables+
-        trackSCAssocTable)
+nanoHGCMLRecoSequence = cms.Sequence(
+    nanoHGCMLSequence+
+	cms.Sequence(hgcRecHitsTask)+
+    cms.Sequence(hgcRecHitSimAssociationTask)+
+    cms.Sequence(trackTables)+
+    trackingParticleTables+
+    pfCandTable+pfTruth+
+    pfTICLCandTable
+)
 
 def customizeReco(process):
-    process.nanoHGCMLSequence.insert(-1, nanoHGCMLRecoSequence)
+    process.nanoHGCMLSequence = nanoHGCMLRecoSequence
     return process
 
 def customizeNoMergedCaloTruth(process):

@@ -1,5 +1,13 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import P3Vars,Var
+from DPGAnalysis.HGCalNanoAOD.hgcRecHits_cff import hgcRecHitsTable
+from DPGAnalysis.CaloNanoAOD.simClusters_cff import simClusterTable
+from DPGAnalysis.CaloNanoAOD.caloParticles_cff import caloParticleTable
+# TODO: Use this producer in other places
+from RecoLocalCalo.HGCalRecProducers.hgcalRecHitMapProducer_cfi import hgcalRecHitMapProducer
+from SimCalorimetry.HGCalSimProducers.hgcHitAssociation_cfi import lcAssocByEnergyScoreProducer, scAssocByEnergyScoreProducer
+from SimCalorimetry.HGCalAssociatorProducers.LCToCPAssociation_cfi import layerClusterCaloParticleAssociation
+from SimCalorimetry.HGCalAssociatorProducers.LCToSCAssociation_cfi import layerClusterSimClusterAssociation
 
 layerClusterTable = cms.EDProducer("SimpleCaloClusterFlatTableProducer",
     src = cms.InputTag("hgcalLayerClusters"),
@@ -24,11 +32,41 @@ layerClusterToSimClusterTable = cms.EDProducer("LayerClusterToSimClusterIndexTab
     cut = layerClusterTable.cut,
     src = layerClusterTable.src,
     objName = layerClusterTable.name,
-    branchName = cms.string("SimCluster"),
-    objMap = cms.InputTag("layerClusterCaloParticleAssociationProducer"),
-    docString = cms.string("Index of SimCluster matched to LayerCluster"),
-    bestMatchTable = cms.untracked.bool(True)
+    branchName = simClusterTable.name, 
+    objMap = cms.InputTag("layerClusterSimClusterAssociation"),
+    docString = cms.string("Index of SimCluster matched to LayerCluster")
 )
 
-layerClusterTables = cms.Sequence(layerClusterTable+layerClusterToSimClusterTable)
+layerClusterToCaloParticleTable = cms.EDProducer("LayerClusterToCaloParticleIndexTableProducer",
+    cut = layerClusterTable.cut,
+    src = layerClusterTable.src,
+    objName = layerClusterTable.name,
+    branchName = caloParticleTable.name,
+    objMap = cms.InputTag("layerClusterCaloParticleAssociation"),
+    docString = cms.string("Index of CaloParticle matched to LayerCluster")
+)
 
+hgcRecHitsToLayerClusters = cms.EDProducer("RecHitToLayerClusterAssociationProducer",
+    caloRecHits = cms.VInputTag("hgcRecHits"),
+    layerClusters = cms.InputTag("hgcalLayerClusters"),
+)
+
+hgcRecHitsToLayerClusterTable = cms.EDProducer("HGCRecHitToLayerClusterIndexTableProducer",
+    cut = hgcRecHitsTable.cut,
+    src = hgcRecHitsTable.src,
+    objName = hgcRecHitsTable.name,
+    branchName = cms.string("LayerCluster"),
+    objMap = cms.InputTag("hgcRecHitsToLayerClusters:hgcRecHitsToLayerCluster"),
+    docString = cms.string("LayerCluster assigned largest RecHit fraction")
+)
+
+layerClusterTables = cms.Task(layerClusterTable,
+    hgcalRecHitMapProducer,
+    lcAssocByEnergyScoreProducer,
+    scAssocByEnergyScoreProducer,
+    layerClusterCaloParticleAssociation,
+    layerClusterSimClusterAssociation,
+    layerClusterToSimClusterTable,
+    layerClusterToCaloParticleTable,
+    hgcRecHitsToLayerClusters,
+    hgcRecHitsToLayerClusterTable)

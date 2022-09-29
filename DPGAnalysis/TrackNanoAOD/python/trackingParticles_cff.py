@@ -1,5 +1,9 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import CandVars,Var
+from SimTracker.TrackerHitAssociation.tpClusterProducer_cfi import *
+from SimTracker.TrackAssociatorProducers.quickTrackAssociatorByHits_cfi import quickTrackAssociatorByHits
+from SimTracker.TrackAssociation.trackingParticleRecoTrackAsssociation_cfi import trackingParticleRecoTrackAsssociation
+from DPGAnalysis.TrackNanoAOD.tracks_cff import *
 
 trackingParticleTable = cms.EDProducer("SimpleTrackingParticleFlatTableProducer",
     src = cms.InputTag("mix:MergedTrackTruth"),
@@ -37,4 +41,19 @@ trackingParticleToSCTable = cms.EDProducer("TrackingParticleToTrackIndexTablePro
     docString = cms.string("Index of the matching reco::Tracks") 
 )
 
-trackingParticleTables = cms.Sequence(trackingParticleTable+trackingParticleToSCTable)
+trackToTrackingParticleTable = cms.EDProducer("TrackToTrackingParticleIndexTableProducer",
+    cut = generalTrackTable.cut,
+    src = generalTrackTable.src,
+    objName = generalTrackTable.name,
+    branchName = cms.string("TrackingPart"),
+    objMap = cms.InputTag("trackingParticleRecoTrackAsssociation"),
+    docString = cms.string("Index of the matching TrackingParticles") 
+)
+
+trackingParticleTables = cms.Sequence(trackingParticleTable
+    +tpClusterProducer
+    +quickTrackAssociatorByHits
+    +trackingParticleRecoTrackAsssociation
+    +trackToTrackingParticleTable
+    +trackingParticleToSCTable
+)

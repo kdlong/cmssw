@@ -48,9 +48,9 @@ public:
     enum zpos{ negZ=0, posZ=1};
     HGCalObjectPropagator() {}
     HGCalObjectPropagator(edm::ConsumesCollector&& cc) :
-        bFieldToken_(cc.esConsumes<MagneticField, IdealMagneticFieldRecord>()),
-        hgcEEToken_(cc.esConsumes<edm::Transition::BeginRun>(edm::ESInputTag{"", "HGCalEESensitive"})),
-        propagatorToken_(cc.esConsumes(edm::ESInputTag("", "PropagatorWithMaterial"))) {}
+        bFieldToken_(cc.esConsumes<edm::Transition::BeginRun>()),
+        hgcEEToken_(cc.esConsumes<HGCalDDDConstants, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag{"", "HGCalEESensitive"})),
+        propagatorToken_(cc.esConsumes<edm::Transition::BeginRun>(edm::ESInputTag("", "PropagatorWithMaterial"))) {}
 
     void setupRun(const edm::EventSetup& iSetup);
 
@@ -58,7 +58,7 @@ public:
 
 private:
     edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> bFieldToken_;
-    edm::ESGetToken<HGCalDDDConstants, CaloGeometryRecord> hgcEEToken_;
+    edm::ESGetToken<HGCalDDDConstants, IdealGeometryRecord> hgcEEToken_;
     edm::ESGetToken<Propagator, TrackingComponentsRecord> propagatorToken_;
     bool setup_;
     const MagneticField* bField_;
