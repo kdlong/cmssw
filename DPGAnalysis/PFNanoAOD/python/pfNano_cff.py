@@ -38,23 +38,33 @@ pfNanoSimSeq = cms.Sequence(
 hgcalTask = cms.Task()
 phase2_hgcal.toReplaceWith(hgcalTask,
     cms.Task(hgcRecHitsTask,
-    	hgcRecHitSimAssociationTask,
-    	layerClusterTables,
-    	ticlTables
-	)
+        hgcRecHitSimAssociationTask,
+        layerClusterTables,
+        ticlTables
+    )
 )
 
 pfNanoSequence = cms.Sequence(nanoMetadata
-	+pfNanoSimSeq
     +genVertexTable+genVertexT0Table+genParticleTable
     +pfCandTables
     +pfAssociationTables
     +pfClusterTables
     #+pfTrackTables
     +cms.Sequence(trackTables)
-	+hcalRecHitTables
-	+cms.Sequence(hgcalTask)
+    +cms.Sequence(hgcalTask)
 )
+hitsAndElementsToPFCands.caloRecHits = []
+
+
+pfNanoWithSimSeq = pfNanoSequence.copy()
+pfNanoWithSimSeq.insert(1, pfNanoSimSeq)
+
+def customizeWithRecHits(process):
+    pfNanoSequence.insert(-2, hcalRecHitTables)
+    hitsAndElementsToPFCands.caloRecHits = ("hbhereco", "hfreco", "horeco")
+    pfAssociationTables.insert(-1, hbheRecHitsToPFCandTable)
+    pfAssociationTables.insert(-1, hbheRecHitsToPFClusterTable)
+    return process
 
 def customizeOutputForPF(process):
     import re

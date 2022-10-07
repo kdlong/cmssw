@@ -72,7 +72,5 @@ pfAssociationTables = cms.Sequence(
 	+pfClusterECALToCandTable
 	+pfClusterHCALToCandTable
 	+pfClusterHFToCandTable
- 	+hbheRecHitsToPFCandTable
-	+hbheRecHitsToPFClusterTable 
 )
 

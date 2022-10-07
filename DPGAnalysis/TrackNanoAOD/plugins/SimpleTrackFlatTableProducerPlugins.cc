@@ -11,8 +11,12 @@ typedef SimpleFlatTableProducer<SimTrack> SimpleSimTrackFlatTableProducer;
 #include "DataFormats/TrackReco/interface/Track.h"
 typedef SimpleFlatTableProducer<reco::Track> SimpleTrackFlatTableProducer;
 
+#include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
+typedef SimpleFlatTableProducer<reco::GsfTrack> SimpleGsfTrackFlatTableProducer;
+
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(SimplePSimHitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleSimTrackFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleTrackingParticleFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleTrackFlatTableProducer);
+DEFINE_FWK_MODULE(SimpleGsfTrackFlatTableProducer);

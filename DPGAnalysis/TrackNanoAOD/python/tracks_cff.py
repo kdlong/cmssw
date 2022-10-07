@@ -1,11 +1,12 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import P3Vars,Var
+from TrackingTools.MaterialEffects.MaterialPropagator_cfi import *
 
 generalTrackTable = cms.EDProducer("SimpleTrackFlatTableProducer",
     src = cms.InputTag("generalTracks"),
     cut = cms.string(""), 
     name = cms.string("Track"),
-    doc  = cms.string("reco::Track"),
+    doc  = cms.string("general tracks"),
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(P3Vars,
@@ -13,36 +14,39 @@ generalTrackTable = cms.EDProducer("SimpleTrackFlatTableProducer",
         normChiSq = Var("normalizedChi2", float, precision=14, doc="Chi^2/ndof"),
         numberOfValidHits = Var('numberOfValidHits()', 'int', precision=-1, doc='Number of valid hits in track'),
         numberOfLostHits = Var('numberOfLostHits()', 'int', precision=-1, doc='Number of lost hits in track'),
+        algo = Var("algo()", "int", precision=-1, doc="ID of the track algo"),
         Vtx_x = Var('vx()', 'float', precision=14, doc='parent vertex x pos'),
         Vtx_y = Var('vy()', 'float', precision=14, doc='parent vertex y pos'),
         Vtx_z = Var('vz()', 'float', precision=14, doc='parent vertex z pos'),
         Vtx_t = Var('t0', 'float', precision=14, doc='parent vertex time'),
         # Be careful here, this isn't really a decay vertex
-        DecayVtx_y = Var('outerPosition().x()', 'float', precision=14, doc='x position of first decay vertex'),
-        DecayVtx_x = Var('outerPosition().y()', 'float', precision=14, doc='y position of first decay vertex'),
-        DecayVtx_z = Var('outerPosition().z()', 'float', precision=14, doc='z position of first decay vertex'),
-        DecayVtx_t = Var('0', 'float', precision=14, doc='DUMMY VALUE! for time of first decay vertex'),
+        OuterPos_y = Var('outerPosition().x()', 'float', precision=14, doc='x position of first decay vertex'),
+        OuterPos_x = Var('outerPosition().y()', 'float', precision=14, doc='y position of first decay vertex'),
+        OuterPos_z = Var('outerPosition().z()', 'float', precision=14, doc='z position of first decay vertex'),
     )
 )
 
 trackConversionsTable = generalTrackTable.clone()
 trackConversionsTable.src = "conversionStepTracks"
 trackConversionsTable.name = "TrackConv"
+trackConversionsTable.doc = "conversion tracks"
 
-trackDisplacedTable = cms.EDProducer("SimpleTrackFlatTableProducer",
-    src = cms.InputTag("displacedTracks"),
+trackDisplacedTable = generalTrackTable.clone()
+trackDisplacedTable.src = "displacedTracks"
+trackDisplacedTable.name = "TrackDisp"
+trackDisplacedTable.doc = "displaced tracks"
+trackDisplacedTable.variables = cms.PSet(
+    **{x : getattr(generalTrackTable.variables, x) for x in generalTrackTable.variables.parameterNames_() if "OuterPos" not in x}
+)
+
+gsfTrackTable = cms.EDProducer("SimpleGsfTrackFlatTableProducer",
+    src = cms.InputTag("electronGsfTracks"),
     cut = cms.string(""), 
-    name = cms.string("TrackDisp"),
-    doc  = cms.string("reco::Track"),
+    name = cms.string("GsfTrack"),
+    doc  = cms.string("Electron GSF tracks"),
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
-    variables = cms.PSet(P3Vars,
-        charge = Var("charge", int, doc="electric charge"),
-        Vtx_x = Var('vx()', 'float', precision=14, doc='parent vertex x pos'),
-        Vtx_y = Var('vy()', 'float', precision=14, doc='parent vertex y pos'),
-        Vtx_z = Var('vz()', 'float', precision=14, doc='parent vertex z pos'),
-        Vtx_t = Var('t0', 'float', precision=14, doc='parent vertex time'),
-    )
+    variables = generalTrackTable.variables
 )
 
 generalTrackHGCPositionTable = cms.EDProducer("TrackPositionAtHGCALTableProducer",
@@ -53,13 +57,13 @@ generalTrackHGCPositionTable = cms.EDProducer("TrackPositionAtHGCALTableProducer
 
 trackTables = cms.Task(generalTrackTable,
         trackConversionsTable,
-        trackDisplacedTable
+        trackDisplacedTable,
+        gsfTrackTable,
 )
+
+trackTablesPhase2 = cms.Task(*trackTables,
+    MaterialPropagator, generalTrackHGCPositionTable)
 
 from Configuration.Eras.Modifier_phase2_hgcal_cff import phase2_hgcal
-from TrackingTools.MaterialEffects.MaterialPropagator_cfi import *
 
-phase2_hgcal.toReplaceWith(
-	trackTables, cms.Task(generalTrackTable, 
-        trackConversionsTable, trackDisplacedTable, MaterialPropagator, generalTrackHGCPositionTable)
-)
+phase2_hgcal.toReplaceWith(trackTables, trackTablesPhase2)

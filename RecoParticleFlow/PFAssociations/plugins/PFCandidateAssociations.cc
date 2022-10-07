@@ -179,18 +179,19 @@ void PFCandAssociationsProducer::produce(edm::Event& iEvent, const edm::EventSet
             idxvec[cluster.key()] = j;
           }
 
-          // TODO: Make one-to-many association of hit to cluster and cand. Need to handle all the rechit
-          // products
-          const std::vector<reco::PFRecHitFraction>& rhf = cluster->recHitFractions();
-          for (const auto& hf : rhf) {
-            auto pfRecHit = hf.recHitRef();
-            auto rechit = detIdToRecHit[pfRecHit->detId()];
-            size_t prodId = rechit.id().id();
-            if (recHitColToCandAssoc.find(prodId) != std::end(recHitColToCandAssoc)) {
-              recHitColToCandAssoc[prodId]->insert(rechit, std::make_pair(pfCandRef, hf.fraction()));
-            }
-            if (recHitColToClusterAssoc.find(prodId) != std::end(recHitColToClusterAssoc)) {
-              recHitColToClusterAssoc[prodId]->insert(rechit, std::make_pair(cluster, hf.fraction()));
+
+          if (!detIdToRecHit.empty()) {
+            const std::vector<reco::PFRecHitFraction>& rhf = cluster->recHitFractions();
+            for (const auto& hf : rhf) {
+              auto pfRecHit = hf.recHitRef();
+              auto rechit = detIdToRecHit[pfRecHit->detId()];
+              size_t prodId = rechit.id().id();
+              if (recHitColToCandAssoc.find(prodId) != std::end(recHitColToCandAssoc)) {
+                recHitColToCandAssoc[prodId]->insert(rechit, std::make_pair(pfCandRef, hf.fraction()));
+              }
+              if (recHitColToClusterAssoc.find(prodId) != std::end(recHitColToClusterAssoc)) {
+                recHitColToClusterAssoc[prodId]->insert(rechit, std::make_pair(cluster, hf.fraction()));
+              }
 			}	
           }
         }
