@@ -1,0 +1,22 @@
+<use name="FWCore/Framework"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/ServiceRegistry"/>
+<use name="FWCore/Utilities"/>
+<use name="DataFormats/Candidate"/>
+<use name="DataFormats/PatCandidates"/>
+<use name="Geometry/HGCalGeometry"/>
+<use name="Geometry/CaloGeometry"/>
+<use name="Geometry/CSCGeometry"/>
+<use name="Geometry/TrackerGeometryBuilder"/>
+<use name="PhysicsTools/PatAlgos"/>
+<use name="IOPool/Provenance"/>
+<use name="CondFormats/RunInfo"/>
+<use name="CondFormats/DataRecord"/>
+<use name="tbb"/>
+<use name="DataFormats/Common"/>
+<use name="DataFormats/NanoAOD"/>
+<use name="boost"/>
+<export>
+  <lib name="1"/>
+</export>
+
