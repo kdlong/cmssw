@@ -29,15 +29,16 @@ genParticleTable.variables = cms.PSet(genParticleTable.variables,
     charge = CandVars.charge)
 
 pfNanoSimSeq = cms.Sequence(
-    simClusterTables
-    +trackingParticleTables
-    +caloParticleTables
+    trackingParticleTables
     #+pfTruth
 )
 
+#TODO: Turn on simclusters/caloparticles for Run3
 hgcalTask = cms.Task()
 phase2_hgcal.toReplaceWith(hgcalTask,
     cms.Task(hgcRecHitsTask,
+        simClusterTables,
+        caloParticleTables,
     	hgcRecHitSimAssociationTask,
     	layerClusterTables,
     	ticlTables
@@ -69,5 +70,10 @@ def customizeOutputForPF(process):
         'keep recoPFRecHits_*_*_*',
         "keep *_simSiStripDigis_*_*",
         "keep *_simSiPixelDigis_*_*",
+        "keep *_particleFlowRecHitECAL_*_*",
+        "keep *_particleFlowRecHitHBHE_*_*",
+        "keep *_particleFlowRecHitHF_*_*",
+        "keep *_particleFlowRecHitHO_*_*",
+        "keep *_particleFlowClusterPS_*_*",
     ])
     return process

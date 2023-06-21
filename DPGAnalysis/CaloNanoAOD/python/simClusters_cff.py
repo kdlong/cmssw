@@ -38,4 +38,6 @@ simClusterToCaloPartTable = cms.EDProducer("SimClusterToCaloParticleIndexTablePr
     docString = cms.string("Index of CaloPart containing SimCluster")
 )
 
-simClusterTables = cms.Sequence(simClusterTable+simClusterToCaloPart+simClusterToCaloPartTable)
+simClusterTables = cms.Task(simClusterTable,
+        simClusterToCaloPart,
+        simClusterToCaloPartTable)

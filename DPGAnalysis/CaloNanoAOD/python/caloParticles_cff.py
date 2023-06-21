@@ -23,4 +23,4 @@ caloParticleTable = cms.EDProducer("SimpleCaloParticleFlatTableProducer",
     )
 )
 
-caloParticleTables = cms.Sequence(caloParticleTable)
+caloParticleTables = cms.Task(caloParticleTable)

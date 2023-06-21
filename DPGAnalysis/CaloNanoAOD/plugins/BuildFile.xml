@@ -13,6 +13,7 @@
 <use name="IOPool/Provenance"/>
 <use name="CondFormats/RunInfo"/>
 <use name="CondFormats/DataRecord"/>
+<use name="tbb"/>
 <library file="*.cc" name="DPGAnalysisCaloNanoAODPlugins">
   <flags EDM_PLUGIN="1"/>
 </library>
