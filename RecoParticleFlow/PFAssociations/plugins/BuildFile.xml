@@ -1,0 +1,12 @@
+<export>
+</export>
+<library name="PFAssociations_plugins" file="*.cc">
+  <use name="FWCore/Framework"/>
+  <use name="FWCore/ParameterSet"/>
+  <use name="DataFormats/RecoCandidate"/>
+  <use name="DataFormats/ParticleFlowCandidate"/>
+  <use name="DataFormats/ParticleFlowReco"/>
+  <use name="DataFormats/HcalRecHit"/>
+  <use name="TrackingTools/Records"/>
+  <use name="CommonTools/Utils"/>
+</library>

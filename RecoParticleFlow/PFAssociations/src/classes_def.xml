@@ -1,0 +1,16 @@
+<lcgdict>
+  <class name="edm::RefProd<vector<reco::PFCluster>>"/>
+  <class name="edm::Association<std::vector<reco::PFCluster>>"/>
+  <class name="edm::RefToBaseProd<CaloRecHit>"/>
+  <class name="edm::Wrapper<edm::Association<std::vector<reco::PFCluster>>>"/>
+  <class name="edm::helpers::KeyVal<edm::RefToBaseProd<CaloRecHit>,edm::RefProd<std::vector<reco::PFCandidate> > >"/>
+  <class name="edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::View<CaloRecHit>,std::vector<reco::PFCandidate>,float,unsigned int,edm::RefToBaseProd<CaloRecHit>,edm::RefProd<std::vector<reco::PFCandidate> >,edm::RefToBase<CaloRecHit>,edm::Ref<std::vector<reco::PFCandidate>,reco::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::PFCandidate>,reco::PFCandidate> > > >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::View<CaloRecHit>,std::vector<reco::PFCandidate>,float,unsigned int,edm::RefToBaseProd<CaloRecHit>,edm::RefProd<std::vector<reco::PFCandidate> >,edm::RefToBase<CaloRecHit>,edm::Ref<std::vector<reco::PFCandidate>,reco::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::PFCandidate>,reco::PFCandidate> > > > >"/>
+  <class name="edm::helpers::KeyVal<edm::RefToBaseProd<CaloRecHit>,edm::RefProd<std::vector<reco::PFCluster> > >"/>
+  <class name="edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::View<CaloRecHit>,std::vector<reco::PFCluster>,float,unsigned int,edm::RefToBaseProd<CaloRecHit>,edm::RefProd<std::vector<reco::PFCluster> >,edm::RefToBase<CaloRecHit>,edm::Ref<std::vector<reco::PFCluster>,reco::PFCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::PFCluster>,reco::PFCluster> > > >">
+    <field name="transientMap_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::AssociationMap<edm::OneToManyWithQualityGeneric<edm::View<CaloRecHit>,std::vector<reco::PFCluster>,float,unsigned int,edm::RefToBaseProd<CaloRecHit>,edm::RefProd<std::vector<reco::PFCluster> >,edm::RefToBase<CaloRecHit>,edm::Ref<std::vector<reco::PFCluster>,reco::PFCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::PFCluster>,reco::PFCluster> > > > >"/>
+</lcgdict>

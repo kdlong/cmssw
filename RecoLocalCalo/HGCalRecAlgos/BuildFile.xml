@@ -8,6 +8,7 @@
 <use name="Geometry/HGCalGeometry"/>
 <use name="Geometry/HcalTowerAlgo"/>
 <use name="Geometry/Records"/>
+<use name="TrackingTools/Records"/>
 <use name="DataFormats/ParticleFlowReco"/>
 <export>
   <lib name="1"/>
