@@ -7,6 +7,8 @@ genWeightsNano.weightProductLabels = ["genWeights"]
 
 lheWeightsNano = lheWeights.clone()
 lheWeightsNano.weightProductLabels = ["lheWeights"]
+# fix for crashing for bkg samples
+lheWeightsNano.failIfInvalidXML = cms.untracked.bool(False)
 
 genWeightsTable = cms.EDProducer("GenWeightsTableProducer",
     lheWeightPrecision = cms.int32(14),
