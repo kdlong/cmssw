@@ -218,7 +218,8 @@ public:
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
     edm::ParameterSetDescription desc;
-    desc.add<std::vector<edm::InputTag>>("lheInfo", std::vector<edm::InputTag>{{"lheWeights"}, {"externalLHEProducer"}, {"source"}})
+    desc.add<std::vector<edm::InputTag>>(
+            "lheInfo", std::vector<edm::InputTag>{{"lheWeights"}, {"externalLHEProducer"}, {"source"}})
         ->setComment("tag(s) for the LHE information (LHEEventProduct)");
     desc.add<int>("precision", -1)->setComment("precision on the 4-momenta of the LHE particles");
     desc.add<bool>("storeLHEParticles", false)
@@ -226,7 +227,8 @@ public:
     desc.add<bool>("storeAllLHEInfo", false)
         ->setComment(
             "Whether to store the whole set of LHE particles (not only status +/-1 and the status-2 W/Z/H) together "
-            "with the raw LHE record: colour flow, 1-based mother indices, lifetime, per-event alphaQED/scale/process id");
+            "with the raw LHE record: colour flow, 1-based mother indices, lifetime, per-event alphaQED/scale/process "
+            "id");
     descriptions.add("lheInfoTable", desc);
   }
 

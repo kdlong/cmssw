@@ -19,7 +19,7 @@
 namespace gen {
   class LHEWeightHelper : public WeightHelper {
   public:
-    LHEWeightHelper() : WeightHelper(){};
+    LHEWeightHelper() : WeightHelper() {};
 
     enum class ErrorType { Empty, SwapHeader, HTMLStyle, NoWeightGroup, TrailingStr, Unknown, NoError };
     const std::unordered_map<ErrorType, std::string> errorTypeAsString_ = {

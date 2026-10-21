@@ -51,7 +51,7 @@ namespace gen {
       copy(other);
       return *this;
     }
-    virtual ~WeightGroupInfo(){};
+    virtual ~WeightGroupInfo() {};
     void copy(const WeightGroupInfo& other);
     virtual WeightGroupInfo* clone() const;
     const WeightMetaInfo& weightMetaInfo(int weightEntry) const;
