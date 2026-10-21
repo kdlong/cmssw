@@ -44,7 +44,9 @@ public:
                                std::string tablename) const;
   void addWeightGroupToTable(std::vector<nanoaod::FlatTable>& weightTablevec,
                              const WeightGroupDataContainer& weightInfos,
-                             WeightsContainer& allWeights) const;
+                             WeightsContainer& allWeights,
+                             Counter& counter,
+                             double genWeight) const;
   // Need to either pass the handle or a pointer to avoid a copy and conversion to the base class
   WeightGroupDataContainer weightDataPerType(edm::Handle<GenWeightInfoProduct>& weightsInfoHandle,
                                              gen::WeightType weightType,
@@ -238,13 +240,13 @@ void GenWeightsTableProducer::produce(edm::StreamID id, edm::Event& iEvent, cons
     if (ignoreLheGroups_) {
       fillTableIgnoringGroups(*weightTablevec, weightInfos.at(inLHE), lheWeights, nStoreUngroupedLhe_, "LHEWeight");
     } else
-      addWeightGroupToTable(*weightTablevec, weightInfos.at(inLHE), lheWeights);
+      addWeightGroupToTable(*weightTablevec, weightInfos.at(inLHE), lheWeights, counter, genWeight);
   }
 
   if (ignoreGenGroups_)
     fillTableIgnoringGroups(*weightTablevec, weightInfos.at(inGen), genWeights, nStoreUngroupedGen_, "GenWeight");
   else
-    addWeightGroupToTable(*weightTablevec, weightInfos.at(inGen), genWeights);
+    addWeightGroupToTable(*weightTablevec, weightInfos.at(inGen), genWeights, counter, genWeight);
 
   iEvent.put(std::move(weightTablevec), "LHEWeightTableVec");
 }
@@ -321,7 +323,9 @@ void GenWeightsTableProducer::fillTableIgnoringGroups(std::vector<nanoaod::FlatT
 
 void GenWeightsTableProducer::addWeightGroupToTable(std::vector<nanoaod::FlatTable>& weightTablevec,
                                                     const WeightGroupDataContainer& weightInfos,
-                                                    WeightsContainer& allWeights) const {
+                                                    WeightsContainer& allWeights,
+                                                    Counter& counter,
+                                                    double genWeight) const {
   std::unordered_map<gen::WeightType, int> typeCount = {};
   for (auto& type : gen::allWeightTypes)
     typeCount[type] = 0;
@@ -336,6 +340,9 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::vector<nanoaod::FlatTab
     std::string entryName = weightTypeNames_.at(weightType);
     std::string label = groupInfo.group->description();
     auto weights = allWeights.at(groupInfo.index);
+    // An unassociated group holding only the nominal weight (no variations in the sample) carries no information
+    if (groupInfo.group->name() == "unassociated" && weights.size() <= 1)
+      continue;
     if (weightType == gen::WeightType::kScaleWeights) {
       const auto& scaleGroup = *static_cast<const gen::ScaleWeightGroupInfo*>(groupInfo.group);
       auto weightsAndLabel = orderedScaleWeights(weights, scaleGroup);
@@ -363,6 +370,8 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::vector<nanoaod::FlatTab
     }
     weightTablevec.emplace_back(weights.size(), entryName, false);
     weightTablevec.back().addColumn<float>("", weights, label, lheWeightPrecision_);
+    // sum of genWeight * weights[i], normalised to genEventSumw at the end of the run
+    counter.incLHE(genWeight, weights, entryName);
 
     typeCount[weightType]++;
   }
