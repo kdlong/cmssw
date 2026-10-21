@@ -90,6 +90,7 @@ void GenWeightProductProducer::produce(edm::StreamID, edm::Event& iEvent, const 
 std::shared_ptr<GenWeightInfoProdData> GenWeightProductProducer::globalBeginLuminosityBlock(
     const edm::LuminosityBlock& iLumi, edm::EventSetup const& iSetup) const {
   GenWeightInfoProdData productInfo;
+  productInfo.makeNewProduct = true;
 
   edm::Handle<GenWeightInfoProduct> weightInfoHandle;
   for (auto& token : weightInfoTokens_) {

@@ -14,8 +14,9 @@ namespace gen {
     int showerGroupIndex = -1;
     std::string curGroup = "";
     // If size is 1, it's just the central weight
+    // Still give the opportunity to add an unassociated group
     if (weightNames.size() <= 1)
-      return {};
+      return buildGroups(parsedWeights, addUnassociated);
 
     for (std::string weightName : weightNames) {
       if (weightName.find("LHE") != std::string::npos) {

@@ -189,26 +189,7 @@ namespace gen {
     return false;
   }
 
-  // Come back to improving this, it's gross
   void WeightHelper::cleanupOrphanCentralWeight(WeightGroupInfoContainer& weightGroups) const {
-    //  std::vector<int> removeList;
-    //  for (auto& group : weightGroups_) {
-    //    if (group->weightType() != WeightType::kScaleWeights)
-    //      continue;
-    //    auto& baseWeight = *static_cast<gen::ScaleWeightGroupInfo>(group.get());
-    //    if (baseWeight.containsCentralWeight())
-    //      continue;
-    //    for (auto subIt = weightGroups_.begin(); subIt < it; subIt++) {
-    //      if (subIt->weightType() != WeightType::kPdfWeights)
-    //        continue;
-    //      auto& subWeight = dynamic_cast<gen::PdfWeightGroupInfo&>(*subIt);
-    //      if (subWeight.nIdsContained() == 1 && subWeight.parentLhapdfId() == baseWeight.lhaid()) {
-    //        removeList.push_back(subIt - weightGroups_.begin());
-    //        auto info = subWeight.idsContained().at(0);
-    //        baseWeight.addContainedId(info.globalIndex, info.id, info.label, 1, 1);
-    //      }
-    //    }
-    //  }
     auto centralIt = std::find_if(std::begin(weightGroups), std::end(weightGroups), [](auto& entry) {
       return entry->weightType() == gen::WeightType::kScaleWeights &&
              static_cast<ScaleWeightGroupInfo*>(entry.get())->containsCentralWeight();
@@ -342,8 +323,9 @@ namespace gen {
         updatePartonShowerInfo(*static_cast<gen::PartonShowerWeightGroupInfo*>(group.get()), weight);
     }
     cleanupOrphanCentralWeight(weightGroups);
-    if (addUnassociated)
+    if (addUnassociated) {
       addUnassociatedGroup(weightGroups);
+    }
     return weightGroups;
   }
 

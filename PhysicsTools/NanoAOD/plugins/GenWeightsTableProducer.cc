@@ -132,15 +132,9 @@ protected:
   const edm::EDGetTokenT<GenEventInfoProduct> genEventInfoToken_;
   const edm::EDGetTokenT<GenLumiInfoHeader> genLumiInfoHeadTag_;
   const std::vector<gen::WeightType> weightgroups_;
+  const std::vector<std::string> outputnames_;
   const std::vector<int> maxGroupsPerType_;
   const std::vector<int> pdfIds_;
-  const std::unordered_map<gen::WeightType, std::string> weightTypeNames_ = {
-      {gen::WeightType::kScaleWeights, "LHEScaleWeight"},
-      {gen::WeightType::kPdfWeights, "LHEPdfWeight"},
-      {gen::WeightType::kMEParamWeights, "MEParamWeight"},
-      {gen::WeightType::kPartonShowerWeights, "PSWeight"},
-      {gen::WeightType::kUnknownWeights, "UnknownWeight"},
-  };
   int lheWeightPrecision_;
   std::vector<gen::WeightType> unknownOnlyIfEmpty_;
   bool keepAllPSWeights_;
@@ -170,6 +164,7 @@ GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params
           mayConsume<GenLumiInfoHeader, edm::InLumi>(params.getParameter<edm::InputTag>("genLumiInfoHeader"))),
       weightgroups_(edm::vector_transform(params.getParameter<std::vector<std::string>>("weightgroups"),
                                           [](auto& c) { return gen::WeightType(c.at(0)); })),
+      outputnames_(params.getParameter<std::vector<std::string>>("outputNames")),
       maxGroupsPerType_(params.getParameter<std::vector<int>>("maxGroupsPerType")),
       pdfIds_(params.getUntrackedParameter<std::vector<int>>("pdfIds", {})),
       lheWeightPrecision_(params.getParameter<int32_t>("lheWeightPrecision")),
@@ -180,8 +175,12 @@ GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params
       ignoreGenGroups_(params.getUntrackedParameter<bool>("ignoreGenGroups", false)),
       nStoreUngroupedLhe_(params.getUntrackedParameter<int>("nStoreUngroupedLhe", 10)),
       nStoreUngroupedGen_(params.getUntrackedParameter<int>("nStoreUngroupedGen", 10)) {
-  if (weightgroups_.size() != maxGroupsPerType_.size())
-    throw std::invalid_argument("Inputs 'weightgroups' and 'maxGroupsPerType' must have equal size");
+  if (weightgroups_.size() != maxGroupsPerType_.size() || weightgroups_.size() != outputnames_.size())
+    throw std::invalid_argument(
+        "Inputs 'weightgroups', 'maxGroupsPerType', and 'outputNames' must have equal size! Found " +
+        std::to_string(weightgroups_.size()) + "; " + std::to_string(maxGroupsPerType_.size()) + "; " +
+        std::to_string(outputnames_.size()));
+
   produces<nanoaod::FlatTable>("GENWeight");
   produces<nanoaod::MergeableCounterTable, edm::Transition::EndRun>();
   produces<std::string>("genModel");
@@ -327,6 +326,11 @@ void GenWeightsTableProducer::addWeightGroupToTable(std::vector<nanoaod::FlatTab
   for (auto& type : gen::allWeightTypes)
     typeCount[type] = 0;
 
+  std::unordered_map<gen::WeightType, std::string> weightTypeNames_;
+  for (size_t i = 0; i < weightgroups_.size(); i++) {
+    weightTypeNames_[weightgroups_[i]] = outputnames_[i];
+  }
+
   for (const auto& groupInfo : weightInfos) {
     gen::WeightType weightType = groupInfo.group->weightType();
     std::string entryName = weightTypeNames_.at(weightType);
@@ -448,6 +452,7 @@ std::pair<std::string, std::vector<double>> GenWeightsTableProducer::orderedScal
     weights.emplace_back(scaleWeights.at(scaleGroup.muR2muF2Index()));
     labels += "[8] is muR=2 muF=2";
   } else {
+    weights = scaleWeights;
     size_t nstore = std::min<size_t>(gen::ScaleWeightGroupInfo::MIN_SCALE_VARIATIONS, weights.size());
     weights = std::vector<double>(begin(weights), std::begin(weights) + nstore);
     labels.append("WARNING: Unexpected format found. Contains first " + std::to_string(nstore) +
@@ -514,14 +519,13 @@ void GenWeightsTableProducer::globalEndRunProduce(edm::Run& iRun,
 void GenWeightsTableProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<std::vector<edm::InputTag>>("lheWeights");
-  desc.add<std::vector<edm::InputTag>>("lheInfo", std::vector<edm::InputTag>{{"externalLHEProducer"}, {"source"}})
-      ->setComment("tag(s) for the LHE information (LHEEventProduct and LHERunInfoProduct)");
   desc.add<std::vector<edm::InputTag>>("genWeights", std::vector<edm::InputTag>{{"genWeights"}});
   desc.add<edm::InputTag>("genEvent", edm::InputTag("generator"))
       ->setComment("tag for the GenEventInfoProduct, to get the main weight");
   desc.add<edm::InputTag>("genLumiInfoHeader", edm::InputTag("generator"))
       ->setComment("tag for the GenLumiInfoProduct, to get the model string");
   desc.add<std::vector<std::string>>("weightgroups");
+  desc.add<std::vector<std::string>>("outputNames");
   desc.add<std::vector<int>>("maxGroupsPerType");
   desc.addOptionalUntracked<std::vector<int>>("pdfIds");
   desc.add<int32_t>("lheWeightPrecision", -1)->setComment("Number of bits in the mantissa for LHE weights");

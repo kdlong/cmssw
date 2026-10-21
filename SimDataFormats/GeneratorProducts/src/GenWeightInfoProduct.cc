@@ -44,7 +44,8 @@ gen::WeightGroupData GenWeightInfoProduct::containingWeightGroupInfo(int index, 
   if (it != std::end(weightGroupsInfo_))
     return {static_cast<size_t>(std::distance(std::begin(weightGroupsInfo_), it)), it->get()};
 
-  throw cms::Exception("GenWeightInfoProduct") << "No weight group found containing the weight index requested";
+  throw cms::Exception("GenWeightInfoProduct") << "No weight group found containing weight index " << index
+                                               << " in the " << weightGroupsInfo_.size() << " groups.";
 }
 
 const gen::WeightGroupInfo* GenWeightInfoProduct::orderedWeightGroupInfo(int weightGroupIndex) const {

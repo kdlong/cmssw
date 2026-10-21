@@ -66,6 +66,7 @@ LHEWeightProductProducer::LHEWeightProductProducer(const edm::ParameterSet& iCon
       groupPutToken_(produces<GenWeightInfoProduct, edm::Transition::BeginRun>()),
       allowUnassociated_(iConfig.getUntrackedParameter<bool>("allowUnassociatedWeights", false)) {
   produces<GenWeightProduct>();
+  produces<LHEEventProduct>();
   weightHelper_.setFailIfInvalidXML(iConfig.getUntrackedParameter<bool>("failIfInvalidXML", false));
   weightHelper_.setDebug(iConfig.getUntrackedParameter<bool>("debug", false));
   weightHelper_.setGuessPSWeightIdx(iConfig.getUntrackedParameter<bool>("guessPSWeightIdx", false));
@@ -93,6 +94,12 @@ void LHEWeightProductProducer::produce(edm::StreamID, edm::Event& iEvent, const 
   auto weightProduct =
       weightHelper_.weightProduct(productInfo.product, lheEventInfo->weights(), lheEventInfo->originalXWGTUP());
   iEvent.put(std::move(weightProduct));
+
+  auto newLheEventInfo = std::make_unique<LHEEventProduct>(*lheEventInfo);
+  newLheEventInfo->clearWeights();
+  if (!lheEventInfo->weights().empty())
+    newLheEventInfo->addWeight(lheEventInfo->weights()[0]);
+  iEvent.put(std::move(newLheEventInfo));
 }
 
 std::shared_ptr<GenWeightInfoProdData> LHEWeightProductProducer::globalBeginRun(edm::Run const& run,
