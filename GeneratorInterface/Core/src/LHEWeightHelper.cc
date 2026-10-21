@@ -82,9 +82,11 @@ namespace gen {
   std::vector<std::unique_ptr<gen::WeightGroupInfo>> LHEWeightHelper::parseWeights(std::vector<std::string> headerLines,
                                                                                    bool addUnassociatedGroup) const {
     tinyxml2::XMLDocument xmlDoc;
-    if (!validateAndFixHeader(headerLines, xmlDoc)) {
-      return {};
-    }
+    std::vector<ParsedWeight> noWeights;
+    // Header could not be parsed (and failIfInvalidXML is false):
+    // all weights in the event go to the unassociated group, if requested
+    if (!validateAndFixHeader(headerLines, xmlDoc))
+      return buildGroups(noWeights, addUnassociatedGroup);
 
     std::vector<ParsedWeight> parsedWeights;
     int weightIndex = 0;

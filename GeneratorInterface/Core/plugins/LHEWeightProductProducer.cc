@@ -120,8 +120,11 @@ std::shared_ptr<GenWeightInfoProdData> LHEWeightProductProducer::globalBeginRun(
       break;
     }
   }
-  if (!lheRunInfoHandle.isValid())
+  if (!lheRunInfoHandle.isValid()) {
+    if (allowUnassociated_)
+      productInfo.product.addWeightGroupInfo(std::make_unique<gen::UnknownWeightGroupInfo>("unassociated"));
     return std::make_shared<GenWeightInfoProdData>(productInfo);
+  }
 
   typedef std::vector<LHERunInfoProduct::Header>::const_iterator header_cit;
   LHERunInfoProduct::Header headerWeightInfo;

@@ -4,11 +4,16 @@ from GeneratorInterface.Core.lheWeights_cfi import lheWeights
 
 genWeightsNano = genWeights.clone()
 genWeightsNano.weightProductLabels = ["genWeights"]
+# Existing samples can have more weights in the event than in the GenLumiInfoHeader (cms-sw/cmssw#36705);
+# store them as unassociated instead of failing
+genWeightsNano.allowUnassociatedWeights = True
 
 lheWeightsNano = lheWeights.clone()
 lheWeightsNano.weightProductLabels = ["lheWeights"]
 # fix for crashing for bkg samples
 lheWeightsNano.failIfInvalidXML = cms.untracked.bool(False)
+# Weights from an invalid or missing LHE header are stored as unassociated
+lheWeightsNano.allowUnassociatedWeights = True
 
 genWeightsTable = cms.EDProducer("GenWeightsTableProducer",
     lheWeightPrecision = cms.int32(14),
