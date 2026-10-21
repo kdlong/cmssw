@@ -9,6 +9,7 @@
   <use name="FWCore/AbstractServices"/>
   <use name="FWCore/Framework"/>
   <use name="SimDataFormats/GeneratorProducts"/>
+  <use name="GeneratorInterface/Core"/>
   <flags EDM_PLUGIN="1"/>
 </library>
 
