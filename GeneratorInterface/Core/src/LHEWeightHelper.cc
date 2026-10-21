@@ -154,8 +154,8 @@ namespace gen {
     int close = -1;
     for (size_t idx = 0; idx < headerLines.size(); idx++) {
       std::string& line = headerLines[idx];
-      std::cout << "Line is " << line << std::endl;
-      ;
+      if (debug_)
+        std::cout << "Line is " << line << std::endl;
       if (line.find("/weightgroup") != std::string::npos) {
         curLevel--;
         if (curLevel != 0) {

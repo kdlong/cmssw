@@ -27,7 +27,7 @@ namespace gen {
         {ErrorType::SwapHeader, "Header info out of order"},
         {ErrorType::HTMLStyle, "Header is invalid HTML"},
         {ErrorType::TrailingStr, "Header has extraneous info"},
-        {ErrorType::Unknown, "Unregonized error"},
+        {ErrorType::Unknown, "Unrecognized error"},
         {ErrorType::NoError, "No error here!"}};
 
     std::vector<std::unique_ptr<gen::WeightGroupInfo>> parseWeights(std::vector<std::string> headerLines,

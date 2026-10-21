@@ -190,14 +190,15 @@ namespace gen {
   }
 
   void WeightHelper::cleanupOrphanCentralWeight(WeightGroupInfoContainer& weightGroups) const {
-    auto centralIt = std::find_if(std::begin(weightGroups), std::end(weightGroups), [](auto& entry) {
+    // Find the scale weight group that is missing its central weight
+    auto scaleIt = std::find_if(std::begin(weightGroups), std::end(weightGroups), [](auto& entry) {
       return entry->weightType() == gen::WeightType::kScaleWeights &&
-             static_cast<ScaleWeightGroupInfo*>(entry.get())->containsCentralWeight();
+             !static_cast<ScaleWeightGroupInfo*>(entry.get())->containsCentralWeight();
     });
-    if (centralIt == std::end(weightGroups))
+    if (scaleIt == std::end(weightGroups))
       return;
 
-    auto& centralWeight = *static_cast<gen::ScaleWeightGroupInfo*>(centralIt->get());
+    auto& scaleGroup = *static_cast<gen::ScaleWeightGroupInfo*>(scaleIt->get());
 
     std::vector<size_t> toRemove;
     for (size_t i = 0; i < weightGroups.size(); i++) {
@@ -206,10 +207,10 @@ namespace gen {
         auto& pdfGroup = *static_cast<gen::PdfWeightGroupInfo*>(group.get());
         // These are weights that contain nothing but a single central weight,
         // because some versions of madgraph write the central weight separately
-        if (pdfGroup.nIdsContained() == 1 && pdfGroup.parentLhapdfId() == centralWeight.lhaid()) {
+        if (pdfGroup.nIdsContained() == 1 && pdfGroup.parentLhapdfId() == scaleGroup.lhaid()) {
           toRemove.push_back(i);
           const auto& weightInfo = pdfGroup.weightMetaInfo(0);
-          centralWeight.addContainedId(weightInfo.globalIndex, weightInfo.id, weightInfo.label, 1, 1);
+          scaleGroup.addContainedId(weightInfo.globalIndex, weightInfo.id, weightInfo.label, 1, 1);
         }
       }
     }
@@ -286,10 +287,10 @@ namespace gen {
         std::cout << "Weight type is PDF\n";
       return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
     }
-    if (debug_)
+    if (debug_) {
       std::cout << "Weight type is unknown\n";
-
-    std::cout << "Group name is " << weight.groupname << std::endl;
+      std::cout << "Group name is " << weight.groupname << std::endl;
+    }
 
     return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
   }

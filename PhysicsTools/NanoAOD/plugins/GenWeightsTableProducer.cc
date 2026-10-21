@@ -469,9 +469,9 @@ std::pair<std::string, std::vector<double>> GenWeightsTableProducer::preferredPS
   std::string labels = "PS weights (w_var / w_nominal); ";
   if (pswV.isWellFormed()) {
     double baseline = psWeights.at(pswV.weightIndexFromLabel("Baseline"));
-    psTosave.emplace_back(psWeights.at(pswV.variationIndex(true, false, gen::PSVarType::def)) / baseline);
+    psTosave.emplace_back(psWeights.at(pswV.isrCombinedUpIndex(gen::PSVarType::def)) / baseline);
     labels += "[0] is ISR=2 FSR=1; ";
-    psTosave.emplace_back(psWeights.at(pswV.variationIndex(false, false, gen::PSVarType::def)) / baseline);
+    psTosave.emplace_back(psWeights.at(pswV.fsrCombinedUpIndex(gen::PSVarType::def)) / baseline);
     labels += "[1] is ISR=1 FSR=2; ";
     psTosave.emplace_back(psWeights.at(pswV.isrCombinedDownIndex(gen::PSVarType::def)) / baseline);
     labels += "[2] is ISR=0.5 FSR=1; ";
