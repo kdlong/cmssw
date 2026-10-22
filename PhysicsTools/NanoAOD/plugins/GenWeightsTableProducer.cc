@@ -21,6 +21,7 @@
 #include "PhysicsTools/NanoAOD/interface/GenWeightCounters.h"
 #include <iostream>
 #include <algorithm>
+#include <array>
 
 namespace {
   typedef std::vector<gen::WeightGroupData> WeightGroupDataContainer;
@@ -476,17 +477,22 @@ std::pair<std::string, std::vector<double>> GenWeightsTableProducer::preferredPS
   std::vector<double> psTosave;
 
   std::string labels = "PS weights (w_var / w_nominal); ";
-  if (pswV.isWellFormed()) {
-    double baseline = psWeights.at(pswV.weightIndexFromLabel("Baseline"));
-    psTosave.emplace_back(psWeights.at(pswV.isrCombinedUpIndex(gen::PSVarType::def)) / baseline);
-    labels += "[0] is ISR=2 FSR=1; ";
-    psTosave.emplace_back(psWeights.at(pswV.fsrCombinedUpIndex(gen::PSVarType::def)) / baseline);
-    labels += "[1] is ISR=1 FSR=2; ";
-    psTosave.emplace_back(psWeights.at(pswV.isrCombinedDownIndex(gen::PSVarType::def)) / baseline);
-    labels += "[2] is ISR=0.5 FSR=1; ";
-    psTosave.emplace_back(psWeights.at(pswV.fsrCombinedDownIndex(gen::PSVarType::def)) / baseline);
-    labels += "[3] is ISR=1 FSR=0.5; ";
+  if (!pswV.isWellFormed())
+    return std::make_pair(labels, psTosave);
+
+  const int baselineIdx = pswV.weightIndexFromLabel("Baseline");
+  const std::array<int, 4> indices = {pswV.isrCombinedUpIndex(gen::PSVarType::def),
+                                      pswV.fsrCombinedUpIndex(gen::PSVarType::def),
+                                      pswV.isrCombinedDownIndex(gen::PSVarType::def),
+                                      pswV.fsrCombinedDownIndex(gen::PSVarType::def)};
+  if (baselineIdx < 0 || std::any_of(indices.begin(), indices.end(), [](int i) { return i < 0; })) {
+    labels.append("WARNING: Could not identify the ISR/FSR variations in the weight names");
+    return std::make_pair(labels, psTosave);
   }
+  const double baseline = psWeights.at(baselineIdx);
+  for (int idx : indices)
+    psTosave.emplace_back(psWeights.at(idx) / baseline);
+  labels += "[0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2; [2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5; ";
   return std::make_pair(labels, psTosave);
 }
 

@@ -172,7 +172,11 @@ namespace gen {
       psGroup.setIsWellFormed(true);
       psGroup.cacheWeightIndicesByLabel();
     }
-    if (weight.content.find(':') != std::string::npos && weight.content.find('=') != std::string::npos)
+    // e.g., isr:murfac=2.0, or isr.murfac=2.0 for Pythia >= 8.310
+    const std::string& name = weight.content;
+    bool pythiaSeparator =
+        name.find(':') != std::string::npos || name.rfind("isr.", 0) == 0 || name.rfind("fsr.", 0) == 0;
+    if (pythiaSeparator && name.find('=') != std::string::npos)
       psGroup.setNameIsPythiaSyntax(true);
   }
 

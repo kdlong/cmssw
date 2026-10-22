@@ -1,5 +1,6 @@
 #include "SimDataFormats/GeneratorProducts/interface/PartonShowerWeightGroupInfo.h"
 
+#include <algorithm>
 #include <exception>
 #include <iostream>
 
@@ -28,6 +29,12 @@ namespace gen {
                                                   PSSplittingType splittingType) const {
     std::string varName = variationName(isISR, isUp, variationType, splittingType);
     int wgtIdx = weightIndexFromLabel(varName);
+    // Pythia >= 8.310 uses '.' rather than ':' as the separator (e.g., isr.murfac=2.0)
+    if (wgtIdx == -1 && nameIsPythiaSyntax_) {
+      std::string dotName = varName;
+      std::replace(dotName.begin(), dotName.end(), ':', '.');
+      wgtIdx = weightIndexFromLabel(dotName);
+    }
     // Guess PS idx if not in label list
     if (wgtIdx == -1 && guessPSWeightIdx_)
       wgtIdx = psWeightIdxGuess(varName);

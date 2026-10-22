@@ -21,6 +21,11 @@ namespace gen {
     GenWeightHelper();
     std::vector<std::unique_ptr<gen::WeightGroupInfo>> parseWeightGroupsFromNames(std::vector<std::string> weightNames,
                                                                                   bool addUnassociatedGroup) const;
+
+  private:
+    int sherpaCentralPdf(const std::vector<std::string>& weightNames) const;
+    const std::regex sherpaVariation_{R"(MUR([0-9.]+)_MUF([0-9.]+)_PDF([0-9]+))"};
+    const std::string genericGroupName_ = "Generator";
   };
 }  // namespace gen
 
