@@ -19,7 +19,6 @@ namespace gen {
     std::vector<std::vector<size_t>> dynVec_;
 
     inline int indexFromMus(int muR, int muF) const { return 3 * muR + muF; }
-    inline bool isValidValue(float mu) const { return mu == 0.5 || mu == 1.0 || mu == 2.0; }
 
     enum scaleIndices {
       muR0p5_muF0p5_idx = 0,
@@ -47,13 +46,15 @@ namespace gen {
     void copy(const ScaleWeightGroupInfo& other);
     ScaleWeightGroupInfo* clone() const override;
     bool containsCentralWeight() const { return containsCentral_; }
-    void addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF);
+    // Return 0 on success, 1 for invalid muR/muF values, 2 if the group is still missing variations
+    int addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF);
     void setWeightIsCorrupt() {
       isWellFormed_ = false;
       weightIsCorrupt_ = true;
     }
+    static bool isValidValue(float mu) { return mu == 0.5 || mu == 1.0 || mu == 2.0; }
 
-    void setMuRMuFIndex(int globalIndex, std::string id, float muR, float muF);
+    int setMuRMuFIndex(int globalIndex, std::string id, float muR, float muF);
     void setDyn(int globalIndex, std::string id, float muR, float muF, size_t dynNum, std::string_view dynName);
     int lhaid() const { return lhaid_; }
     void setLhaid(int lhaid) { lhaid_ = lhaid; }
@@ -69,6 +70,7 @@ namespace gen {
     int muR05muF05Index() const { return muIndices_.at(muR0p5_muF0p5_idx); }
     int muR05muF1Index() const { return muIndices_.at(muR0p5_muF1_idx); }
     int muR05muF2Index() const { return muIndices_.at(muR0p5_muF2_idx); }
+    const std::vector<size_t>& muIndices() const { return muIndices_; }
 
     // dynweight version
     size_t centralIndex(std::string_view dynName) const { return scaleIndex(Central_idx, dynName); }

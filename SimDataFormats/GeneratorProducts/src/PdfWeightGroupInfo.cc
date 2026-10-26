@@ -4,7 +4,7 @@ namespace gen {
   void PdfWeightGroupInfo::copy(const PdfWeightGroupInfo& other) {
     uncertaintyType_ = other.uncertaintyType();
     hasAlphasVars_ = other.hasAlphasVariations();
-    alphasUpIndex_ = other.alphasDownIndex();
+    alphasUpIndex_ = other.alphasUpIndex();
     alphasDownIndex_ = other.alphasDownIndex();
     parentLhapdfId_ = other.parentLhapdfId();
     WeightGroupInfo::copy(other);

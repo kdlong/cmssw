@@ -13,7 +13,7 @@ namespace gen {
 
   ScaleWeightGroupInfo* ScaleWeightGroupInfo::clone() const { return new ScaleWeightGroupInfo(*this); }
 
-  void ScaleWeightGroupInfo::addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF) {
+  int ScaleWeightGroupInfo::addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF) {
     int idxDiff = firstId_ - globalIndex;
     if (idxDiff > 0) {
       for (auto& entry : muIndices_) {
@@ -26,15 +26,15 @@ namespace gen {
       }
     }
     WeightGroupInfo::addContainedId(globalIndex, id, label);
-    setMuRMuFIndex(globalIndex, id, muR, muF);
+    return setMuRMuFIndex(globalIndex, id, muR, muF);
   }
 
-  void ScaleWeightGroupInfo::setMuRMuFIndex(int globalIndex, std::string id, float muR, float muF) {
+  int ScaleWeightGroupInfo::setMuRMuFIndex(int globalIndex, std::string id, float muR, float muF) {
     auto info = weightMetaInfoByGlobalIndex(id, globalIndex);
     int index = indexFromMus(muR, muF);
     if (!(isValidValue(muR) && isValidValue(muF))) {
       setWeightIsCorrupt();
-      return;
+      return 1;
     }
     if (index == Central_idx)
       containsCentral_ = true;
@@ -42,9 +42,10 @@ namespace gen {
 
     for (int muidx : muIndices_) {
       if (muidx == -1)
-        return;
+        return 2;
     }
     isWellFormed_ = !weightIsCorrupt_;
+    return 0;
   }
 
   void ScaleWeightGroupInfo::setDyn(

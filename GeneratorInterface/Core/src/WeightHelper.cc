@@ -1,6 +1,8 @@
 #include "GeneratorInterface/Core/interface/WeightHelper.h"
 
+#include <iterator>
 #include <regex>
+#include <type_traits>
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -90,20 +92,26 @@ namespace gen {
       muF = std::stof(muFText);
     } catch (std::invalid_argument& e) {
       if (debug_)
-        std::cout << "Tried to convert (" << muR << ", " << muF << ") to a int" << std::endl;
+        std::cout << "Tried to convert (" << muR << ", " << muF << ") to an int" << std::endl;
       scaleGroup.setWeightIsCorrupt();
       return;
       /// do something
     }
 
     if (dynNumText.empty()) {
-      scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
+      int ret = scaleGroup.setMuRMuFIndex(weight.index, weight.id, muR, muF);
+      if (ret == 1 && debug_)
+        std::cout << "ScaleWeightGroupInfo::setMuRMuFIndex(): invalid values found: " << muR << " "
+                  << ScaleWeightGroupInfo::isValidValue(muR) << ", " << muF << " "
+                  << ScaleWeightGroupInfo::isValidValue(muF) << std::endl;
     } else {
       std::string dynType = searchAttributes("dyn_name", weight);
       try {
         int dynNum = std::stoi(dynNumText);
         scaleGroup.setDyn(weight.index, weight.id, muR, muF, dynNum, dynType);
       } catch (std::invalid_argument& e) {
+        if (debug_)
+          std::cout << "Tried to convert (" << dynNumText << ") to an int" << std::endl;
         scaleGroup.setWeightIsCorrupt();
         /// do something here
       }
@@ -214,7 +222,14 @@ namespace gen {
         if (pdfGroup.nIdsContained() == 1 && pdfGroup.parentLhapdfId() == scaleGroup.lhaid()) {
           toRemove.push_back(i);
           const auto& weightInfo = pdfGroup.weightMetaInfo(0);
-          scaleGroup.addContainedId(weightInfo.globalIndex, weightInfo.id, weightInfo.label, 1, 1);
+          int ret = scaleGroup.addContainedId(weightInfo.globalIndex, weightInfo.id, weightInfo.label, 1, 1);
+          if (ret == 2 && debug_) {
+            std::cout << "ScaleWeightGroupInfo::setMuRMuFIndex(): missing index, full list is: ";
+            std::copy(scaleGroup.muIndices().begin(),
+                      scaleGroup.muIndices().end(),
+                      std::ostream_iterator<size_t>(std::cout, ","));
+            std::cout << std::endl;
+          }
         }
       }
     }
@@ -228,9 +243,11 @@ namespace gen {
 
   void WeightHelper::printWeights(const WeightGroupInfoContainer& weightGroups) const {
     // checks
+    unsigned int i = 0;
     for (const auto& group : weightGroups) {
-      std::cout << std::boolalpha << group->name() << " (" << group->firstId() << "-" << group->lastId()
-                << "): " << group->isWellFormed() << std::endl;
+      std::cout << std::boolalpha << i << ": " << group->name() << " ["
+                << static_cast<std::underlying_type<gen::WeightType>::type>(group->weightType()) << "] ("
+                << group->firstId() << "-" << group->lastId() << "): " << group->isWellFormed() << std::endl;
       if (group->weightType() == gen::WeightType::kScaleWeights) {
         const auto& groupScale = *static_cast<gen::ScaleWeightGroupInfo*>(group.get());
         std::cout << groupScale.centralIndex() << " ";
@@ -262,13 +279,14 @@ namespace gen {
         std::vector<std::string> labels = groupPS.weightLabels();
         groupPS.printVariables();
       }
+      ++i;
     }
   }
 
   std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) const {
     if (debug_) {
-      std::cout << "Building group for weight group " << weight.groupname << " weight content is " << weight.content
-                << std::endl;
+      std::cout << "Building group for weight group " << weight.groupname << std::endl;
+      std::cout << "    weight content is " << weight.content << std::endl;
     }
     if (isScaleWeightGroup(weight)) {
       if (debug_)
@@ -305,9 +323,11 @@ namespace gen {
     int groupOffset = 0;
     for (auto& weight : parsedWeights) {
       weight.wgtGroup_idx += groupOffset;
-      if (debug_)
-        std::cout << "Building group for weight " << weight.content << " group " << weight.groupname << " group index "
-                  << weight.wgtGroup_idx << std::endl;
+      if (debug_) {
+        std::cout << "Building group for weight " << weight.content << std::endl;
+        std::cout << "    group " << weight.groupname << std::endl;
+        std::cout << "    group index " << weight.wgtGroup_idx << std::endl;
+      }
 
       int numGroups = static_cast<int>(weightGroups.size());
       if (weight.wgtGroup_idx == numGroups) {
@@ -328,9 +348,17 @@ namespace gen {
       else if (group->weightType() == gen::WeightType::kPartonShowerWeights)
         updatePartonShowerInfo(*static_cast<gen::PartonShowerWeightGroupInfo*>(group.get()), weight);
     }
+    if (debug_) {
+      std::cout << "Groups BEFORE cleanup:" << std::endl;
+      printWeights(weightGroups);
+    }
     cleanupOrphanCentralWeight(weightGroups);
     if (addUnassociated) {
       addUnassociatedGroup(weightGroups);
+    }
+    if (debug_) {
+      std::cout << "Groups AFTER cleanup:" << std::endl;
+      printWeights(weightGroups);
     }
     return weightGroups;
   }
