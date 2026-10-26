@@ -28,10 +28,10 @@ namespace {
     gen::GenWeightHelper helper;
     auto groups = helper.parseWeightGroupsFromNames(names, false);
     REQUIRE(groups.size() == 1);
-    REQUIRE(groups[0]->weightType() == gen::WeightType::kPartonShowerWeights);
-    REQUIRE(groups[0]->nIdsContained() == names.size());
-    REQUIRE(groups[0]->isWellFormed());
-    const auto& ps = *static_cast<gen::PartonShowerWeightGroupInfo*>(groups[0].get());
+    REQUIRE(gen::weightGroupBase(groups[0]).weightType() == gen::WeightType::kPartonShowerWeights);
+    REQUIRE(gen::weightGroupBase(groups[0]).nIdsContained() == names.size());
+    REQUIRE(gen::weightGroupBase(groups[0]).isWellFormed());
+    const auto& ps = std::get<gen::PartonShowerWeightGroupInfo>(groups[0]);
     REQUIRE(ps.nameIsPythiaSyntax());
     auto nameAt = [&names](int idx) { return idx < 0 ? std::string("missing") : names.at(idx); };
     REQUIRE(nameAt(ps.weightIndexFromLabel("Baseline")) == "Baseline");
@@ -64,35 +64,35 @@ TEST_CASE("GenWeightHelper parsing of generator weight names", "[GenWeightHelper
     auto groups = helper.parseWeightGroupsFromNames(names, false);
     REQUIRE(groups.size() == 4);
 
-    REQUIRE(groups[0]->weightType() == gen::WeightType::kUnknownWeights);
-    REQUIRE(groups[0]->nIdsContained() == 4);
+    REQUIRE(gen::weightGroupBase(groups[0]).weightType() == gen::WeightType::kUnknownWeights);
+    REQUIRE(gen::weightGroupBase(groups[0]).nIdsContained() == 4);
 
-    REQUIRE(groups[1]->weightType() == gen::WeightType::kScaleWeights);
-    const auto& scale = *static_cast<gen::ScaleWeightGroupInfo*>(groups[1].get());
+    REQUIRE(gen::weightGroupBase(groups[1]).weightType() == gen::WeightType::kScaleWeights);
+    const auto& scale = std::get<gen::ScaleWeightGroupInfo>(groups[1]);
     REQUIRE(scale.nIdsContained() == 9);
     REQUIRE(scale.isWellFormed());
     REQUIRE(scale.lhaid() == 303200);
     REQUIRE(scale.centralIndex() == 8);
     REQUIRE(scale.muR2muF1Index() == 6);
 
-    REQUIRE(groups[2]->weightType() == gen::WeightType::kPdfWeights);
-    const auto& pdf = *static_cast<gen::PdfWeightGroupInfo*>(groups[2].get());
+    REQUIRE(gen::weightGroupBase(groups[2]).weightType() == gen::WeightType::kPdfWeights);
+    const auto& pdf = std::get<gen::PdfWeightGroupInfo>(groups[2]);
     REQUIRE(pdf.nIdsContained() == 100);
     REQUIRE(pdf.parentLhapdfId() == 303200);
     // The first weight of the group is the 13th in the event (after 4 Sherpa and 9 scale weights)
     REQUIRE(pdf.weightMetaInfo(0).globalIndex == 13);
 
     // Scale variations with an alternative PDF
-    REQUIRE(groups[3]->weightType() == gen::WeightType::kScaleWeights);
-    REQUIRE(groups[3]->nIdsContained() == 2);
+    REQUIRE(gen::weightGroupBase(groups[3]).weightType() == gen::WeightType::kScaleWeights);
+    REQUIRE(gen::weightGroupBase(groups[3]).nIdsContained() == 2);
   }
 
   SECTION("Unrecognized weight names") {
     gen::GenWeightHelper helper;
     auto groups = helper.parseWeightGroupsFromNames({"central", "foo", "bar"}, true);
     REQUIRE(groups.size() == 2);
-    REQUIRE(groups[0]->weightType() == gen::WeightType::kUnknownWeights);
-    REQUIRE(groups[0]->nIdsContained() == 3);
-    REQUIRE(groups[1]->name() == "unassociated");
+    REQUIRE(gen::weightGroupBase(groups[0]).weightType() == gen::WeightType::kUnknownWeights);
+    REQUIRE(gen::weightGroupBase(groups[0]).nIdsContained() == 3);
+    REQUIRE(gen::weightGroupBase(groups[1]).name() == "unassociated");
   }
 }

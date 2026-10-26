@@ -183,7 +183,7 @@
   <version ClassVersion="3" checksum="1132025970"/>
  </class>
  <class name="GenWeightInfoProduct" ClassVersion="3">
-  <version ClassVersion="3" checksum="4241667216"/>
+  <version ClassVersion="3" checksum="1147517844"/>
  </class>
  <class name="io_v1::LHEXMLStringProduct" ClassVersion="3">
   <version ClassVersion="3" checksum="3553897172"/>
@@ -220,17 +220,16 @@
  <class name="gen::WeightMetaInfo" ClassVersion="3">
   <version ClassVersion="3" checksum="1735024360"/>
  </class>
+ <class name="gen::WeightGroupLocation" ClassVersion="3">
+  <version ClassVersion="3" checksum="1780930043"/>
+ </class>
  <class name="std::vector<gen::WeightsInfo>"/>
- <class name="std::vector<gen::WeightGroupInfo>"/>
- <class name="std::vector<gen::WeightGroupInfo*>"/>
- <class name="edm::Wrapper<gen::WeightGroupInfo>"/>
- <class name="edm::Wrapper<gen::UnknownWeightGroupInfo>"/>
- <class name="edm::Wrapper<gen::MEParamWeightGroupInfo>"/>
- <class name="edm::Wrapper<gen::PdfWeightGroupInfo>"/>
- <class name="edm::Wrapper<gen::PartonShowerWeightGroupInfo>"/>
- <class name="edm::Wrapper<gen::ScaleWeightGroupInfo>"/>
- <class name="std::vector<std::unique_ptr<gen::WeightGroupInfo>>"/>
- <class name="edm::Wrapper<std::vector<std::unique_ptr<gen::WeightGroupInfo>>>"/>
+ <class name="std::vector<gen::UnknownWeightGroupInfo>"/>
+ <class name="std::vector<gen::MEParamWeightGroupInfo>"/>
+ <class name="std::vector<gen::PdfWeightGroupInfo>"/>
+ <class name="std::vector<gen::PartonShowerWeightGroupInfo>"/>
+ <class name="std::vector<gen::ScaleWeightGroupInfo>"/>
+ <class name="std::vector<gen::WeightGroupLocation>"/>
  <class name="edm::Wrapper<GenWeightInfoProduct>"/>
  <class name="edm::Wrapper<GenWeightProduct>"/>
 	<class name="edm::Wrapper&lt;io_v1::LHERunInfoProduct&gt;"/>

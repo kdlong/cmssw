@@ -7,12 +7,6 @@
 #include "FWCore/Utilities/interface/Exception.h"
 
 namespace gen {
-  WeightGroupInfo* WeightGroupInfo::clone() const {
-    throw cms::Exception("WeightGroupInfo") << "In group " << name_
-                                            << ": WeightGroupInfo is abstract, so it's clone() method can't be "
-                                               "implemented.";
-  }
-
   const WeightMetaInfo& WeightGroupInfo::weightMetaInfo(int weightEntry) const {
     if (weightEntry < 0 || weightEntry >= static_cast<int>(idsContained_.size()))
       throw cms::Exception("WeightGroupInfo")
