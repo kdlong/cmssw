@@ -56,8 +56,10 @@ VertexSmearing = cms.Sequence(cms.SequencePlaceholder("VtxSmeared"))
 GenSmeared = cms.Sequence(generatorSmeared)
 GeneInfo = cms.Sequence(GeneInfoTask)
 genWeightsSeq = cms.Sequence(genWeights*lheWeights)
-genWeights.allowUnassociatedWeights = True # This should be off, but needed until Pythia bug is fixed
-lheWeights.failIfInvalidXML = False # Also would ideally be true, but is needed at least for the tau embedding unit test
+# Fail on weights that cannot be associated to a group, or an invalid LHE header, so that problems
+# are fixed at the generator level before samples are produced
+genWeights.allowUnassociatedWeights = False
+lheWeights.failIfInvalidXML = cms.untracked.bool(True)
 genJetMET = cms.Sequence(genJetMETTask)
 
 from SimPPS.Configuration.GenPPS_cff import *

@@ -18,6 +18,12 @@ namespace gen {
     ErrorType errorType;
 
     while (errorType = findErrorType(xmlError, fullHeader), errorType != ErrorType::NoError) {
+      // No weight header at all (e.g. LHE made by the tau embedding) is valid: the sample has no weight variations
+      if (errorType == ErrorType::Empty) {
+        if (debug_)
+          std::cout << "  >>> There are no LHE xml header, ending parsing" << std::endl;
+        return false;
+      }
       if (failIfInvalidXML_) {
         std::cout << "XML error: ";
         xmlDoc.PrintError();
@@ -42,10 +48,6 @@ namespace gen {
         if (debug_)
           std::cout << "  >>> There is non-XML text at the end of this file\n";
         xmlError = tryRemoveTrailings(xmlDoc, fullHeader);
-      } else if (errorType == ErrorType::Empty) {
-        if (debug_)
-          std::cout << "  >>> There are no LHE xml header, ending parsing" << std::endl;
-        return false;
       } else if (errorType == ErrorType::NoWeightGroup) {
         if (debug_)
           std::cout << "  >>> There are no <weightgroup> in the LHE xml header, "
