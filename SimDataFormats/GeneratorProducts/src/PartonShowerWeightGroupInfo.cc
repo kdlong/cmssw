@@ -10,10 +10,6 @@ namespace gen {
     weightType_ = WeightType::kPartonShowerWeights;
   }
 
-  PartonShowerWeightGroupInfo* PartonShowerWeightGroupInfo::clone() const {
-    return new PartonShowerWeightGroupInfo(*this);
-  }
-
   int PartonShowerWeightGroupInfo::variationIndex(bool isISR, bool isUp, PSVarType variationType) const {
     return variationIndex(isISR, isUp, variationType, PSSplittingType::combined);
   }

@@ -19,8 +19,8 @@ namespace gen {
   class GenWeightHelper : public WeightHelper {
   public:
     GenWeightHelper();
-    std::vector<std::unique_ptr<gen::WeightGroupInfo>> parseWeightGroupsFromNames(std::vector<std::string> weightNames,
-                                                                                  bool addUnassociatedGroup) const;
+    gen::WeightGroupInfoContainer parseWeightGroupsFromNames(std::vector<std::string> weightNames,
+                                                             bool addUnassociatedGroup) const;
 
   private:
     int sherpaCentralPdf(const std::vector<std::string>& weightNames) const;

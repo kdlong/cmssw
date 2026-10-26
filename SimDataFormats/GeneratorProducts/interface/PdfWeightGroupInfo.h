@@ -34,8 +34,6 @@ namespace gen {
       weightType_ = WeightType::kPdfWeights;
     }
     PdfWeightGroupInfo(std::string header) : WeightGroupInfo(header) { weightType_ = WeightType::kPdfWeights; }
-    ~PdfWeightGroupInfo() override {}
-    PdfWeightGroupInfo* clone() const override;
 
     void setUncertaintyType(PdfUncertaintyType uncertaintyType) { uncertaintyType_ = uncertaintyType; }
     void setHasAlphasVariations(bool hasAlphasVars) { hasAlphasVars_ = hasAlphasVars; }

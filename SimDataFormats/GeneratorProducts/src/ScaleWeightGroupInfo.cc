@@ -4,8 +4,6 @@
 #include <stdexcept>
 
 namespace gen {
-  ScaleWeightGroupInfo* ScaleWeightGroupInfo::clone() const { return new ScaleWeightGroupInfo(*this); }
-
   int ScaleWeightGroupInfo::addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF) {
     int idxDiff = firstId_ - globalIndex;
     if (idxDiff > 0) {

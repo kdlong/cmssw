@@ -46,11 +46,6 @@ namespace gen {
         : isWellFormed_(false), headerEntry_(header), name_(name), firstId_(-1), lastId_(-1) {}
     WeightGroupInfo(std::string header)
         : isWellFormed_(false), headerEntry_(header), name_(header), firstId_(-1), lastId_(-1) {}
-    // The default copy keeps every member; the derived classes rely on it as well
-    WeightGroupInfo(const WeightGroupInfo& other) = default;
-    WeightGroupInfo& operator=(const WeightGroupInfo& other) = default;
-    virtual ~WeightGroupInfo() {};
-    virtual WeightGroupInfo* clone() const;
     const WeightMetaInfo& weightMetaInfo(int weightEntry) const;
     const WeightMetaInfo& weightMetaInfoByGlobalIndex(std::string& wgtId, int weightEntry) const;
     const WeightMetaInfo& weightMetaInfoByGlobalIndex(int weightEntry) const;
@@ -86,6 +81,10 @@ namespace gen {
     std::vector<std::string> weightLabels() const;
 
   protected:
+    // Only the concrete group types are stored, never a WeightGroupInfo on its own.
+    // The destructor is not virtual, so a group must not be deleted through a base pointer
+    ~WeightGroupInfo() = default;
+
     bool isWellFormed_ = false;
     std::string headerEntry_;
     std::string name_;

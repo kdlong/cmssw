@@ -40,10 +40,10 @@ namespace gen {
     void setGuessPSWeightIdx(bool guessPSWeightIdx) {
       PartonShowerWeightGroupInfo::setGuessPSWeightIdx(guessPSWeightIdx);
     }
-    void addUnassociatedGroup(std::vector<std::unique_ptr<gen::WeightGroupInfo>>& weightGroups) const {
+    void addUnassociatedGroup(WeightGroupInfoContainer& weightGroups) const {
       gen::UnknownWeightGroupInfo unassoc("unassociated");
       unassoc.setDescription("Weights with missing or invalid header meta data");
-      weightGroups.push_back(std::make_unique<gen::UnknownWeightGroupInfo>(unassoc));
+      weightGroups.push_back(unassoc);
     }
     int addWeightToProduct(GenWeightProduct& product, double weight, std::string name, int weightNum, int groupIndex);
     void setDebug(bool value) { debug_ = value; }
@@ -83,7 +83,7 @@ namespace gen {
         {"me_variation", {"mass", "sthw2", "width"}},
     };
     void printWeights(const WeightGroupInfoContainer& weightGroups) const;
-    std::unique_ptr<WeightGroupInfo> buildGroup(ParsedWeight& weight) const;
+    WeightGroup buildGroup(ParsedWeight& weight) const;
     WeightGroupInfoContainer buildGroups(std::vector<ParsedWeight>& parsedWeights, bool addUnassociatedGroup) const;
     std::string searchString(const std::string& label, const std::string& name) const;
   };

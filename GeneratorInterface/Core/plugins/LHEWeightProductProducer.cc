@@ -122,7 +122,7 @@ std::shared_ptr<GenWeightInfoProdData> LHEWeightProductProducer::globalBeginRun(
   }
   if (!lheRunInfoHandle.isValid()) {
     if (allowUnassociated_)
-      productInfo.product.addWeightGroupInfo(std::make_unique<gen::UnknownWeightGroupInfo>("unassociated"));
+      productInfo.product.addWeightGroupInfo(gen::UnknownWeightGroupInfo("unassociated"));
     return std::make_shared<GenWeightInfoProdData>(productInfo);
   }
 
@@ -157,8 +157,7 @@ std::shared_ptr<GenWeightInfoProdData> LHEWeightProductProducer::globalBeginRun(
 
 void LHEWeightProductProducer::globalBeginRunProduce(edm::Run& run, const edm::EventSetup& es) const {
   const auto& productInfo = *runCache(run.index());
-  auto prod = std::make_unique<GenWeightInfoProduct>(productInfo.product);
-  run.emplace(groupPutToken_, std::move(prod));
+  run.emplace(groupPutToken_, productInfo.product);
 }
 
 void LHEWeightProductProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {

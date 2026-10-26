@@ -83,8 +83,8 @@ namespace gen {
     return {inner->Attribute("id"), weightIndex++, groupName, text, attributes, groupIndex};
   }
 
-  std::vector<std::unique_ptr<gen::WeightGroupInfo>> LHEWeightHelper::parseWeights(std::vector<std::string> headerLines,
-                                                                                   bool addUnassociatedGroup) const {
+  gen::WeightGroupInfoContainer LHEWeightHelper::parseWeights(std::vector<std::string> headerLines,
+                                                              bool addUnassociatedGroup) const {
     tinyxml2::XMLDocument xmlDoc;
     std::vector<ParsedWeight> noWeights;
     // Header could not be parsed (and failIfInvalidXML is false):

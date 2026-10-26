@@ -189,10 +189,9 @@ namespace gen {
   }
 
   bool WeightHelper::splitPdfWeight(ParsedWeight& weight, WeightGroupInfoContainer& weightGroups) const {
-    if (weightGroups[weight.wgtGroup_idx]->weightType() == gen::WeightType::kPdfWeights) {
-      auto& pdfGroup = *static_cast<gen::PdfWeightGroupInfo*>(weightGroups[weight.wgtGroup_idx].get());
-      int lhaid = lhapdfId(weight, pdfGroup);
-      if (lhaid > 0 && !pdfGroup.isIdInParentSet(lhaid) && pdfGroup.parentLhapdfId() > 0) {
+    if (auto* pdfGroup = std::get_if<gen::PdfWeightGroupInfo>(&weightGroups[weight.wgtGroup_idx])) {
+      int lhaid = lhapdfId(weight, *pdfGroup);
+      if (lhaid > 0 && !pdfGroup->isIdInParentSet(lhaid) && pdfGroup->parentLhapdfId() > 0) {
         weightGroups.push_back(buildGroup(weight));
         weight.wgtGroup_idx++;
         return true;
@@ -204,19 +203,19 @@ namespace gen {
   void WeightHelper::cleanupOrphanCentralWeight(WeightGroupInfoContainer& weightGroups) const {
     // Find the scale weight group that is missing its central weight
     auto scaleIt = std::find_if(std::begin(weightGroups), std::end(weightGroups), [](auto& entry) {
-      return entry->weightType() == gen::WeightType::kScaleWeights &&
-             !static_cast<ScaleWeightGroupInfo*>(entry.get())->containsCentralWeight();
+      auto* scaleGroup = std::get_if<gen::ScaleWeightGroupInfo>(&entry);
+      return scaleGroup && !scaleGroup->containsCentralWeight();
     });
     if (scaleIt == std::end(weightGroups))
       return;
 
-    auto& scaleGroup = *static_cast<gen::ScaleWeightGroupInfo*>(scaleIt->get());
+    // The groups found below are removed after the loop, so this reference stays valid
+    auto& scaleGroup = std::get<gen::ScaleWeightGroupInfo>(*scaleIt);
 
     std::vector<size_t> toRemove;
     for (size_t i = 0; i < weightGroups.size(); i++) {
-      auto& group = weightGroups[i];
-      if (group->weightType() == gen::WeightType::kPdfWeights) {
-        auto& pdfGroup = *static_cast<gen::PdfWeightGroupInfo*>(group.get());
+      if (auto* pdfGroupPtr = std::get_if<gen::PdfWeightGroupInfo>(&weightGroups[i])) {
+        auto& pdfGroup = *pdfGroupPtr;
         // These are weights that contain nothing but a single central weight,
         // because some versions of madgraph write the central weight separately
         if (pdfGroup.nIdsContained() == 1 && pdfGroup.parentLhapdfId() == scaleGroup.lhaid()) {
@@ -244,12 +243,13 @@ namespace gen {
   void WeightHelper::printWeights(const WeightGroupInfoContainer& weightGroups) const {
     // checks
     unsigned int i = 0;
-    for (const auto& group : weightGroups) {
-      std::cout << std::boolalpha << i << ": " << group->name() << " ["
-                << static_cast<std::underlying_type<gen::WeightType>::type>(group->weightType()) << "] ("
-                << group->firstId() << "-" << group->lastId() << "): " << group->isWellFormed() << std::endl;
-      if (group->weightType() == gen::WeightType::kScaleWeights) {
-        const auto& groupScale = *static_cast<gen::ScaleWeightGroupInfo*>(group.get());
+    for (const auto& entry : weightGroups) {
+      const auto& group = gen::weightGroupBase(entry);
+      std::cout << std::boolalpha << i << ": " << group.name() << " ["
+                << static_cast<std::underlying_type<gen::WeightType>::type>(group.weightType()) << "] ("
+                << group.firstId() << "-" << group.lastId() << "): " << group.isWellFormed() << std::endl;
+      if (const auto* groupScalePtr = std::get_if<gen::ScaleWeightGroupInfo>(&entry)) {
+        const auto& groupScale = *groupScalePtr;
         std::cout << groupScale.centralIndex() << " ";
         std::cout << groupScale.muR1muF2Index() << " ";
         std::cout << groupScale.muR1muF05Index() << " ";
@@ -272,18 +272,16 @@ namespace gen {
           std::cout << groupScale.scaleIndex(0.5, 0.5, name) << "\n";
         }
 
-      } else if (group->weightType() == gen::WeightType::kPdfWeights) {
-        std::cout << group->description() << "\n";
-      } else if (group->weightType() == gen::WeightType::kPartonShowerWeights) {
-        const auto& groupPS = *static_cast<gen::PartonShowerWeightGroupInfo*>(group.get());
-        std::vector<std::string> labels = groupPS.weightLabels();
-        groupPS.printVariables();
+      } else if (std::holds_alternative<gen::PdfWeightGroupInfo>(entry)) {
+        std::cout << group.description() << "\n";
+      } else if (const auto* groupPS = std::get_if<gen::PartonShowerWeightGroupInfo>(&entry)) {
+        groupPS->printVariables();
       }
       ++i;
     }
   }
 
-  std::unique_ptr<WeightGroupInfo> WeightHelper::buildGroup(ParsedWeight& weight) const {
+  WeightGroup WeightHelper::buildGroup(ParsedWeight& weight) const {
     if (debug_) {
       std::cout << "Building group for weight group " << weight.groupname << std::endl;
       std::cout << "    weight content is " << weight.content << std::endl;
@@ -291,30 +289,30 @@ namespace gen {
     if (isScaleWeightGroup(weight)) {
       if (debug_)
         std::cout << "Weight type is scale\n";
-      return std::make_unique<ScaleWeightGroupInfo>(weight.groupname);
+      return ScaleWeightGroupInfo(weight.groupname);
     } else if (isPdfWeightGroup(weight)) {
       if (debug_)
         std::cout << "Weight type is PDF\n";
-      return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
+      return PdfWeightGroupInfo(weight.groupname);
     } else if (isMEParamWeightGroup(weight)) {
       if (debug_)
         std::cout << "Weight type is MEParam\n";
-      return std::make_unique<MEParamWeightGroupInfo>(weight.groupname);
+      return MEParamWeightGroupInfo(weight.groupname);
     } else if (isPartonShowerWeightGroup(weight)) {
       if (debug_)
         std::cout << "Weight type is parton shower\n";
-      return std::make_unique<PartonShowerWeightGroupInfo>("shower");
+      return PartonShowerWeightGroupInfo("shower");
     } else if (isOrphanPdfWeightGroup(weight)) {
       if (debug_)
         std::cout << "Weight type is PDF\n";
-      return std::make_unique<PdfWeightGroupInfo>(weight.groupname);
+      return PdfWeightGroupInfo(weight.groupname);
     }
     if (debug_) {
       std::cout << "Weight type is unknown\n";
       std::cout << "Group name is " << weight.groupname << std::endl;
     }
 
-    return std::make_unique<UnknownWeightGroupInfo>(weight.groupname);
+    return UnknownWeightGroupInfo(weight.groupname);
   }
 
   WeightGroupInfoContainer WeightHelper::buildGroups(std::vector<ParsedWeight>& parsedWeights,
@@ -340,13 +338,13 @@ namespace gen {
         groupOffset++;
 
       auto& group = weightGroups[weight.wgtGroup_idx];
-      group->addContainedId(weight.index, weight.id, weight.content);
-      if (group->weightType() == gen::WeightType::kScaleWeights)
-        updateScaleInfo(*static_cast<gen::ScaleWeightGroupInfo*>(group.get()), weight);
-      else if (group->weightType() == gen::WeightType::kPdfWeights)
-        updatePdfInfo(*static_cast<gen::PdfWeightGroupInfo*>(group.get()), weight);
-      else if (group->weightType() == gen::WeightType::kPartonShowerWeights)
-        updatePartonShowerInfo(*static_cast<gen::PartonShowerWeightGroupInfo*>(group.get()), weight);
+      gen::weightGroupBase(group).addContainedId(weight.index, weight.id, weight.content);
+      if (auto* scaleGroup = std::get_if<gen::ScaleWeightGroupInfo>(&group))
+        updateScaleInfo(*scaleGroup, weight);
+      else if (auto* pdfGroup = std::get_if<gen::PdfWeightGroupInfo>(&group))
+        updatePdfInfo(*pdfGroup, weight);
+      else if (auto* psGroup = std::get_if<gen::PartonShowerWeightGroupInfo>(&group))
+        updatePartonShowerInfo(*psGroup, weight);
     }
     if (debug_) {
       std::cout << "Groups BEFORE cleanup:" << std::endl;
