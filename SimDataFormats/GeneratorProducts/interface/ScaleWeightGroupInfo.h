@@ -41,8 +41,6 @@ namespace gen {
       isFunctionalFormVar_ = false;
     }
     ScaleWeightGroupInfo(std::string header) : ScaleWeightGroupInfo(header, header) {}
-    ~ScaleWeightGroupInfo() override {}
-    ScaleWeightGroupInfo* clone() const override;
     bool containsCentralWeight() const { return containsCentral_; }
     // Return 0 on success, 1 for invalid muR/muF values, 2 if the group is still missing variations
     int addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF);

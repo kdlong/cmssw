@@ -30,8 +30,7 @@ namespace gen {
         {ErrorType::Unknown, "Unrecognized error"},
         {ErrorType::NoError, "No error here!"}};
 
-    std::vector<std::unique_ptr<gen::WeightGroupInfo>> parseWeights(std::vector<std::string> headerLines,
-                                                                    bool addUnassociated) const;
+    gen::WeightGroupInfoContainer parseWeights(std::vector<std::string> headerLines, bool addUnassociated) const;
     bool isConsistent(const std::string& fullHeader) const;
     void swapHeaders(std::vector<std::string>& headerLines) const;
     void setFailIfInvalidXML(bool value) { failIfInvalidXML_ = value; }

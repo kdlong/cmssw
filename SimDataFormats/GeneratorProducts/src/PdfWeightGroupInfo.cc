@@ -1,7 +1,6 @@
 #include "SimDataFormats/GeneratorProducts/interface/PdfWeightGroupInfo.h"
 
 namespace gen {
-  PdfWeightGroupInfo* PdfWeightGroupInfo::clone() const { return new PdfWeightGroupInfo(*this); }
   void PdfWeightGroupInfo::addLhaid(int lhaid) {
     lhaids_.push_back(lhaid);
     if (lhaids_.size() == parentLhapdfSize_)

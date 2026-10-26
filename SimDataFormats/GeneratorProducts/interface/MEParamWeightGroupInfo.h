@@ -11,8 +11,6 @@ namespace gen {
       weightType_ = WeightType::kMEParamWeights;
     }
     MEParamWeightGroupInfo(std::string header) : MEParamWeightGroupInfo(header, header) {}
-    ~MEParamWeightGroupInfo() override {}
-    MEParamWeightGroupInfo* clone() const override;
   };
 }  // namespace gen
 

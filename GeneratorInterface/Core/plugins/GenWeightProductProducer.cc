@@ -105,8 +105,7 @@ std::shared_ptr<GenWeightInfoProdData> GenWeightProductProducer::globalBeginLumi
     auto weightGroups = weightHelper_.parseWeightGroupsFromNames(genLumiInfoHandle->weightNames(), allowUnassociated_);
     productInfo.product = GenWeightInfoProduct(weightGroups);
   } else if (allowUnassociated_) {
-    auto group = std::make_unique<gen::UnknownWeightGroupInfo>("unassociated");
-    productInfo.product.addWeightGroupInfo(std::move(group));
+    productInfo.product.addWeightGroupInfo(gen::UnknownWeightGroupInfo("unassociated"));
   }
   return std::make_shared<GenWeightInfoProdData>(productInfo);
 }
@@ -119,8 +118,7 @@ void GenWeightProductProducer::globalBeginLuminosityBlockProduce(edm::Luminosity
   if (!productInfo.makeNewProduct)
     return;
 
-  auto weightInfoProduct = std::make_unique<GenWeightInfoProduct>(productInfo.product);
-  iLumi.emplace(groupPutToken_, std::move(weightInfoProduct));
+  iLumi.emplace(groupPutToken_, productInfo.product);
 }
 
 void GenWeightProductProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
