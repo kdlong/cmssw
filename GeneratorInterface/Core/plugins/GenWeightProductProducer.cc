@@ -78,6 +78,9 @@ void GenWeightProductProducer::produce(edm::StreamID, edm::Event& iEvent, const 
 
   edm::Handle<GenEventInfoProduct> genEventInfo;
   iEvent.getByToken(genEventToken_, genEventInfo);
+  // Not all generators (e.g. some particle guns) produce a GenEventInfoProduct
+  if (!genEventInfo.isValid())
+    return;
 
   float centralWeight = !genEventInfo->weights().empty() ? genEventInfo->weights().at(0) : 1.;
   auto weightProduct = weightHelper_.weightProduct(productInfo.product, genEventInfo->weights(), centralWeight);
