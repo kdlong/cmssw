@@ -42,7 +42,9 @@ namespace gen {
   }
 
   bool WeightGroupInfo::containsWeight(int weightEntry) const {
-    std::string id = std::to_string(weightEntry);
+    // Match on the global index only. The weight IDs are arbitrary strings and can collide
+    // with the index of a different weight (e.g. IDs "1", "2", ... for indices 0, 1, ...)
+    std::string id;
     return weightVectorEntry(id, weightEntry) != -1;
   }
 
