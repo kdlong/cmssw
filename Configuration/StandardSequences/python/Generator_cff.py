@@ -56,10 +56,11 @@ VertexSmearing = cms.Sequence(cms.SequencePlaceholder("VtxSmeared"))
 GenSmeared = cms.Sequence(generatorSmeared)
 GeneInfo = cms.Sequence(GeneInfoTask)
 genWeightsSeq = cms.Sequence(genWeights*lheWeights)
-# Fail on weights that cannot be associated to a group, or an invalid LHE header, so that problems
-# are fixed at the generator level before samples are produced
+# Fail on weights that cannot be associated to a group, so that problems are fixed at the generator
+# level before samples are produced. Known defects of the LHE header (e.g. the swapped weightgroup tags
+# written by the CMS MadGraph scripts) are repaired. For the strictest check, which also rejects those,
+# set lheWeights.failIfInvalidXML = True
 genWeights.allowUnassociatedWeights = False
-lheWeights.failIfInvalidXML = cms.untracked.bool(True)
 genJetMET = cms.Sequence(genJetMETTask)
 
 from SimPPS.Configuration.GenPPS_cff import *

@@ -141,7 +141,7 @@ std::shared_ptr<GenWeightInfoProdData> LHEWeightProductProducer::globalBeginRun(
   } catch (cms::Exception& e) {
     std::string error = e.what();
     error +=
-        "\n   NOTE: if you want to attempt to process this sample anyway, set "
+        "\n   NOTE: if you want to attempt to repair the header, set "
         "failIfInvalidXML = False "
         "in the configuration file (current value is ";
     error += weightHelper_.failIfInvalidXML() ? "True" : "False";
@@ -176,10 +176,11 @@ void LHEWeightProductProducer::fillDescriptions(edm::ConfigurationDescriptions& 
           "empty if you want to recreate new "
           "products regardless.");
   desc.addUntracked<bool>("debug", false)->setComment("Output debug info");
-  desc.addUntracked<bool>("failIfInvalidXML", true)
+  desc.addUntracked<bool>("failIfInvalidXML", false)
       ->setComment(
-          "Throw exception if XML header is invalid (rather than trying to "
-          "recover and parse anyway)");
+          "Throw exception on any defect in the XML header, without trying the known repairs "
+          "(swapped weightgroup tags, HTML escapes, trailing text). If false, the repairs are tried and "
+          "a header that still cannot be parsed throws");
   desc.addUntracked<bool>("allowUnassociatedWeights", false)
       ->setComment(
           "Handle weights found in the event that aren't advertised in the "

@@ -1,8 +1,10 @@
 #include "GeneratorInterface/Core/interface/LHEWeightHelper.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <iostream>
+#include <set>
 #include <stdexcept>
 
 using namespace tinyxml2;
@@ -16,6 +18,7 @@ namespace gen {
       std::cout << "Full header is \n" << fullHeader << std::endl;
     int xmlError = xmlDoc.Parse(fullHeader.c_str());
     ErrorType errorType;
+    std::set<ErrorType> repaired;
 
     while (errorType = findErrorType(xmlError, fullHeader), errorType != ErrorType::NoError) {
       // No weight header at all (e.g. LHE made by the tau embedding) is valid: the sample has no weight variations
@@ -24,13 +27,23 @@ namespace gen {
           std::cout << "  >>> There are no LHE xml header, ending parsing" << std::endl;
         return false;
       }
-      if (failIfInvalidXML_) {
+      // In strict mode any defect is fatal, without trying the repairs below. Otherwise a known defect is
+      // repaired once, and is fatal if the repair did not remove it
+      if (failIfInvalidXML_ || repaired.count(errorType)) {
         std::cout << "XML error: ";
         xmlDoc.PrintError();
-        throw cms::Exception("LHEWeightHelper") << "The LHE header is not valid! Weight information was not properly "
-                                                   "parsed."
-                                                << " The error type is '" << errorTypeAsString_.at(errorType) << "'";
-      } else if (errorType == ErrorType::HTMLStyle) {
+        throw cms::Exception("LHEWeightHelper")
+            << "The LHE header is not valid! Weight information was not properly parsed."
+            << " The error type is '" << errorTypeAsString_.at(errorType) << "'"
+            << (failIfInvalidXML_ ? "" : " and it could not be repaired");
+      }
+      if (errorType == ErrorType::HTMLStyle || errorType == ErrorType::SwapHeader ||
+          errorType == ErrorType::TrailingStr) {
+        repaired.insert(errorType);
+        edm::LogInfo("LHEWeightHelper") << "Repairing the LHE weight header. The error type is '"
+                                        << errorTypeAsString_.at(errorType) << "'";
+      }
+      if (errorType == ErrorType::HTMLStyle) {
         if (debug_)
           std::cout << "  >>> This file uses &gt; instead of >\n";
         xmlError = tryReplaceHtmlStyle(xmlDoc, fullHeader);

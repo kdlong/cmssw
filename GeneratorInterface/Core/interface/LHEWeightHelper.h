@@ -26,6 +26,7 @@ namespace gen {
         {ErrorType::Empty, "Empty header"},
         {ErrorType::SwapHeader, "Header info out of order"},
         {ErrorType::HTMLStyle, "Header is invalid HTML"},
+        {ErrorType::NoWeightGroup, "Header has no weightgroup"},
         {ErrorType::TrailingStr, "Header has extraneous info"},
         {ErrorType::Unknown, "Unrecognized error"},
         {ErrorType::NoError, "No error here!"}};
