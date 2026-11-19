@@ -206,3 +206,40 @@ TEST_CASE("Sherpa associated EW corrections are matrix-element variations", "[Ge
     REQUIRE(groups[1]->nIdsContained() == 2);
   }
 }
+
+TEST_CASE("Embedded LHE PDF splitting preserves a returning shower group", "[GenWeightHelper][PythiaPS]") {
+  const auto separator = GENERATE(std::string(":"), std::string("."));
+  const auto splitPdf = GENERATE(false, true);
+  INFO("separator=" << separator << ", splitPdf=" << splitPdf);
+  const auto showerNames = pythiaNames(separator);
+  std::vector<std::string> names = {"nominal", "LHE, id = 1001, group = PDF_variation, PDF=261000 MemberID=0"};
+  if (splitPdf)
+    names.push_back("LHE, id = 1002, group = PDF_variation, PDF=303200 MemberID=0");
+  const auto firstShower = names.size();
+  names.insert(names.end(), showerNames.begin() + 1, showerNames.end());
+  names.push_back("unrecognized");
+
+  gen::GenWeightHelper helper;
+  auto groups = helper.parseWeightGroupsFromNames(names, false);
+  REQUIRE(groups.size() == (splitPdf ? 4 : 3));
+  REQUIRE(groups[0]->weightType() == gen::WeightType::kPartonShowerWeights);
+  const auto&ps = *static_cast<const gen::PartonShowerWeightGroupInfo *>(groups[0].get());
+  REQUIRE(ps.nIdsContained() == showerNames.size());
+  REQUIRE(ps.isWellFormed());
+  REQUIRE(ps.nameIsPythiaSyntax());
+  for (size_t i = 0; i < showerNames.size(); ++i) {
+    const auto&meta = ps.weightMetaInfo(i);
+    REQUIRE(meta.localIndex == i);
+    REQUIRE(meta.globalIndex == (i == 0 ? 0 : firstShower + i - 1));
+    REQUIRE(meta.label == showerNames[i]);
+  }
+  REQUIRE(ps.weightMetaInfo(ps.isrCombinedUpIndex(gen::PSVarType::def)).label == "isr" + separator + "murfac=2.0");
+  REQUIRE(ps.weightMetaInfo(ps.fsrCombinedDownIndex(gen::PSVarType::def)).label == "fsr" + separator + "murfac=0.5");
+  for (size_t i = 1; i + 1 < groups.size(); ++i) {
+    REQUIRE(groups[i]->weightType() == gen::WeightType::kPdfWeights);
+    REQUIRE(groups[i]->nIdsContained() == 1);
+  }
+  REQUIRE(groups.back()->weightType() == gen::WeightType::kUnknownWeights);
+  REQUIRE(groups.back()->nIdsContained() == 1);
+  REQUIRE(groups.back()->weightMetaInfo(0).globalIndex == names.size() - 1);
+}

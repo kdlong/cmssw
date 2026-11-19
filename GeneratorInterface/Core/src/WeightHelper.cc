@@ -320,8 +320,14 @@ namespace gen {
                                                      bool addUnassociated) const {
     WeightGroupInfoContainer weightGroups;
     int groupOffset = 0;
+    std::unordered_map<int, int> resolvedGroupIndices;
     for (auto& weight : parsedWeights) {
-      weight.wgtGroup_idx += groupOffset;
+      const int parsedGroupIndex = weight.wgtGroup_idx;
+      // Generator names can return to an earlier group (nominal, embedded LHE,
+      // then shower variations). Splitting an intervening PDF group must not
+      // shift that earlier group's index.
+      const auto resolved = resolvedGroupIndices.find(parsedGroupIndex);
+      weight.wgtGroup_idx = resolved == resolvedGroupIndices.end() ? parsedGroupIndex + groupOffset : resolved->second;
       if (debug_) {
         std::cout << "Building group for weight " << weight.content << std::endl;
         std::cout << "    group " << weight.groupname << std::endl;
@@ -337,6 +343,7 @@ namespace gen {
       // split PDF groups
       if (splitPdfWeight(weight, weightGroups))
         groupOffset++;
+      resolvedGroupIndices[parsedGroupIndex] = weight.wgtGroup_idx;
 
       auto& group = weightGroups[weight.wgtGroup_idx];
       group->addContainedId(weight.index, weight.id, weight.content);
