@@ -5,6 +5,12 @@
 using namespace tinyxml2;
 
 namespace gen {
+  namespace {
+    const std::regex sherpaEWVariation{
+        R"(MUR([0-9.]+)_MUF([0-9.]+)_PDF([0-9]+)_((?:MULTI|EXP)?ASSEW(?:LO1(?:LO2(?:LO3)?)?)?))"};
+    const std::string sherpaEWGroupName = "Sherpa EW variations";
+  }  // namespace
+
   GenWeightHelper::GenWeightHelper() {}
 
   int GenWeightHelper::sherpaCentralPdf(const std::vector<std::string>& weightNames) const {
@@ -62,6 +68,16 @@ namespace gen {
         // std::vector<float> in the event
         attributes["id"] = "";
         parsedWeights.push_back({attributes["id"], index, curGroup, text, attributes, groupIndex});
+      } else if (std::regex_match(weightName, match, sherpaEWVariation)) {
+        // These vary associated EW contributions and their combination with
+        // the QCD matrix element, even though their labels contain scales/PDFs.
+        std::unordered_map<std::string, std::string> attributes = {
+            {"mur", match.str(1)}, {"muf", match.str(2)}, {"pdf", match.str(3)}};
+        if (curGroup != sherpaEWGroupName) {
+          curGroup = sherpaEWGroupName;
+          groupIndex++;
+        }
+        parsedWeights.push_back({"", index, curGroup, weightName, attributes, groupIndex});
       } else if (std::regex_match(weightName, match, sherpaVariation_)) {
         std::unordered_map<std::string, std::string> attributes = {
             {"mur", match.str(1)}, {"muf", match.str(2)}, {"pdf", match.str(3)}};
@@ -99,6 +115,18 @@ namespace gen {
       }
       index++;
     }
-    return buildGroups(parsedWeights, addUnassociated);
+    auto groups = buildGroups(parsedWeights, addUnassociated);
+    for (auto& group : groups) {
+      if (group->weightType() != gen::WeightType::kMEParamWeights || group->name() != sherpaEWGroupName)
+        continue;
+      std::string description =
+          "Sherpa associated EW matrix-element variations; ASS: additive, MULTIASS: multiplicative, "
+          "EXPASS: exponentiated; ";
+      for (const auto& weight : group->idsContained())
+        description += "[" + std::to_string(weight.localIndex) + "] " + weight.label + "; ";
+      group->setDescription(description);
+      group->setIsWellFormed(true);
+    }
+    return groups;
   }
 }  // namespace gen

@@ -137,3 +137,72 @@ TEST_CASE("PDF uncertainty types and descriptions come from LHAPDF", "[GenWeight
     REQUIRE(group.uncertaintyType() == gen::kUnknownUnc);
   }
 }
+
+TEST_CASE("Sherpa associated EW corrections are matrix-element variations", "[GenWeightHelper][SherpaEW]") {
+  const std::vector<std::string> corrections = {"ASSEW",
+                                                "MULTIASSEW",
+                                                "EXPASSEW",
+                                                "ASSEWLO1",
+                                                "MULTIASSEWLO1",
+                                                "EXPASSEWLO1",
+                                                "ASSEWLO1LO2",
+                                                "MULTIASSEWLO1LO2",
+                                                "EXPASSEWLO1LO2",
+                                                "ASSEWLO1LO2LO3",
+                                                "MULTIASSEWLO1LO2LO3",
+                                                "EXPASSEWLO1LO2LO3"};
+
+  SECTION("Preserve all twelve EW labels alongside ordinary Sherpa groups") {
+    std::vector<std::string> names = {"Weight", "MEWeight", "WeightNormalisation", "NTrials"};
+    for (const std::string mur : {"0.5", "1", "2"})
+      for (const std::string muf : {"0.5", "1", "2"})
+        names.push_back("MUR" + mur + "_MUF" + muf + "_PDF261000");
+    for (int i = 1; i <= 100; ++i)
+      names.push_back("MUR1_MUF1_PDF" + std::to_string(261000 + i));
+    const size_t firstEW = names.size();
+    for (const auto& correction : corrections)
+      names.push_back("MUR1_MUF1_PDF261000_" + correction);
+    names.push_back("unrecognized");
+
+    gen::GenWeightHelper helper;
+    auto groups = helper.parseWeightGroupsFromNames(names, false);
+    REQUIRE(groups.size() == 5);
+    REQUIRE(groups[0]->weightType() == gen::WeightType::kUnknownWeights);
+    REQUIRE(groups[0]->nIdsContained() == 4);
+    REQUIRE(groups[1]->weightType() == gen::WeightType::kScaleWeights);
+    REQUIRE(groups[1]->nIdsContained() == 9);
+    REQUIRE(groups[1]->isWellFormed());
+    REQUIRE(groups[2]->weightType() == gen::WeightType::kPdfWeights);
+    REQUIRE(groups[2]->nIdsContained() == 100);
+    REQUIRE(groups[3]->weightType() == gen::WeightType::kMEParamWeights);
+    REQUIRE(groups[3]->nIdsContained() == corrections.size());
+    REQUIRE(groups[3]->isWellFormed());
+    REQUIRE(groups[3]->description().find("associated EW") != std::string::npos);
+    for (size_t i = 0; i < corrections.size(); ++i) {
+      const auto& meta = groups[3]->weightMetaInfo(i);
+      REQUIRE(meta.globalIndex == firstEW + i);
+      REQUIRE(meta.localIndex == i);
+      REQUIRE(meta.label == names[firstEW + i]);
+      REQUIRE(groups[3]->description().find("[" + std::to_string(i) + "] " + meta.label) != std::string::npos);
+    }
+    REQUIRE(groups[4]->weightType() == gen::WeightType::kUnknownWeights);
+    REQUIRE(groups[4]->nIdsContained() == 1);
+  }
+
+  SECTION("EW suffix takes precedence over scale and PDF tokens") {
+    gen::GenWeightHelper helper;
+    auto groups = helper.parseWeightGroupsFromNames({"nominal", "MUR2_MUF0.5_PDF261001_MULTIASSEW"}, false);
+    REQUIRE(groups.size() == 2);
+    REQUIRE(groups[1]->weightType() == gen::WeightType::kMEParamWeights);
+    REQUIRE(groups[1]->isWellFormed());
+  }
+
+  SECTION("Unrecognized Sherpa suffixes stay unknown") {
+    gen::GenWeightHelper helper;
+    auto groups = helper.parseWeightGroupsFromNames(
+        {"nominal", "MUR1_MUF1_PDF261000_NOTEW", "MUR1_MUF1_PDF261000_ASSEWLO2"}, false);
+    REQUIRE(groups.size() == 2);
+    REQUIRE(groups[1]->weightType() == gen::WeightType::kUnknownWeights);
+    REQUIRE(groups[1]->nIdsContained() == 2);
+  }
+}
