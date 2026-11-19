@@ -96,3 +96,44 @@ TEST_CASE("GenWeightHelper parsing of generator weight names", "[GenWeightHelper
     REQUIRE(groups[1]->name() == "unassociated");
   }
 }
+
+TEST_CASE("PDF uncertainty types and descriptions come from LHAPDF", "[GenWeightHelper][PDF]") {
+  struct PdfCase {
+    int lhaid;
+    const char* errorType;
+    gen::PdfUncertaintyType uncertaintyType;
+    const char* descriptionPrefix;
+  };
+  for (const auto& test : {PdfCase{325300, "symmhessian+as", gen::kHessianUnc, "Hessian "},
+                           PdfCase{316200, "replicas", gen::kMonteCarloUnc, "Monte Carlo "},
+                           PdfCase{14000, "hessian", gen::kHessianUnc, "Hessian "}}) {
+    INFO("LHAPDF ID " << test.lhaid);
+    const auto name = LHAPDF::lookupPDF(test.lhaid).first;
+    REQUIRE(LHAPDF::PDFSet(name).errorType() == test.errorType);
+
+    gen::PdfWeightGroupInfo directGroup(name);
+    directGroup.setParentLhapdfInfo(test.lhaid);
+    REQUIRE(directGroup.uncertaintyType() == test.uncertaintyType);
+
+    gen::GenWeightHelper helper;
+    const auto groups = helper.parseWeightGroupsFromNames(
+        {"nominal", "LHE, id = 1001, group = " + name + ", PDF=" + std::to_string(test.lhaid) + " MemberID=0"}, false);
+    REQUIRE(groups.size() == 2);
+    REQUIRE(groups[1]->weightType() == gen::WeightType::kPdfWeights);
+    const auto& pdf = *static_cast<const gen::PdfWeightGroupInfo*>(groups[1].get());
+    REQUIRE(pdf.parentLhapdfId() == test.lhaid);
+    REQUIRE(pdf.uncertaintyType() == test.uncertaintyType);
+    REQUIRE(pdf.description() == std::string(test.descriptionPrefix) + "Uncertainty sets for LHAPDF set " + name +
+                                     " with LHAID = " + std::to_string(test.lhaid) + "; ");
+  }
+
+  SECTION("Missing error type remains unknown, including after changing parent set") {
+    gen::PdfWeightGroupInfo group;
+    group.setParentLhapdfInfo(325300);
+    REQUIRE(group.uncertaintyType() == gen::kHessianUnc);
+    // cteq6l1 does not define ErrorType in its LHAPDF metadata.
+    REQUIRE(LHAPDF::PDFSet("cteq6l1").errorType() == "unknown");
+    group.setParentLhapdfInfo(10042);
+    REQUIRE(group.uncertaintyType() == gen::kUnknownUnc);
+  }
+}

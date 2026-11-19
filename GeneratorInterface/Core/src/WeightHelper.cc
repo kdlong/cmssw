@@ -157,7 +157,6 @@ namespace gen {
     if (pdfGroup.parentLhapdfId() < 0) {
       int parentId = lhaid - LHAPDF::lookupPDF(lhaid).second;
       pdfGroup.setParentLhapdfInfo(parentId);
-      pdfGroup.setUncertaintyType(gen::kUnknownUnc);
 
       std::string description = "";
       if (pdfGroup.uncertaintyType() == gen::kHessianUnc)
