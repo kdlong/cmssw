@@ -136,7 +136,20 @@ namespace gen {
 
     if (!lhaidText.empty()) {
       try {
-        return std::stoi(lhaidText);
+        const int lhaid = std::stoi(lhaidText);
+        // XML PDF attributes already identify an individual member. In the
+        // flattened MadGraph text, PDF instead names the set and MemberID
+        // selects its member. Do not apply the text offset to an XML ID.
+        const auto memberText = searchAttributes("pdf_member", weight);
+        if (searchAttributesByTag("pdf", weight).empty() && !memberText.empty()) {
+          const int member = std::stoi(memberText);
+          const auto setName = LHAPDF::lookupPDF(lhaid).first;
+          if (member < 0 || member >= static_cast<int>(LHAPDF::getPDFSet(setName).size()))
+            throw cms::Exception("InvalidPDFMember")
+                << "MemberID=" << member << " is outside LHAPDF set " << setName << " (PDF=" << lhaid << ").";
+          return LHAPDF::lookupLHAPDFID(setName, member);
+        }
+        return lhaid;
       } catch (std::invalid_argument& e) {
         pdfGroup.setIsWellFormed(false);
       }

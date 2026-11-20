@@ -243,3 +243,57 @@ TEST_CASE("Embedded LHE PDF splitting preserves a returning shower group", "[Gen
   REQUIRE(groups.back()->nIdsContained() == 1);
   REQUIRE(groups.back()->weightMetaInfo(0).globalIndex == names.size() - 1);
 }
+
+TEST_CASE("MadGraph PDF set and member labels resolve individual LHAPDF IDs", "[GenWeightHelper][PDFMember]") {
+  struct Helper : gen::WeightHelper {
+    using gen::WeightHelper::lhapdfId;
+  };
+  Helper helper;
+  gen::PdfWeightGroupInfo pdf;
+  SECTION("Text set IDs include the member number") {
+    for (int member : {0, 1, 102}) {
+      gen::ParsedWeight weight{"", 0, "PDF_variation", "PDF=325300 MemberID=" + std::to_string(member), {}, 0};
+      REQUIRE(helper.lhapdfId(weight, pdf) == 325300 + member);
+    }
+    gen::ParsedWeight weight{"", 0, "PDF_variation", "lhapdf=325301", {}, 0};
+    REQUIRE(helper.lhapdfId(weight, pdf) == 325301);
+  }
+  SECTION("An expanded XML PDF attribute takes precedence over the text") {
+    gen::ParsedWeight weight{"", 0, "PDF_variation", "PDF=325300 MemberID=1", {{"PDF", "325301"}}, 0};
+    REQUIRE(helper.lhapdfId(weight, pdf) == 325301);
+    weight.attributes["PDF"] = "325302";
+    REQUIRE(helper.lhapdfId(weight, pdf) == 325302);
+  }
+  SECTION("Invalid members cannot spill into another PDF set") {
+    for (int member : {-1, 103}) {
+      gen::ParsedWeight weight{"", 0, "PDF_variation", "PDF=325300 MemberID=" + std::to_string(member), {}, 0};
+      REQUIRE_THROWS(helper.lhapdfId(weight, pdf));
+    }
+  }
+  SECTION("Complete sets retain their member order across PDF splits and returning PS weights") {
+    const auto shower = pythiaNames(".");
+    std::vector<std::string> names{"nominal"};
+    for (const auto& entry : {std::pair<int, int>{325300, 103}, {14000, 59}})
+      for (int member = 0; member < entry.second; ++member)
+        names.push_back("LHE, id = " + std::to_string(names.size()) + ", group = PDF_variation, PDF=" +
+                        std::to_string(entry.first) + " MemberID=" + std::to_string(member));
+    names.insert(names.end(), shower.begin() + 1, shower.end());
+    gen::GenWeightHelper parser;
+    const auto groups = parser.parseWeightGroupsFromNames(names, false);
+    REQUIRE(groups.size() == 3);
+    REQUIRE(groups[0]->nIdsContained() == 46);
+    REQUIRE(groups[0]->isWellFormed());
+    for (size_t i = 1; i < groups.size(); ++i) {
+      auto& group = *static_cast<gen::PdfWeightGroupInfo*>(groups[i].get());
+      const int base = i == 1 ? 325300 : 14000;
+      const size_t count = i == 1 ? 103 : 59;
+      REQUIRE(group.parentLhapdfId() == base);
+      REQUIRE(group.nIdsContained() == count);
+      REQUIRE(group.isWellFormed());
+      for (size_t member = 0; member < count; ++member) {
+        REQUIRE(group.lhaIds()[member] == base + static_cast<int>(member));
+        REQUIRE(group.weightMetaInfo(member).localIndex == member);
+      }
+    }
+  }
+}
