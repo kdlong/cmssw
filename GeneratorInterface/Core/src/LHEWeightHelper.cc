@@ -82,6 +82,10 @@ namespace gen {
                                             std::string groupName,
                                             int groupIndex,
                                             int& weightIndex) const {
+    const char* id = inner->Attribute("id");
+    if (id == nullptr || std::string(id).find_first_not_of(" \t\r\n") == std::string::npos)
+      throw cms::Exception("LHEWeightHelper")
+          << "Missing or empty id attribute for weight at index " << weightIndex << " in group " << groupName << ".";
     if (debug_)
       std::cout << "  >> Found a weight inside the group. " << std::endl;
     std::string text = "";
@@ -93,7 +97,7 @@ namespace gen {
       attributes[att->Name()] = att->Value();
     if (debug_)
       std::cout << "     " << weightIndex << ": \"" << text << "\"" << std::endl;
-    return {inner->Attribute("id"), weightIndex++, groupName, text, attributes, groupIndex};
+    return {id, weightIndex++, groupName, text, attributes, groupIndex};
   }
 
   std::vector<std::unique_ptr<gen::WeightGroupInfo>> LHEWeightHelper::parseWeights(std::vector<std::string> headerLines,

@@ -39,3 +39,27 @@ TEST_CASE("Flattened LHE labels without group attributes have valid destinations
     REQUIRE(pdf.lhaIds() == std::vector<int>{325300, 325301});
   }
 }
+
+TEST_CASE("XML weight IDs are checked before constructing strings", "[LHEWeightHelper][MissingID]") {
+  gen::LHEWeightHelper helper;
+  helper.setFailIfInvalidXML(GENERATE(false, true));
+  SECTION("Missing, empty, and whitespace-only IDs fail with a useful error") {
+    for (const std::string attribute : {"", " id=''", " id='   '"}) {
+      const std::vector<std::string> header{"<weightgroup name='PDF_variation'>\n",
+                                            "<weight" + attribute + ">PDF=325300 MemberID=0</weight>\n",
+                                            "</weightgroup>\n"};
+      REQUIRE_THROWS_WITH(helper.parseWeights(header, false),
+                          Catch::Matchers::ContainsSubstring("Missing or empty id attribute"));
+    }
+  }
+  SECTION("Valid numerical and named IDs remain unchanged") {
+    const auto groups = helper.parseWeights({"<weightgroup name='PDF_variation'>\n",
+                                             "<weight id='central'>PDF=325300 MemberID=0</weight>\n",
+                                             "<weight id='2001'>PDF=325300 MemberID=1</weight>\n",
+                                             "</weightgroup>\n"},
+                                            false);
+    REQUIRE(groups.size() == 1);
+    REQUIRE(groups[0]->weightMetaInfo(0).id == "central");
+    REQUIRE(groups[0]->weightMetaInfo(1).id == "2001");
+  }
+}
