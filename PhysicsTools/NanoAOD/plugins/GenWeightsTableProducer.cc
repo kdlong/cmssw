@@ -19,6 +19,7 @@
 #include "SimDataFormats/GeneratorProducts/interface/PartonShowerWeightGroupInfo.h"
 #include "FWCore/Utilities/interface/transform.h"
 #include "PhysicsTools/NanoAOD/interface/GenWeightCounters.h"
+#include "PhysicsTools/NanoAOD/interface/GenWeightGroupSelection.h"
 #include <iostream>
 #include <algorithm>
 #include <array>
@@ -138,6 +139,7 @@ protected:
   const std::vector<std::string> outputnames_;
   const std::vector<int> maxGroupsPerType_;
   const std::vector<int> pdfIds_;
+  const bool fallbackToFirstPDF_;
   int lheWeightPrecision_;
   std::vector<gen::WeightType> unknownOnlyIfEmpty_;
   bool keepAllPSWeights_;
@@ -170,6 +172,7 @@ GenWeightsTableProducer::GenWeightsTableProducer(edm::ParameterSet const& params
       outputnames_(params.getParameter<std::vector<std::string>>("outputNames")),
       maxGroupsPerType_(params.getParameter<std::vector<int>>("maxGroupsPerType")),
       pdfIds_(params.getUntrackedParameter<std::vector<int>>("pdfIds", {})),
+      fallbackToFirstPDF_(params.getUntrackedParameter<bool>("fallbackToFirstPDF", true)),
       lheWeightPrecision_(params.getParameter<int32_t>("lheWeightPrecision")),
       unknownOnlyIfEmpty_(edm::vector_transform(params.getParameter<std::vector<std::string>>("unknownOnlyIfEmpty"),
                                                 [](auto& c) { return gen::WeightType(c.at(0)); })),
@@ -429,9 +432,7 @@ WeightGroupDataContainer GenWeightsTableProducer::weightDataPerType(
     edm::Handle<GenWeightInfoProduct>& weightsInfoHandle, gen::WeightType weightType, size_t maxStore) const {
   WeightGroupDataContainer allgroups;
   if (weightType == gen::WeightType::kPdfWeights && !pdfIds_.empty()) {
-    allgroups = weightsInfoHandle->pdfGroupsWithIndicesByLHAIDs(pdfIds_);
-    if (allgroups.size() > maxStore)
-      allgroups.resize(maxStore);
+    allgroups = nanoaod::selectPdfWeightGroups(*weightsInfoHandle, pdfIds_, maxStore, fallbackToFirstPDF_);
   } else
     allgroups = weightsInfoHandle->weightGroupsAndIndicesByType(weightType, maxStore);
 
@@ -543,6 +544,8 @@ void GenWeightsTableProducer::fillDescriptions(edm::ConfigurationDescriptions& d
   desc.add<std::vector<std::string>>("outputNames");
   desc.add<std::vector<int>>("maxGroupsPerType");
   desc.addOptionalUntracked<std::vector<int>>("pdfIds");
+  desc.addUntracked<bool>("fallbackToFirstPDF", true)
+      ->setComment("If none of pdfIds match, store the first PDF group in header order; false keeps a strict filter");
   desc.add<int32_t>("lheWeightPrecision", -1)->setComment("Number of bits in the mantissa for LHE weights");
   desc.add<std::vector<std::string>>("unknownOnlyIfEmpty")
       ->setComment("Only store weights in an Unknown WeightGroup if one of the specified groups is empty");

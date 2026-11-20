@@ -13,3 +13,9 @@
 <!-- <test name="test-btvNano-check" command="test-btvNano.py"> COMMENT: depends on disabled test 
   <flags PRE_TEST="test-btvNano-run"/>
 </test> -->
+
+<bin file="testGenWeightsTableHelpers.cc" name="testGenWeightsTableHelpers">
+  <use name="FWCore/Utilities"/>
+  <use name="SimDataFormats/GeneratorProducts"/>
+  <use name="catch2"/>
+</bin>
