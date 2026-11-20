@@ -68,24 +68,29 @@ namespace gen {
   }
 
   void WeightGroupInfo::addContainedId(int weightEntry, std::string id, std::string label = "") {
+    if (weightEntry < 0)
+      throw cms::Exception("WeightGroupInfo")
+          << "Negative global weight index " << weightEntry << " in group " << name_;
+    auto position = std::lower_bound(
+        idsContained_.begin(), idsContained_.end(), weightEntry, [](const WeightMetaInfo& entry, int index) {
+          return entry.globalIndex < static_cast<size_t>(index);
+        });
+    if (position != idsContained_.end() && position->globalIndex == static_cast<size_t>(weightEntry))
+      throw cms::Exception("WeightGroupInfo")
+          << "Duplicate global weight index " << weightEntry << " in group " << name_;
+    const size_t localIndex = std::distance(idsContained_.begin(), position);
     if (id.empty())
       id = std::to_string(weightEntry);
-
-    if (firstId_ < 0 || weightEntry < firstId_) {
+    if (firstId_ < 0 || weightEntry < firstId_)
       firstId_ = weightEntry;
-      for (auto& entry : idsContained_)  // Reset if indices need to be shifted
-        entry.localIndex++;
-    }
     if (weightEntry > lastId_)
       lastId_ = weightEntry;
-
-    size_t localIndex = std::min(weightEntry - firstId_, static_cast<int>(idsContained_.size()));
     WeightMetaInfo info = {static_cast<size_t>(weightEntry), localIndex, id, label};
-    // logic to insert for all cases e.g. inserting in the middle of the vector
-    if (localIndex == idsContained_.size())
-      idsContained_.emplace_back(info);
-    else
-      idsContained_.insert(idsContained_.begin() + localIndex, info);
+    idsContained_.insert(position, std::move(info));
+    for (size_t i = localIndex + 1; i < idsContained_.size(); ++i)
+      idsContained_[i].localIndex = i;
+    if (!weightLabelsToIndices_.empty())
+      cacheWeightIndicesByLabel();
   }
 
   bool WeightGroupInfo::indexInRange(int index) const { return (index <= lastId_ && index >= firstId_); }

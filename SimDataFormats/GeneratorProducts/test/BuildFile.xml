@@ -2,3 +2,9 @@
   <use name="hepmc"/>
   <use name="root"/>
 </bin>
+
+<bin file="testWeightGroupIndices.cc" name="testWeightGroupIndices">
+  <use name="SimDataFormats/GeneratorProducts"/>
+  <use name="FWCore/Utilities"/>
+  <use name="catch2"/>
+</bin>

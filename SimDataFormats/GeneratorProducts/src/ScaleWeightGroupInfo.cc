@@ -7,18 +7,18 @@ namespace gen {
   ScaleWeightGroupInfo* ScaleWeightGroupInfo::clone() const { return new ScaleWeightGroupInfo(*this); }
 
   int ScaleWeightGroupInfo::addContainedId(int globalIndex, std::string id, std::string label, float muR, float muF) {
-    int idxDiff = firstId_ - globalIndex;
-    if (idxDiff > 0) {
-      for (auto& entry : muIndices_) {
-        entry += idxDiff;
-      }
-      for (auto& subVec : dynVec_) {
-        for (auto& entry : subVec) {
-          entry += idxDiff;
-        }
-      }
-    }
+    const size_t position = std::count_if(idsContained_.begin(), idsContained_.end(), [globalIndex](const auto& info) {
+      return info.globalIndex < static_cast<size_t>(globalIndex);
+    });
     WeightGroupInfo::addContainedId(globalIndex, id, label);
+    // Cached positions count entries, not gaps between global indices.
+    for (auto& entry : muIndices_)
+      if (entry != size_t(-1) && entry >= position)
+        ++entry;
+    for (auto& subVec : dynVec_)
+      for (auto& entry : subVec)
+        if (entry != size_t(-1) && entry >= position)
+          ++entry;
     return setMuRMuFIndex(globalIndex, id, muR, muF);
   }
 
@@ -48,7 +48,7 @@ namespace gen {
     // resize if too small
     if (dynVec_.at(index).size() < dynNum + 1) {
       for (auto& dynIt : dynVec_)
-        dynIt.resize(dynNum + 1);
+        dynIt.resize(dynNum + 1, size_t(-1));
       dynNames_.resize(dynNum + 1);
     }
 
