@@ -35,6 +35,7 @@ namespace gen {
     int index = 0;
     int groupIndex = -1;
     int showerGroupIndex = -1;
+    std::unordered_map<std::string, size_t> dynamicalScaleIndices;
     std::string curGroup = "";
     // If size is 1, it's just the central weight
     // Still give the opportunity to add an unassociated group
@@ -68,6 +69,21 @@ namespace gen {
         // std::vector<float> in the event
         attributes["id"] = "";
         parsedWeights.push_back({attributes["id"], index, curGroup, text, attributes, groupIndex});
+        auto& parsed = parsedWeights.back();
+        if (isScaleWeightGroup(parsed)) {
+          // MadGraph omits factors equal to one from its text labels. Pythia
+          // also drops the XML scale attributes, so reconstruct them here.
+          for (const auto& factor : {"mur", "muf"}) {
+            const auto value = searchAttributes(factor, parsed);
+            parsed.attributes[factor] = value.empty() ? "1" : value;
+          }
+          const auto dynName = searchAttributes("dyn_name", parsed);
+          if (!dynName.empty()) {
+            const auto entry = dynamicalScaleIndices.emplace(dynName, dynamicalScaleIndices.size()).first;
+            parsed.attributes["DYN_SCALE"] = std::to_string(entry->second);
+            parsed.attributes["dyn_scale_choice"] = dynName;
+          }
+        }
       } else if (std::regex_match(weightName, match, sherpaEWVariation)) {
         // These vary associated EW contributions and their combination with
         // the QCD matrix element, even though their labels contain scales/PDFs.

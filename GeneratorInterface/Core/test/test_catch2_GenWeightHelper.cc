@@ -297,3 +297,44 @@ TEST_CASE("MadGraph PDF set and member labels resolve individual LHAPDF IDs", "[
     }
   }
 }
+
+TEST_CASE("Flattened MadGraph scales reconstruct the default and dynamical nine-point grids",
+          "[GenWeightHelper][EmbeddedScales]") {
+  const std::vector<std::pair<float, float>> factors = {
+      {1, 1}, {2, 1}, {0.5, 1}, {1, 2}, {2, 2}, {0.5, 2}, {1, 0.5}, {2, 0.5}, {0.5, 0.5}};
+  const std::vector<std::string> dynamicNames = {"sum pt", "HT", "HT/2", "sqrts"};
+  std::vector<std::string> names{"nominal"};
+  for (const auto& factor : factors) {
+    std::string label;
+    if (factor.first != 1)
+      label += " MUR=" + std::to_string(factor.first);
+    if (factor.second != 1)
+      label += " MUF=" + std::to_string(factor.second);
+    for (size_t choice = 0; choice <= dynamicNames.size(); ++choice) {
+      const auto dynamic = choice == 0 ? "" : " dyn_scale_choice=" + dynamicNames[choice - 1];
+      names.push_back("LHE, id = " + std::to_string(1000 + names.size()) + ", group = Central scale variation, " +
+                      label + dynamic);
+    }
+  }
+  gen::GenWeightHelper parser;
+  const auto groups = parser.parseWeightGroupsFromNames(names, false);
+  REQUIRE(groups.size() == 2);
+  REQUIRE(groups[1]->weightType() == gen::WeightType::kScaleWeights);
+  const auto& scale = *static_cast<const gen::ScaleWeightGroupInfo*>(groups[1].get());
+  REQUIRE(scale.nIdsContained() == 45);
+  REQUIRE(scale.isWellFormed());
+  const std::vector<size_t> expected{40, 10, 25, 30, 0, 15, 35, 5, 20};
+  REQUIRE(scale.muIndices() == expected);
+  REQUIRE(scale.centralIndex() == 0);
+  REQUIRE(scale.dynNames() == dynamicNames);
+  for (size_t i = 0; i < factors.size(); ++i) {
+    REQUIRE(scale.scaleIndex(factors[i].first, factors[i].second) == 5 * i);
+    for (size_t choice = 0; choice < dynamicNames.size(); ++choice)
+      REQUIRE(scale.scaleIndex(factors[i].first, factors[i].second, dynamicNames[choice]) == 5 * i + choice + 1);
+  }
+  SECTION("Explicitly malformed factors remain invalid") {
+    names.push_back("LHE, id = 1100, group = Central scale variation, MUR=bad MUF=1");
+    const auto bad = parser.parseWeightGroupsFromNames(names, false);
+    REQUIRE_FALSE(bad[1]->isWellFormed());
+  }
+}
