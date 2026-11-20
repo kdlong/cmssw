@@ -3,14 +3,22 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "FWCore/Utilities/interface/Exception.h"
 namespace genCounter {
 
-  inline void mergeSumVectors(std::vector<long double>& v1, std::vector<long double> const& v2) {
+  inline void mergeSumVectors(std::vector<long double>& v1,
+                              std::vector<long double> const& v2,
+                              const std::string& name = "") {
+    if (v2.empty())
+      return;
     if (v1.empty() && !v2.empty())
       v1.resize(v2.size(), 0);
-    if (!v2.empty())
-      for (unsigned int i = 0, n = v1.size(); i < n; ++i)
-        v1[i] += v2[i];
+    if (v1.size() != v2.size())
+      throw cms::Exception("WeightCounterSizeMismatch")
+          << "Cannot merge weight counter " << name << ": accumulated size " << v1.size() << ", incoming size "
+          << v2.size() << ".";
+    for (size_t i = 0; i < v1.size(); ++i)
+      v1[i] += v2[i];
   }
 
   ///  ---- Cache object for running sums of weights ----
@@ -31,16 +39,16 @@ namespace genCounter {
     }
 
     void incLHE(double w0, const std::vector<double>& weightV, const std::string& wName) {
-      // if new type of weight, create a map element
-      if (weightSumMap_.find(wName) == weightSumMap_.end()) {
-        std::vector<long double> temp;
-        weightSumMap_.insert({wName, temp});
-      }
+      auto& sums = weightSumMap_[wName];
       if (!weightV.empty()) {
-        if (weightSumMap_[wName].empty())
-          weightSumMap_[wName].resize(weightV.size(), 0);
+        if (sums.empty())
+          sums.resize(weightV.size(), 0);
+        if (sums.size() != weightV.size())
+          throw cms::Exception("WeightCounterSizeMismatch")
+              << "Weight counter " << wName << " changed size: accumulated size " << sums.size() << ", incoming size "
+              << weightV.size() << ".";
         for (unsigned int i = 0, n = weightV.size(); i < n; ++i)
-          weightSumMap_[wName][i] += (w0 * weightV[i]);
+          sums[i] += (w0 * weightV[i]);
       }
       // incGenOnly(w0);
       // incPSOnly(w0, wPS);
@@ -50,19 +58,8 @@ namespace genCounter {
       num_ += other.num_;
       sumw_ += other.sumw_;
       sumw2_ += other.sumw2_;
-      // if weightMap_ for "this" is empty, create map elements with empty
-      // vectors before merging
-      if (weightSumMap_.empty() && !other.weightSumMap_.empty()) {
-        for (auto& wmap : other.weightSumMap_) {
-          std::vector<long double> temp;
-          weightSumMap_.insert({wmap.first, temp});
-        }
-      }
-
-      for (auto& wmap : weightSumMap_) {
-        if (other.weightSumMap_.find(wmap.first) != other.weightSumMap_.end())
-          mergeSumVectors(wmap.second, other.weightSumMap_.at(wmap.first));
-      }
+      for (const auto& wmap : other.weightSumMap_)
+        mergeSumVectors(weightSumMap_[wmap.first], wmap.second, wmap.first);
     }
 
     // private:
@@ -86,7 +83,7 @@ namespace genCounter {
     }
 
     void clear() {
-      for (auto x : countermap)
+      for (auto& x : countermap)
         x.second.clear();
     }
 
