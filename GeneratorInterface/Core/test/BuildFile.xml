@@ -28,7 +28,7 @@
     <use name="catch2"/>
   </bin>
 
-  <bin name="testGenWeightHelper" file="test_catch2_GenWeightHelper.cc">
+  <bin name="testGenWeightHelper" file="test_catch2_GenWeightHelper.cc,test_catch2_WeightParsingSafety.cc">
     <use name="GeneratorInterface/Core"/>
     <use name="catch2"/>
   </bin>

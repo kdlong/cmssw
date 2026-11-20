@@ -61,8 +61,12 @@ namespace gen {
             attributes[boost::algorithm::trim_copy(subInfo[0])] = boost::algorithm::trim_copy(subInfo[1]);
           }
         }
-        if (attributes["group"] != curGroup) {
-          curGroup = attributes["group"];
+        const auto groupAttribute = attributes.find("group");
+        const std::string groupName = groupAttribute == attributes.end() || groupAttribute->second.empty()
+                                          ? genericGroupName_
+                                          : groupAttribute->second;
+        if (groupIndex < 0 || groupName != curGroup) {
+          curGroup = groupName;
           groupIndex++;
         }
         // Gen Weights can't have an ID, because they are just a
