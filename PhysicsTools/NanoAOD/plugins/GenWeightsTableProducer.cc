@@ -431,8 +431,14 @@ WeightGroupsToStore GenWeightsTableProducer::groupsToStore(
 WeightGroupDataContainer GenWeightsTableProducer::weightDataPerType(
     edm::Handle<GenWeightInfoProduct>& weightsInfoHandle, gen::WeightType weightType, size_t maxStore) const {
   WeightGroupDataContainer allgroups;
-  if (weightType == gen::WeightType::kPdfWeights && !pdfIds_.empty()) {
+  if (weightType == gen::WeightType::kPdfWeights) {
     allgroups = nanoaod::selectPdfWeightGroups(*weightsInfoHandle, pdfIds_, maxStore, fallbackToFirstPDF_);
+    if (maxStore == 1 && allgroups.size() == 1 && !nanoaod::hasPdfUncertaintyVariations(allgroups.front())) {
+      const auto& pdf = *static_cast<const gen::PdfWeightGroupInfo*>(allgroups.front().group);
+      edm::LogWarning("GenWeightsTableProducer")
+          << "The selected PDF group for LHAPDF ID " << pdf.parentLhapdfId()
+          << " has no noncentral members; its stored weights cannot provide PDF uncertainties.";
+    }
   } else
     allgroups = weightsInfoHandle->weightGroupsAndIndicesByType(weightType, maxStore);
 
@@ -545,7 +551,9 @@ void GenWeightsTableProducer::fillDescriptions(edm::ConfigurationDescriptions& d
   desc.add<std::vector<int>>("maxGroupsPerType");
   desc.addOptionalUntracked<std::vector<int>>("pdfIds");
   desc.addUntracked<bool>("fallbackToFirstPDF", true)
-      ->setComment("If none of pdfIds match, store the first PDF group in header order; false keeps a strict filter");
+      ->setComment(
+          "Allow fallback outside pdfIds when no IDs match, or when priority mode finds only central weights; "
+          "prefer a group with uncertainty variations in header order. False keeps a strict filter.");
   desc.add<int32_t>("lheWeightPrecision", -1)->setComment("Number of bits in the mantissa for LHE weights");
   desc.add<std::vector<std::string>>("unknownOnlyIfEmpty")
       ->setComment("Only store weights in an Unknown WeightGroup if one of the specified groups is empty");

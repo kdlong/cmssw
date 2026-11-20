@@ -5,9 +5,14 @@
 #include <limits>
 
 namespace {
-  void addPdf(GenWeightInfoProduct& info, int id) {
+  void addPdf(GenWeightInfoProduct& info, int id, const std::vector<int>& members = {0, 1}) {
     auto group = std::make_unique<gen::PdfWeightGroupInfo>("PDF_variation");
     group->setParentLhapdfInfo(id);
+    for (size_t i = 0; i < members.size(); ++i) {
+      const int index = info.numberOfGroups() * 1000 + i;
+      group->addContainedId(index, std::to_string(index), "member" + std::to_string(members[i]));
+      group->addLhaid(id + members[i]);
+    }
     info.addWeightGroupInfo(std::move(group));
   }
 }  // namespace
@@ -114,5 +119,76 @@ TEST_CASE("Weight counters reject inconsistent dimensions before indexing", "[We
     REQUIRE(map.get()->weightSumMap_.empty());
     REQUIRE_NOTHROW(map.get()->incLHE(1., {1., 2., 3.}, "PDF"));
     REQUIRE(map.get()->weightSumMap_.at("PDF").size() == 3);
+  }
+}
+
+TEST_CASE("PDF priority prefers uncertainty variations over central-only groups", "[PDFSelection][Uncertainties]") {
+  const size_t unlimited = std::numeric_limits<size_t>::max();
+  const std::vector<int> officialIds{
+      306000, 304400, 325300, 316200, 325500, 320900, 260000, 262000, 292000, 292200, 91400, 90400, 90900};
+  SECTION("Run3 central-only 306000 cannot mask the complete 325300 uncertainty set") {
+    GenWeightInfoProduct info;
+    addPdf(info, 306000, {0});
+    addPdf(info, 325300);
+    addPdf(info, 316200);
+    const auto selected = nanoaod::selectPdfWeightGroups(info, officialIds, 1, true);
+    REQUIRE(selected.size() == 1);
+    REQUIRE(selected[0].index == 1);
+    REQUIRE(nanoaod::hasPdfUncertaintyVariations(selected[0]));
+    const auto all = nanoaod::selectPdfWeightGroups(info, officialIds, unlimited, true);
+    REQUIRE(all.size() == 3);
+    REQUIRE(all[0].index == 0);
+    REQUIRE(all[1].index == 1);
+    REQUIRE(all[2].index == 2);
+  }
+  SECTION("A varying first preference still wins") {
+    GenWeightInfoProduct info;
+    addPdf(info, 325300);
+    addPdf(info, 306000);
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, officialIds, 1, true)[0].index == 1);
+  }
+  SECTION("Fallback can leave a central-only whitelist, while strict filtering cannot") {
+    GenWeightInfoProduct info;
+    addPdf(info, 306000, {0});
+    addPdf(info, 261000, {1, 2});
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, {306000}, 1, true)[0].index == 1);
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, {306000}, 1, false)[0].index == 0);
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, {260000}, unlimited, true)[0].index == 1);
+  }
+  SECTION("Header-order priority also avoids a central-only first group") {
+    GenWeightInfoProduct info;
+    addPdf(info, 306000, {0});
+    addPdf(info, 325300);
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, {}, 1, true)[0].index == 1);
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, {}, unlimited, true)[0].index == 0);
+  }
+  SECTION("A complete single-member set still has no uncertainty variations") {
+    GenWeightInfoProduct info;
+    addPdf(info, 14066, {0});
+    addPdf(info, 325300);
+    REQUIRE(info.orderedWeightGroupInfo(0)->isWellFormed());
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, {14066, 325300}, 1, true)[0].index == 1);
+  }
+  SECTION("A noncentral member counts as a variation even without a stored central member") {
+    GenWeightInfoProduct info;
+    addPdf(info, 306000, {0});
+    addPdf(info, 261000, {1});
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, {}, 1, true)[0].index == 1);
+  }
+  SECTION("Duplicate central IDs do not manufacture uncertainty variations") {
+    GenWeightInfoProduct info;
+    addPdf(info, 306000, {0, 0});
+    addPdf(info, 325300);
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, officialIds, 1, true)[0].index == 1);
+  }
+  SECTION("Central-only input is retained when no uncertainty weights exist") {
+    GenWeightInfoProduct info;
+    addPdf(info, 306000, {0});
+    addPdf(info, 315200, {0});
+    const auto selected = nanoaod::selectPdfWeightGroups(info, officialIds, 1, true);
+    REQUIRE(selected.size() == 1);
+    REQUIRE(selected[0].index == 0);
+    REQUIRE_FALSE(nanoaod::hasPdfUncertaintyVariations(selected[0]));
+    REQUIRE(nanoaod::selectPdfWeightGroups(info, {260000}, 1, true)[0].index == 0);
   }
 }

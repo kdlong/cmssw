@@ -28,10 +28,15 @@ genWeightsTable = cms.EDProducer("GenWeightsTableProducer",
     # Max number of groups to store for each type above, -1 ==> store all found                                           
     #maxGroupsPerType = cms.vint32([-1, -1, -1, -1, -1]),
     maxGroupsPerType = cms.vint32([1, 1, -1, 1, 1]),
-    # Ordered LHAPDF IDs: PDF group limit 1 selects the first match; -1 keeps all matches.
-    # An empty list selects groups in header order without filtering on LHAPDF IDs.
-    pdfIds = cms.untracked.vint32([91400, 306000, 260000]),
-    # If no configured ID matches, keep the first group in header order.
+    # Match the standard NanoAOD preferredPDFs ordering (genWeightsTable_cfi.py).
+    # PDF group limit 1 prefers the first match with uncertainty variations;
+    # -1 keeps all matching groups, including central-only comparison weights.
+    # An empty list removes the LHAPDF-ID filter.
+    pdfIds = cms.untracked.vint32([
+        306000, 304400, 325300, 316200, 325500, 320900, 260000,
+        262000, 292000, 292200, 91400, 90400, 90900,
+    ]),
+    # Fall back in header order, preferring uncertainty variations over central-only groups.
     fallbackToFirstPDF = cms.untracked.bool(True),
     unknownOnlyIfEmpty = cms.vstring(['scale', 'PDF']),
     keepAllPSWeights = cms.bool(False),

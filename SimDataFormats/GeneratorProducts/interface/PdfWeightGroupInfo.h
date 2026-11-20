@@ -45,6 +45,7 @@ namespace gen {
     bool hasAlphasVariations() const { return hasAlphasVars_; }
     void addLhaid(int lhaid);
     std::vector<int>& lhaIds() { return lhaids_; }
+    const std::vector<int>& lhaIds() const { return lhaids_; }
 
     bool isIdInParentSet(int lhaid) const { return parentLhapdfId_ == parentLhapdfId(lhaid); }
     int parentLhapdfId() const { return parentLhapdfId_; }
